@@ -1,0 +1,6 @@
+{
+  "name": "Octopus Energy España Consumption Card",
+  "homeassistant": "2023.1.0",
+  "render_readme": true,
+  "filename": "www/community/octopus_energy_es/octopus-consumption-card.bundle.js"
+}

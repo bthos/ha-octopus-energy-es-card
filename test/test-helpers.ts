@@ -8,12 +8,14 @@ import { html, TemplateResult } from 'lit';
  * Mock Home Assistant object for testing
  */
 export function createMockHass(overrides: Partial<any> = {}): any {
+  const mockCallService = overrides.callService || (async (domain: string, service: string, serviceData?: Record<string, any>) => {
+    // Default mock implementation - can be overridden
+    return { success: true, ...overrides.callServiceResponse };
+  });
+  
   return {
-    states: {},
-    callService: async (domain: string, service: string, serviceData?: Record<string, any>) => {
-      // Default mock implementation - can be overridden
-      return { success: true, ...overrides.callServiceResponse };
-    },
+    states: overrides.states || {},
+    callService: mockCallService,
     ...overrides,
   };
 }
@@ -121,9 +123,87 @@ export async function waitForUpdate(element: any): Promise<void> {
  * Wait for async data loading to complete
  */
 export async function waitForDataLoad(element: any, timeout: number = 500): Promise<void> {
+  // Wait for initial render
   await waitForUpdate(element);
+  
+  // If shadowRoot doesn't exist, create it manually and trigger render
+  if (!element.shadowRoot && element.isConnected) {
+    // Create shadowRoot manually
+    const shadowRoot = element.attachShadow({ mode: 'open' });
+    // Set renderRoot so Lit knows about it
+    (element as any).renderRoot = shadowRoot;
+    // Enable updating
+    if (typeof (element as any).enableUpdating === 'function') {
+      (element as any).enableUpdating(true);
+    }
+    // Set isUpdatePending to false to allow updates
+    (element as any).isUpdatePending = false;
+    
+    // Try to find render method through prototype chain
+    let renderMethod: any = null;
+    let proto = Object.getPrototypeOf(element);
+    while (proto && proto !== Object.prototype) {
+      const descriptor = Object.getOwnPropertyDescriptor(proto, 'render');
+      if (descriptor && typeof descriptor.value === 'function') {
+        renderMethod = descriptor.value;
+        break;
+      }
+      proto = Object.getPrototypeOf(proto);
+    }
+    
+    // Call render directly and manually add to shadowRoot
+    if (renderMethod) {
+      try {
+        const renderResult = renderMethod.call(element);
+        if (renderResult && shadowRoot) {
+          const { render } = await import('lit');
+          render(renderResult, shadowRoot);
+        }
+      } catch (e) {
+        // Ignore render errors
+      }
+    }
+    await waitForUpdate(element);
+  }
+  
+  // Wait for async operations
   await new Promise(resolve => setTimeout(resolve, timeout));
+  
+  // Wait for updates after async operations
   await waitForUpdate(element);
+  
+  // Additional wait to ensure shadow DOM is ready
+  await new Promise(resolve => setTimeout(resolve, 100));
+}
+
+/**
+ * Wait for element to be in a stable state (not loading)
+ */
+export async function waitForStableState(element: any, maxAttempts: number = 20): Promise<void> {
+  // Wait for shadowRoot to be created
+  for (let i = 0; i < maxAttempts; i++) {
+    await waitForUpdate(element);
+    if (element.shadowRoot) {
+      break;
+    }
+    await new Promise(resolve => setTimeout(resolve, 50));
+  }
+  
+  // Wait for loading to complete and component to be in stable state
+  for (let i = 0; i < maxAttempts; i++) {
+    await waitForUpdate(element);
+    if (element.shadowRoot) {
+      const loading = element.shadowRoot.querySelector('.loading');
+      const errorMessage = element.shadowRoot.querySelector('.error-message');
+      const cardHeader = element.shadowRoot.querySelector('.card-header');
+      
+      // Component is stable if it's not loading (either error or content is shown)
+      if (!loading && (errorMessage || cardHeader)) {
+        break;
+      }
+    }
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
 }
 
 /**

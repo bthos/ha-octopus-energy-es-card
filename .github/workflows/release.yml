@@ -1,0 +1,193 @@
+name: Release
+
+on:
+  workflow_run:
+    workflows: ["Validate"]
+    types:
+      - completed
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && (github.event.workflow_run.head_branch == 'main' || github.event.workflow_run.head_branch == 'master') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.workflow_run.head_branch }}
+          fetch-tags: true
+
+      - name: Check if last commit is version bump
+        id: check_last_commit
+        run: |
+          LAST_COMMIT_MSG=$(git log -1 --pretty=%B)
+          
+          if echo "$LAST_COMMIT_MSG" | grep -qE "(Bump version|\[skip ci\]|\[ci skip\])"; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "Last commit is a version bump or contains [skip ci], skipping release"
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "Last commit is not a version bump, proceeding with release"
+          fi
+
+      - name: Get current version from package.json
+        if: steps.check_last_commit.outputs.skip == 'false'
+        id: get_current_version
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "Current version: $CURRENT_VERSION"
+
+      - name: Calculate next version
+        if: steps.check_last_commit.outputs.skip == 'false'
+        id: calculate_version
+        run: |
+          CURRENT_VERSION="${{ steps.get_current_version.outputs.current_version }}"
+          # Parse version (e.g., 0.4.34 -> 0.4.35)
+          IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_VERSION"
+          MAJOR="${VERSION_PARTS[0]}"
+          MINOR="${VERSION_PARTS[1]}"
+          PATCH="${VERSION_PARTS[2]}"
+          
+          # Increment patch version
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}"
+          
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "New version: $NEW_VERSION"
+
+      - name: Update version in package.json
+        if: steps.check_last_commit.outputs.skip == 'false'
+        run: |
+          NEW_VERSION="${{ steps.calculate_version.outputs.new_version }}"
+          node << EOF
+          const fs = require('fs');
+          const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          packageJson.version = "$NEW_VERSION";
+          fs.writeFileSync('package.json', JSON.stringify(packageJson, null, 2) + '\n');
+          EOF
+          echo "Updated package.json to version $NEW_VERSION"
+
+      - name: Commit version update
+        if: steps.check_last_commit.outputs.skip == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json
+          git commit -m "Bump version to ${{ steps.calculate_version.outputs.new_version }} [skip ci]" || echo "No changes to commit"
+          git push || echo "Nothing to push"
+
+      - name: Get version for release
+        if: steps.check_last_commit.outputs.skip == 'false'
+        id: get_version
+        run: |
+          VERSION="${{ steps.calculate_version.outputs.new_version }}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version for release: $VERSION"
+
+      - name: Check if tag exists
+        if: steps.check_last_commit.outputs.skip == 'false'
+        id: check_tag
+        run: |
+          if git rev-parse "v${{ steps.get_version.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Tag v${{ steps.get_version.outputs.version }} already exists"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Tag v${{ steps.get_version.outputs.version }} does not exist"
+          fi
+
+      - name: Create tag
+        if: steps.check_last_commit.outputs.skip == 'false' && steps.check_tag.outputs.exists == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "v${{ steps.get_version.outputs.version }}" -m "Release v${{ steps.get_version.outputs.version }}"
+          git push origin "v${{ steps.get_version.outputs.version }}"
+
+      - name: Get previous tag
+        if: steps.check_last_commit.outputs.skip == 'false' && steps.check_tag.outputs.exists == 'false'
+        id: get_previous_tag
+        run: |
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -z "$PREVIOUS_TAG" ]; then
+            PREVIOUS_TAG=$(git rev-list --max-parents=0 HEAD 2>/dev/null || echo "")
+          fi
+          echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
+          echo "Previous tag: $PREVIOUS_TAG"
+
+      - name: Generate changelog
+        if: steps.check_last_commit.outputs.skip == 'false' && steps.check_tag.outputs.exists == 'false'
+        id: changelog
+        run: |
+          PREVIOUS_TAG="${{ steps.get_previous_tag.outputs.previous_tag }}"
+          CURRENT_SHA="${{ github.event.workflow_run.head_sha }}"
+          
+          if [ -z "$PREVIOUS_TAG" ] || [ "$PREVIOUS_TAG" = "" ]; then
+            # First release - get all commits
+            git log --pretty=format:"- %s (%h)" --reverse > changelog.txt
+          else
+            # Get commits since last tag
+            git log ${PREVIOUS_TAG}..${CURRENT_SHA} --pretty=format:"- %s (%h)" --reverse > changelog.txt
+          fi
+          
+          if [ ! -s changelog.txt ]; then
+            echo "- No commits found" > changelog.txt
+          fi
+          
+          # Ensure changelog ends with a newline
+          if [ -s changelog.txt ] && [ "$(tail -c1 changelog.txt)" != "" ]; then
+            echo "" >> changelog.txt
+          fi
+          
+          # Use a unique delimiter - ensure it's on its own line
+          DELIMITER="CHANGELOG_END_$(date +%s)_$$"
+          {
+            printf "changelog<<%s\n" "${DELIMITER}"
+            cat changelog.txt
+            printf "%s\n" "${DELIMITER}"
+          } >> $GITHUB_OUTPUT
+          
+          echo "Changelog:"
+          cat changelog.txt
+
+      - name: Create release
+        if: steps.check_last_commit.outputs.skip == 'false' && steps.check_tag.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.get_version.outputs.version }}
+          name: Release v${{ steps.get_version.outputs.version }}
+          body: |
+            ## Release v${{ steps.get_version.outputs.version }}
+
+            ### 📦 What's Changed
+
+            ${{ steps.changelog.outputs.changelog }}
+
+            ### 🔗 Links
+
+            - [Full Changelog](https://github.com/${{ github.repository }}/compare/${{ steps.get_previous_tag.outputs.previous_tag }}...v${{ steps.get_version.outputs.version }})
+            - [Documentation](https://github.com/${{ github.repository }}#readme)
+            - [Report Issues](https://github.com/${{ github.repository }}/issues)
+
+            ---
+            *This release was automatically created after successful validation.*
+          draft: false
+          prerelease: false
+
+      - name: Skip release (version bump commit)
+        if: steps.check_last_commit.outputs.skip == 'true'
+        run: |
+          echo "Last commit is a version bump, skipping release to prevent infinite loop."
+
+      - name: Skip release (tag exists)
+        if: steps.check_last_commit.outputs.skip == 'false' && steps.check_tag.outputs.exists == 'true'
+        run: |
+          echo "Tag v${{ steps.get_version.outputs.version }} already exists. Skipping release creation."

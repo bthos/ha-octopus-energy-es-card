@@ -1,8 +1,26 @@
 # 📊 Octopus Energy España Consumption Card
 
 [![HACS Validation](https://img.shields.io/github/actions/workflow/status/bthos/ha-octopus-energy-es-card/validate.yml?branch=main&label=HACS&logo=github)](https://github.com/bthos/ha-octopus-energy-es-card/actions/workflows/validate.yml)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Home Assistant](https://img.shields.io/badge/home%20assistant-2023.1%2B-blue.svg)](https://www.home-assistant.io/)
 
-Lovelace card for displaying consumption graphs and tariff comparisons for Octopus Energy España integration.
+A Lovelace card for Home Assistant that displays consumption graphs and tariff comparisons for the Octopus Energy España integration. Visualize your energy consumption data with interactive charts, compare different tariffs, and analyze costs with detailed breakdowns.
+
+## 📸 Preview
+
+![Octopus Energy España Consumption Card](https://raw.githubusercontent.com/bthos/ha-octopus-energy-es-card/main/.github/images/card-preview.svg)
+
+## 💝 Support the Developer
+
+**Love this card?** Help support its development by joining Octopus Energy España!
+
+When you sign up using the button below, **you'll receive 50€ credit** on your second electricity bill, and **the card developer will also receive 50€** - a win-win that helps keep this project maintained and improved! 🎉
+
+**[Join Octopus Energy España - Get 50€](https://octopusenergy.es/afiliados/bthos)**
+
+✨ **100% renewable energy** • 📊 **Transparent pricing** • ⭐ **4.8/5 customer rating** • 🔓 **No permanence**
+
+_La energía de la buena se comparte_ - Your support helps make this card better for everyone! 🌟
 
 ## ✨ Features
 

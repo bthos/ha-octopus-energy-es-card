@@ -111,16 +111,30 @@ show_navigation: true
 
 | Option | Type | Required | Default | Description |
 |--------|------|----------|---------|-------------|
-| `entity` | string | ✅ Yes | - | Consumption sensor entity ID |
-| `title` | string | ❌ No | "Consumption" | Card title |
-| `show_comparison` | boolean | ❌ No | `true` | Show period comparison section |
-| `default_period` | string | ❌ No | `"week"` | Default period: `"day"`, `"week"`, or `"month"` |
-| `chart_type` | string | ❌ No | `"line"` | Chart type: `"line"` or `"bar"` |
-| `show_tariff_comparison` | boolean | ❌ No | `false` | Show tariff comparison section |
-| `tariff_entry_ids` | array | ❌ No | `[]` | List of tariff entry IDs to compare |
-| `show_cost_on_chart` | boolean | ❌ No | `false` | Show cost on consumption chart (secondary axis) |
-| `selected_tariff_for_cost` | string | ❌ No | - | Tariff entry ID to use for cost display |
-| `show_navigation` | boolean | ❌ No | `true` | Show period navigation controls |
+| `entity` | string | ✅ Yes | - | Consumption sensor entity ID from Octopus Energy España integration (e.g., `sensor.octopus_energy_es_daily_consumption`) |
+| `title` | string | ❌ No | `"Consumption"` | Card title displayed at the top of the card |
+| `show_comparison` | boolean | ❌ No | `true` | Show period comparison section with summary statistics |
+| `default_period` | string | ❌ No | `"week"` | Default period to display: `"day"`, `"week"`, or `"month"` |
+| `chart_type` | string | ❌ No | `"line"` | Chart visualization type: `"line"` for line chart or `"bar"` for bar chart |
+| `show_tariff_comparison` | boolean | ❌ No | `false` | Enable tariff comparison section showing costs for multiple tariffs |
+| `tariff_entry_ids` | array | ❌ No | `[]` | List of tariff entry IDs to compare (required if `show_tariff_comparison` is `true`) |
+| `show_cost_on_chart` | boolean | ❌ No | `false` | Display cost information on the consumption chart using a secondary axis |
+| `selected_tariff_for_cost` | string | ❌ No | - | Tariff entry ID to use for cost display (required if `show_cost_on_chart` is `true`) |
+| `show_navigation` | boolean | ❌ No | `true` | Show Previous/Next navigation buttons to move between periods |
+
+#### Configuration Notes
+
+- **Entity ID**: Must be a valid consumption sensor from the Octopus Energy España integration. The card automatically extracts the `entry_id` from the entity ID or entity attributes.
+- **Tariff Entry IDs**: These are the integration entry IDs configured in Home Assistant. You can find them in the integration settings or entity attributes.
+- **Period Selection**: The card supports three period types:
+  - `"day"`: Shows hourly consumption data for a single day
+  - `"week"`: Shows hourly consumption data for a week (7 days)
+  - `"month"`: Shows daily consumption data for a month
+- **Error Handling**: The card displays user-friendly error messages if:
+  - The entity is not found
+  - The entry_id cannot be extracted
+  - Service calls fail
+  - Data is unavailable
 
 ## 📊 Usage Examples
 
@@ -168,23 +182,41 @@ The card uses Home Assistant services from the [Octopus Energy España Integrati
 
 ## 🐛 Troubleshooting
 
+### Error Handling
+
+The card includes comprehensive error handling and will display user-friendly error messages in the following scenarios:
+
+- **Entity Not Found**: If the specified entity doesn't exist, the card will show: `"Entity <entity_id> not found"`
+- **Entry ID Extraction Failed**: If the card cannot extract the entry_id from the entity, it will show: `"Could not extract entry_id from entity <entity_id>. Please check entity ID format."`
+- **Service Call Failures**: If the Octopus Energy España integration services fail, the card will display the error message returned by the service
+- **Missing Data**: If consumption data is unavailable, the card will show an appropriate error message
+- **Network Errors**: API failures are caught and displayed to the user
+
+All errors are logged to the browser console for debugging purposes.
+
 ### Card Not Appearing
 
 - Verify the card resource is registered in Lovelace Resources
 - Check that the file exists: `/hacsfiles/octopus_energy_es/octopus-consumption-card.bundle.js`
 - Restart Home Assistant after installation
+- Check browser console for JavaScript errors
 
 ### No Data Displayed
 
-- Ensure the integration is configured and sensors are available
+- Ensure the [Octopus Energy España Integration](https://github.com/bthos/ha-octopus-energy-es) is configured and sensors are available
 - Check that the `entity` option points to a valid consumption sensor
 - Verify the integration is working (check sensor states)
+- Check the card's error message for specific issues
+- Review Home Assistant logs for integration errors
 
 ### Tariff Comparison Not Working
 
 - Ensure `tariff_entry_ids` contains valid entry IDs
-- Verify that the integration services are available
+- Verify that the integration services are available (`octopus_energy_es.compare_tariffs`)
+- Check that `show_tariff_comparison` is set to `true`
+- Ensure at least one tariff entry ID is provided
 - Check Home Assistant logs for service call errors
+- Note: Tariff comparison failures are logged as warnings but don't prevent the card from displaying consumption data
 
 ## 📚 Related Components
 
@@ -197,6 +229,34 @@ For issues, feature requests, or questions:
 
 - 📝 Open an issue on [GitHub](https://github.com/bthos/ha-octopus-energy-es-card/issues)
 - 🔍 Check existing issues for similar problems
+
+## 🧪 Testing
+
+This project includes unit tests using [@web/test-runner](https://modern-web.dev/docs/test-runner/overview/) and [@open-wc/testing](https://open-wc.org/docs/testing/testing-package/).
+
+### Running Tests
+
+```bash
+# Install dependencies (if not already installed)
+npm install
+
+# Run tests once
+npm test
+
+# Run tests in watch mode (for development)
+npm run test:watch
+
+# Run tests with coverage report
+npm run test:coverage
+```
+
+### Test Structure
+
+- `test/octopus-consumption-card.test.ts` - Component tests
+- `test/types.test.ts` - Type definition tests
+- `test/test-helpers.ts` - Test utilities and mocks
+
+See [test/README.md](test/README.md) for more details.
 
 ## 📄 License
 

@@ -7,7 +7,10 @@
   "scripts": {
     "build": "tsc && npm run bundle",
     "bundle": "rollup -c",
-    "watch": "tsc --watch"
+    "watch": "tsc --watch",
+    "test": "web-test-runner \"test/**/*.test.ts\"",
+    "test:watch": "web-test-runner \"test/**/*.test.ts\" --watch",
+    "test:coverage": "web-test-runner \"test/**/*.test.ts\" --coverage"
   },
   "keywords": [
     "home-assistant",
@@ -23,7 +26,11 @@
     "rollup": "^4.0.0",
     "@rollup/plugin-node-resolve": "^15.0.0",
     "@rollup/plugin-commonjs": "^25.0.0",
-    "@rollup/plugin-terser": "^0.4.0"
+    "@rollup/plugin-terser": "^0.4.0",
+    "@web/test-runner": "^0.18.0",
+    "@web/test-runner-playwright": "^0.11.0",
+    "@open-wc/testing": "^4.0.0",
+    "@web/dev-server-esbuild": "^1.0.4"
   },
   "dependencies": {
     "lit": "^3.0.0"

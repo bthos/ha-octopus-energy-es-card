@@ -24,8 +24,12 @@ export class OctopusConsumptionCard extends LitElement {
   @state() private _comparisonResult: ComparisonResult | null = null;
   @state() private _loading = false;
   @state() private _error: string | null = null;
+  @state() private _comparisonError: string | null = null;
   @state() private _currentPeriod: "day" | "week" | "month" = "week";
   @state() private _currentDate: Date = new Date();
+
+  // Service call timeout in milliseconds (10 seconds)
+  private readonly SERVICE_TIMEOUT = 10000;
 
   static styles = css`
     :host {
@@ -99,6 +103,64 @@ export class OctopusConsumptionCard extends LitElement {
       color: var(--text-primary-color);
       border-radius: 4px;
       margin-bottom: 16px;
+    }
+
+    .error-message {
+      padding: 24px;
+      text-align: center;
+      background: var(--card-background-color);
+      border-radius: 8px;
+      border: 2px solid var(--error-color);
+    }
+
+    .error-icon {
+      color: var(--error-color);
+      margin-bottom: 12px;
+    }
+
+    .error-title {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--error-color);
+    }
+
+    .error-details {
+      font-size: 14px;
+      color: var(--secondary-text-color);
+      margin-bottom: 16px;
+    }
+
+    .retry-button {
+      padding: 10px 20px;
+      background: var(--primary-color);
+      color: var(--text-primary-color);
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      margin-top: 8px;
+    }
+
+    .retry-button:hover {
+      opacity: 0.9;
+    }
+
+    .comparison-error {
+      padding: 12px;
+      background: var(--warning-color);
+      color: var(--text-primary-color);
+      border-radius: 4px;
+      margin-top: 16px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .comparison-error ha-icon {
+      flex-shrink: 0;
     }
 
     .comparison-section {
@@ -239,6 +301,7 @@ export class OctopusConsumptionCard extends LitElement {
 
   connectedCallback(): void {
     super.connectedCallback();
+    this._validateConfig();
     this._currentPeriod = this.config.default_period || "week";
     this._loadData();
   }
@@ -246,8 +309,57 @@ export class OctopusConsumptionCard extends LitElement {
   protected updated(changedProperties: PropertyValues): void {
     super.updated(changedProperties);
     if (changedProperties.has("config")) {
+      this._validateConfig();
       this._loadData();
     }
+  }
+
+  /**
+   * Validates the card configuration
+   */
+  private _validateConfig(): void {
+    if (!this.config) {
+      throw new Error("Card configuration is required");
+    }
+
+    if (!this.config.entity) {
+      throw new Error("Entity is required. Please specify a consumption sensor entity.");
+    }
+
+    if (!this.config.entity.startsWith("sensor.octopus_energy_es_")) {
+      throw new Error(`Invalid entity format. Entity must be an Octopus Energy España sensor (e.g., sensor.octopus_energy_es_*). Got: ${this.config.entity}`);
+    }
+
+    if (this.config.show_tariff_comparison && (!this.config.tariff_entry_ids || this.config.tariff_entry_ids.length === 0)) {
+      console.warn("show_tariff_comparison is enabled but no tariff_entry_ids provided. Comparison will be disabled.");
+    }
+
+    if (this.config.show_cost_on_chart && !this.config.selected_tariff_for_cost) {
+      console.warn("show_cost_on_chart is enabled but selected_tariff_for_cost is not set. Cost display will be disabled.");
+    }
+  }
+
+  /**
+   * Creates a timeout promise for service calls
+   */
+  private _createTimeoutPromise(timeoutMs: number): Promise<never> {
+    return new Promise((_, reject) => {
+      setTimeout(() => reject(new Error("Request timeout. The service call took too long to respond.")), timeoutMs);
+    });
+  }
+
+  /**
+   * Calls a Home Assistant service with timeout
+   */
+  private async _callServiceWithTimeout<T>(
+    domain: string,
+    service: string,
+    serviceData?: Record<string, any>
+  ): Promise<T> {
+    const serviceCall = this.hass.callService(domain, service, serviceData);
+    const timeout = this._createTimeoutPromise(this.SERVICE_TIMEOUT);
+    
+    return Promise.race([serviceCall, timeout]) as Promise<T>;
   }
 
   private async _loadData(): Promise<void> {
@@ -257,6 +369,7 @@ export class OctopusConsumptionCard extends LitElement {
 
     this._loading = true;
     this._error = null;
+    this._comparisonError = null;
 
     try {
       // Get entry_id from entity
@@ -296,8 +409,8 @@ export class OctopusConsumptionCard extends LitElement {
       // Calculate date range based on current period
       const { startDate, endDate } = this._getDateRange();
 
-      // Fetch consumption data
-      const consumptionResult = await this.hass.callService(
+      // Fetch consumption data with timeout
+      const consumptionResult = await this._callServiceWithTimeout<FetchConsumptionResult>(
         "octopus_energy_es",
         "fetch_consumption",
         {
@@ -306,7 +419,7 @@ export class OctopusConsumptionCard extends LitElement {
           end_date: endDate.toISOString().split("T")[0],
           granularity: this._currentPeriod === "day" ? "hourly" : this._currentPeriod === "week" ? "hourly" : "daily",
         }
-      ) as FetchConsumptionResult;
+      );
 
       if (!consumptionResult.success) {
         throw new Error(consumptionResult.error || "Failed to fetch consumption data");
@@ -314,26 +427,36 @@ export class OctopusConsumptionCard extends LitElement {
 
       this._consumptionData = consumptionResult.consumption_data || [];
 
-      // Fetch tariff comparison if enabled
+      // Fetch tariff comparison if enabled (with graceful degradation)
+      this._comparisonError = null;
       if (this.config.show_tariff_comparison && this.config.tariff_entry_ids && this.config.tariff_entry_ids.length > 0) {
-        const period = this._currentPeriod === "day" ? "daily" : this._currentPeriod === "week" ? "weekly" : "monthly";
-        
-        const comparisonResult = await this.hass.callService(
-          "octopus_energy_es",
-          "compare_tariffs",
-          {
-            tariff_entry_ids: this.config.tariff_entry_ids,
-            source_entry_id: entryId,
-            period: period,
-            start_date: startDate.toISOString().split("T")[0],
-            end_date: endDate.toISOString().split("T")[0],
-          }
-        ) as { success: boolean; result?: ComparisonResult; error?: string };
+        try {
+          const period = this._currentPeriod === "day" ? "daily" : this._currentPeriod === "week" ? "weekly" : "monthly";
+          
+          const comparisonResult = await this._callServiceWithTimeout<{ success: boolean; result?: ComparisonResult; error?: string }>(
+            "octopus_energy_es",
+            "compare_tariffs",
+            {
+              tariff_entry_ids: this.config.tariff_entry_ids,
+              source_entry_id: entryId,
+              period: period,
+              start_date: startDate.toISOString().split("T")[0],
+              end_date: endDate.toISOString().split("T")[0],
+            }
+          );
 
-        if (comparisonResult.success && comparisonResult.result) {
-          this._comparisonResult = comparisonResult.result;
-        } else {
-          console.warn("Tariff comparison failed:", comparisonResult.error);
+          if (comparisonResult.success && comparisonResult.result) {
+            this._comparisonResult = comparisonResult.result;
+          } else {
+            const errorMsg = comparisonResult.error || "Failed to compare tariffs";
+            this._comparisonError = errorMsg;
+            console.warn("Tariff comparison failed:", errorMsg);
+          }
+        } catch (error) {
+          const errorMsg = error instanceof Error ? error.message : String(error);
+          this._comparisonError = `Tariff comparison error: ${errorMsg}`;
+          console.warn("Tariff comparison error:", error);
+          // Don't throw - allow consumption data to display even if comparison fails
         }
       }
     } catch (error) {
@@ -395,7 +518,14 @@ export class OctopusConsumptionCard extends LitElement {
 
     if (this._error) {
       return html`
-        <div class="error">Error: ${this._error}</div>
+        <div class="error-message">
+          <ha-icon icon="mdi:alert-circle" class="error-icon"></ha-icon>
+          <div class="error-title">Unable to Load Data</div>
+          <div class="error-details">${this._error}</div>
+          <button class="retry-button" @click=${this._loadData}>
+            Retry
+          </button>
+        </div>
       `;
     }
 
@@ -440,10 +570,17 @@ export class OctopusConsumptionCard extends LitElement {
         ${this._renderChart()}
       </div>
 
-      ${this.config.show_tariff_comparison && this._comparisonResult ? html`
+      ${this.config.show_tariff_comparison ? html`
         <div class="comparison-section">
           <h3 class="comparison-title">Tariff Comparison</h3>
-          ${this._renderComparison()}
+          ${this._comparisonError ? html`
+            <div class="comparison-error">
+              <ha-icon icon="mdi:alert"></ha-icon>
+              ${this._comparisonError}
+            </div>
+          ` : this._comparisonResult ? this._renderComparison() : html`
+            <div class="loading">Loading tariff comparison...</div>
+          `}
         </div>
       ` : ""}
     `;

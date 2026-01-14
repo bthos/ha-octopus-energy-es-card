@@ -319,15 +319,21 @@ export class OctopusConsumptionCard extends LitElement {
    */
   private _validateConfig(): void {
     if (!this.config) {
-      throw new Error("Card configuration is required");
+      this._error = "Card configuration is required";
+      this._loading = false;
+      return;
     }
 
     if (!this.config.entity) {
-      throw new Error("Entity is required. Please specify a consumption sensor entity.");
+      this._error = "Entity is required. Please specify a consumption sensor entity.";
+      this._loading = false;
+      return;
     }
 
     if (!this.config.entity.startsWith("sensor.octopus_energy_es_")) {
-      throw new Error(`Invalid entity format. Entity must be an Octopus Energy España sensor (e.g., sensor.octopus_energy_es_*). Got: ${this.config.entity}`);
+      this._error = `Invalid entity format. Entity must be an Octopus Energy España sensor (e.g., sensor.octopus_energy_es_*). Got: ${this.config.entity}`;
+      this._loading = false;
+      return;
     }
 
     if (this.config.show_tariff_comparison && (!this.config.tariff_entry_ids || this.config.tariff_entry_ids.length === 0)) {
@@ -705,10 +711,8 @@ declare global {
 // Explicitly register the custom element for Home Assistant
 // This ensures the element is available even if decorators don't work properly
 // Register immediately when module loads (for IIFE bundles)
-(function() {
-  if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
-    if (!customElements.get('octopus-consumption-card')) {
-      customElements.define('octopus-consumption-card', OctopusConsumptionCard);
-    }
+if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
+  if (!customElements.get('octopus-consumption-card')) {
+    customElements.define('octopus-consumption-card', OctopusConsumptionCard);
   }
-})();
+}

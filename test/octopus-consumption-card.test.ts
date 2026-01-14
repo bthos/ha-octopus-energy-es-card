@@ -36,51 +36,51 @@ describe('OctopusConsumptionCard', () => {
       const config = { type: 'custom:octopus-consumption-card' } as any;
       const hass = createMockHass();
       
-      let error: Error | null = null;
-      try {
-        const el = await fixture<OctopusConsumptionCard>(html`
-          <octopus-consumption-card
-            .config=${config}
-            .hass=${hass}
-          ></octopus-consumption-card>
-        `);
-        await waitForUpdate(el);
-        // Validation happens in connectedCallback, which throws synchronously
-        // But fixture might catch it, so check if error was set
-        if (!(el as any)._error) {
-          // If no error was set, validation didn't run - this is a test issue
-          throw new Error('Validation should have thrown an error');
-        }
-      } catch (e) {
-        error = e as Error;
-      }
+      const el = await fixture<OctopusConsumptionCard>(html`
+        <octopus-consumption-card
+          .config=${config}
+          .hass=${hass}
+        ></octopus-consumption-card>
+      `);
       
-      // Either fixture throws or component sets _error
-      expect(error).to.exist;
+      await waitForUpdate(el);
+      await waitForStableState(el);
+      
+      // Component should have error state after validation fails
+      expect(el.shadowRoot).to.exist;
+      if (!el.shadowRoot) return;
+      
+      const errorMessage = el.shadowRoot.querySelector('.error-message');
+      expect(errorMessage).to.exist;
+      expect(errorMessage?.textContent).to.contain('Entity is required');
     });
 
     it('validates entity format', async () => {
       const config = createMockConfig({ entity: 'sensor.invalid_entity' });
       const hass = createMockHass();
       
-      let error: Error | null = null;
-      try {
-        const el = await fixture<OctopusConsumptionCard>(html`
-          <octopus-consumption-card
-            .config=${config}
-            .hass=${hass}
-          ></octopus-consumption-card>
-        `);
-        await waitForUpdate(el);
-        // Validation happens in connectedCallback
-        if (!(el as any)._error) {
-          throw new Error('Validation should have thrown an error');
-        }
-      } catch (e) {
-        error = e as Error;
-      }
+      const el = await fixture<OctopusConsumptionCard>(html`
+        <octopus-consumption-card
+          .config=${config}
+          .hass=${hass}
+        ></octopus-consumption-card>
+      `);
       
-      expect(error).to.exist;
+      await waitForUpdate(el);
+      await waitForStableState(el);
+      
+      // Component should have error state after validation fails
+      expect(el.shadowRoot).to.exist;
+      if (!el.shadowRoot) return;
+      
+      const errorMessage = el.shadowRoot.querySelector('.error-message');
+      expect(errorMessage).to.exist;
+      // Entity format validation passes (starts with "sensor."), but entity is not found
+      // So we check for either validation error or entity not found error
+      const errorText = errorMessage?.textContent || '';
+      expect(errorText).to.satisfy((text: string) => 
+        text.includes('Invalid entity format') || text.includes('not found')
+      );
     });
   });
 

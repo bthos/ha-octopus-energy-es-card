@@ -745,8 +745,20 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
     customElements.define('octopus-consumption-card', OctopusConsumptionCard);
   }
   // Make the class available globally for Home Assistant card picker
-  // Home Assistant looks for card classes in window.customCards or window
-  if (typeof (window as any).customCards === 'undefined') {
+  // Home Assistant looks for card classes in window.customCards
+  // Use array format with metadata for proper card picker integration
+  if (!Array.isArray((window as any).customCards)) {
+    (window as any).customCards = [];
+  }
+  // Add card with metadata to the card picker
+  (window as any).customCards.push({
+    type: 'custom:octopus-consumption-card',
+    name: 'Octopus Energy España Consumption Card',
+    preview: false,
+    description: 'Display consumption data and tariff comparisons for Octopus Energy España',
+  });
+  // Also keep object assignment for backward compatibility
+  if (typeof (window as any).customCards !== 'object') {
     (window as any).customCards = {};
   }
   (window as any).customCards['octopus-consumption-card'] = OctopusConsumptionCard;

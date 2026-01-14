@@ -1,0 +1,181 @@
+/**
+ * Localization system for Octopus Energy España Consumption Card
+ * 
+ * Supports multiple languages for the visual editor
+ */
+
+export interface Translations {
+  [key: string]: string;
+}
+
+export const translations: Record<string, Translations> = {
+  en: {
+    // Basic Settings
+    "editor.basic_settings": "Basic Settings",
+    "editor.entity_label": "Entity",
+    "editor.entity_helper": "Select the Octopus Energy España consumption sensor",
+    "editor.title_label": "Title",
+    "editor.title_helper": "Custom title for the card",
+    
+    // Display Options
+    "editor.display_options": "Display Options",
+    "editor.show_comparison_label": "Show Comparison",
+    "editor.show_comparison_helper": "Compare current period with previous period",
+    "editor.default_period_label": "Default Period",
+    "editor.default_period_helper": "Initial time period to display",
+    "editor.chart_type_label": "Chart Type",
+    "editor.chart_type_helper": "Type of chart to display",
+    "editor.show_navigation_label": "Show Navigation",
+    "editor.show_navigation_helper": "Show period navigation buttons",
+    
+    // Tariff Comparison
+    "editor.tariff_comparison": "Tariff Comparison",
+    "editor.show_tariff_comparison_label": "Show Tariff Comparison",
+    "editor.show_tariff_comparison_helper": "Compare consumption costs across different tariffs",
+    "editor.tariff_entry_ids_label": "Tariff Entry IDs",
+    "editor.tariff_entry_ids_helper": "List of tariff entry IDs to compare",
+    
+    // Cost Display
+    "editor.cost_display": "Cost Display",
+    "editor.show_cost_on_chart_label": "Show Cost on Chart",
+    "editor.show_cost_on_chart_helper": "Display cost information on the chart",
+    "editor.selected_tariff_for_cost_label": "Selected Tariff for Cost",
+    "editor.selected_tariff_for_cost_helper": "Tariff entry ID to use for cost calculation",
+    
+    // Chart Type Options
+    "editor.chart_type_line": "Line",
+    "editor.chart_type_bar": "Bar",
+    
+    // Period Options
+    "editor.period_day": "Day",
+    "editor.period_week": "Week",
+    "editor.period_month": "Month",
+    
+    // Validation
+    "editor.entity_required": "Entity is required",
+    "editor.entity_invalid": "Entity must be an Octopus Energy España sensor (sensor.octopus_energy_es_*)",
+  },
+  es: {
+    // Basic Settings
+    "editor.basic_settings": "Configuración Básica",
+    "editor.entity_label": "Entidad",
+    "editor.entity_helper": "Seleccione el sensor de consumo de Octopus Energy España",
+    "editor.title_label": "Título",
+    "editor.title_helper": "Título personalizado para la tarjeta",
+    
+    // Display Options
+    "editor.display_options": "Opciones de Visualización",
+    "editor.show_comparison_label": "Mostrar Comparación",
+    "editor.show_comparison_helper": "Comparar período actual con período anterior",
+    "editor.default_period_label": "Período Predeterminado",
+    "editor.default_period_helper": "Período de tiempo inicial a mostrar",
+    "editor.chart_type_label": "Tipo de Gráfico",
+    "editor.chart_type_helper": "Tipo de gráfico a mostrar",
+    "editor.show_navigation_label": "Mostrar Navegación",
+    "editor.show_navigation_helper": "Mostrar botones de navegación de período",
+    
+    // Tariff Comparison
+    "editor.tariff_comparison": "Comparación de Tarifas",
+    "editor.show_tariff_comparison_label": "Mostrar Comparación de Tarifas",
+    "editor.show_tariff_comparison_helper": "Comparar costes de consumo entre diferentes tarifas",
+    "editor.tariff_entry_ids_label": "IDs de Entrada de Tarifa",
+    "editor.tariff_entry_ids_helper": "Lista de IDs de entrada de tarifa para comparar",
+    
+    // Cost Display
+    "editor.cost_display": "Visualización de Costes",
+    "editor.show_cost_on_chart_label": "Mostrar Coste en Gráfico",
+    "editor.show_cost_on_chart_helper": "Mostrar información de costes en el gráfico",
+    "editor.selected_tariff_for_cost_label": "Tarifa Seleccionada para Coste",
+    "editor.selected_tariff_for_cost_helper": "ID de entrada de tarifa a usar para cálculo de costes",
+    
+    // Chart Type Options
+    "editor.chart_type_line": "Línea",
+    "editor.chart_type_bar": "Barras",
+    
+    // Period Options
+    "editor.period_day": "Día",
+    "editor.period_week": "Semana",
+    "editor.period_month": "Mes",
+    
+    // Validation
+    "editor.entity_required": "La entidad es requerida",
+    "editor.entity_invalid": "La entidad debe ser un sensor de Octopus Energy España (sensor.octopus_energy_es_*)",
+  },
+  be: {
+    // Basic Settings
+    "editor.basic_settings": "Асноўныя налады",
+    "editor.entity_label": "Сутнасць",
+    "editor.entity_helper": "Выберыце сэнсар спажывання Octopus Energy España",
+    "editor.title_label": "Назва",
+    "editor.title_helper": "Карыстальніцкая назва для карткі",
+    
+    // Display Options
+    "editor.display_options": "Параметры адлюстравання",
+    "editor.show_comparison_label": "Паказаць параўнанне",
+    "editor.show_comparison_helper": "Параўнаць бягучы перыяд з папярэднім перыядам",
+    "editor.default_period_label": "Перыяд па змаўчанні",
+    "editor.default_period_helper": "Пачатковы часовы перыяд для адлюстравання",
+    "editor.chart_type_label": "Тып дыяграмы",
+    "editor.chart_type_helper": "Тып дыяграмы для адлюстравання",
+    "editor.show_navigation_label": "Паказаць навігацыю",
+    "editor.show_navigation_helper": "Паказаць кнопкі навігацыі па перыядах",
+    
+    // Tariff Comparison
+    "editor.tariff_comparison": "Параўнанне тарыфаў",
+    "editor.show_tariff_comparison_label": "Паказаць параўнанне тарыфаў",
+    "editor.show_tariff_comparison_helper": "Параўнаць выдаткі на спажыванне паміж рознымі тарыфамі",
+    "editor.tariff_entry_ids_label": "ID запісаў тарыфаў",
+    "editor.tariff_entry_ids_helper": "Спіс ID запісаў тарыфаў для параўнання",
+    
+    // Cost Display
+    "editor.cost_display": "Адлюстраванне кошту",
+    "editor.show_cost_on_chart_label": "Паказаць кошт на дыяграме",
+    "editor.show_cost_on_chart_helper": "Адлюстраваць інфармацыю аб кошце на дыяграме",
+    "editor.selected_tariff_for_cost_label": "Выбраны тарыф для кошту",
+    "editor.selected_tariff_for_cost_helper": "ID запісу тарыфу для разліку кошту",
+    
+    // Chart Type Options
+    "editor.chart_type_line": "Лінія",
+    "editor.chart_type_bar": "Слупкі",
+    
+    // Period Options
+    "editor.period_day": "Дзень",
+    "editor.period_week": "Тыдзень",
+    "editor.period_month": "Месяц",
+    
+    // Validation
+    "editor.entity_required": "Сутнасць абавязковая",
+    "editor.entity_invalid": "Сутнасць павінна быць сэнсарам Octopus Energy España (sensor.octopus_energy_es_*)",
+  }
+};
+
+/**
+ * Get localized string
+ */
+export function localize(key: string, language: string = "en"): string {
+  const lang = language.toLowerCase();
+  const translation = translations[lang]?.[key] || translations["en"]?.[key];
+  
+  if (!translation) {
+    // Fallback: return the key without prefix
+    return key.replace("editor.", "").replace(/_/g, " ");
+  }
+  
+  return translation;
+}
+
+/**
+ * Compute label for ha-form schema
+ */
+export function computeLabel(schema: any, language: string = "en"): string {
+  const key = `editor.${schema.name}_label`;
+  return localize(key, language);
+}
+
+/**
+ * Compute helper text for ha-form schema
+ */
+export function computeHelper(schema: any, language: string = "en"): string {
+  const key = `editor.${schema.name}_helper`;
+  return localize(key, language);
+}

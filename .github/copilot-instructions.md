@@ -55,3 +55,13 @@ When implementing new cards or features for Home Assistant, follow these steps f
     ```
 
 7. **Card Configuration:** Lovelace cards must have a `setConfig` method to handle configuration from YAML.
+
+8.  **Stylized DevTools Logging:** Implement stylized logs in DevTools using `console.log('%c…', 'CSS')` and `console.group()` for better structure. Follow this pattern:
+
+    ```js
+    console.group('%cYOUR_CARD_NAME', 'background:#c00;color:#fff;padding:2px 6px;border-radius:3px');
+    console.log('%cVersion: 0.0.1', 'color:#c00;font-weight:bold');
+    console.groupEnd();
+    ```
+
+    Use `console.groupCollapsed()` for collapsible blocks, `%c` for inline styles, and `console.table()` for data arrays. This is how Home Assistant custom cards typically log during Lovelace loading.

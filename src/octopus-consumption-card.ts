@@ -301,6 +301,19 @@ export class OctopusConsumptionCard extends LitElement {
     }
   `;
 
+  /**
+   * Set the card configuration (required by Home Assistant)
+   */
+  public setConfig(config: OctopusConsumptionCardConfig): void {
+    if (!config) {
+      throw new Error("Invalid configuration");
+    }
+    if (!config.entity) {
+      throw new Error("Entity is required");
+    }
+    this.config = config;
+  }
+
   connectedCallback(): void {
     super.connectedCallback();
     this._validateConfig();
@@ -741,27 +754,69 @@ declare global {
 // This ensures the element is available even if decorators don't work properly
 // Register immediately when module loads (for IIFE bundles)
 if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
+  // Styled console logs for DevTools
+  const VERSION = '0.4.41';
+  console.groupCollapsed(
+    '%c⚡ OCTOPUS ENERGY ESPAÑA',
+    'background: linear-gradient(90deg, #e10090 0%, #c000a0 100%);' +
+    'color: #fff;' +
+    'padding: 4px 8px;' +
+    'border-radius: 4px;' +
+    'font-weight: bold;'
+  );
+  console.log(
+    '%cConsumption Card %cv' + VERSION,
+    'color: #e10090; font-weight: bold;',
+    'color: #999;'
+  );
+  console.log(
+    '%c✓ Custom element registered',
+    'color: #0a0; font-size: 11px;'
+  );
+  console.log(
+    '%c✓ Added to card picker',
+    'color: #0a0; font-size: 11px;'
+  );
+  console.log(
+    '%c✓ Visual editor enabled',
+    'color: #0a0; font-size: 11px;'
+  );
+  console.log(
+    '%cℹ Supported languages: %cen, es, be',
+    'color: #666; font-size: 11px;',
+    'color: #999; font-size: 11px;'
+  );
+  console.groupEnd();
+
   if (!customElements.get('octopus-consumption-card')) {
     customElements.define('octopus-consumption-card', OctopusConsumptionCard);
   }
+  
   // Make the class available globally for Home Assistant card picker
-  // Home Assistant looks for card classes in window.customCards
-  // Use array format with metadata for proper card picker integration
-  if (!Array.isArray((window as any).customCards)) {
+  // Initialize customCards as array if it doesn't exist
+  if (typeof (window as any).customCards === 'undefined') {
     (window as any).customCards = [];
   }
-  // Add card with metadata to the card picker
-  (window as any).customCards.push({
-    type: 'custom:octopus-consumption-card',
-    name: 'Octopus Energy España Consumption Card',
-    preview: false,
-    description: 'Display consumption data and tariff comparisons for Octopus Energy España',
-  });
-  // Also keep object assignment for backward compatibility
-  if (typeof (window as any).customCards !== 'object') {
-    (window as any).customCards = {};
+  
+  // Add card with metadata to the card picker (only if it's an array)
+  if (Array.isArray((window as any).customCards)) {
+    // Check if not already added
+    const alreadyAdded = (window as any).customCards.some(
+      (card: any) => card.type === 'custom:octopus-consumption-card'
+    );
+    if (!alreadyAdded) {
+      (window as any).customCards.push({
+        type: 'custom:octopus-consumption-card',
+        name: 'Octopus Energy España Consumption Card',
+        preview: false,
+        description: 'Display consumption data and tariff comparisons for Octopus Energy España',
+      });
+    }
   }
+  
+  // Also keep object assignment for backward compatibility
   (window as any).customCards['octopus-consumption-card'] = OctopusConsumptionCard;
+  
   // Also expose directly on window for compatibility
   (window as any).OctopusConsumptionCard = OctopusConsumptionCard;
 }

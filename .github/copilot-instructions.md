@@ -53,3 +53,5 @@ When implementing new cards or features for Home Assistant, follow these steps f
       "homeassistant": "2021.1.0"
     }
     ```
+
+7. **Card Configuration:** Lovelace cards must have a `setConfig` method to handle configuration from YAML.

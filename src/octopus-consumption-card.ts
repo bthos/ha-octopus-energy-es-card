@@ -701,3 +701,14 @@ declare global {
     "octopus-consumption-card": OctopusConsumptionCard;
   }
 }
+
+// Explicitly register the custom element for Home Assistant
+// This ensures the element is available even if decorators don't work properly
+// Register immediately when module loads (for IIFE bundles)
+(function() {
+  if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
+    if (!customElements.get('octopus-consumption-card')) {
+      customElements.define('octopus-consumption-card', OctopusConsumptionCard);
+    }
+  }
+})();

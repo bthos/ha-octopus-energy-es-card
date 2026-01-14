@@ -61,6 +61,12 @@ When you sign up using the button below, **you'll receive 50€ credit** on your
 
 The card will be automatically registered as a Lovelace resource.
 
+**Note:** If the card doesn't appear in the card picker, make sure:
+1. The resource is added in **Settings → Dashboards → Resources**
+2. The resource URL is correct: `/hacsfiles/octopus_energy_es_card/octopus-consumption-card.bundle.js`
+3. The resource type is set to **JavaScript Module**
+4. Home Assistant has been restarted after installation
+
 ### 📁 Manual Installation
 
 1. Download `octopus-consumption-card.bundle.js` from the [latest release](https://github.com/bthos/ha-octopus-energy-es-card/releases)

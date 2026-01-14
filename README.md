@@ -59,7 +59,9 @@ When you sign up using the button below, **you'll receive 50€ credit** on your
 6. Search for **"Octopus Energy España Consumption Card"** and install
 7. **Restart Home Assistant**
 
-The card will be automatically registered as a Lovelace resource.
+The card will be automatically registered as a Lovelace resource and will appear in the card picker with a visual editor.
+
+**Visual Editor:** The card includes a built-in visual editor that appears when adding or editing the card through the UI. No YAML knowledge required!
 
 **Note:** If the card doesn't appear in the card picker, make sure:
 1. The resource is added in **Settings → Dashboards → Resources**
@@ -87,7 +89,28 @@ The card will be automatically registered as a Lovelace resource.
 
 ## 🎨 Card Configuration
 
-### Basic Configuration
+The card can be configured in two ways:
+
+### Visual Editor (Recommended)
+
+When adding the card through the Home Assistant UI, a visual editor is automatically available. The editor provides:
+
+- **Entity Picker**: Select the consumption sensor from a filtered list
+- **Form Fields**: Configure all options through user-friendly controls
+- **Real-time Validation**: Immediate feedback on configuration errors
+- **Conditional Fields**: Advanced options appear when relevant features are enabled
+
+To use the visual editor:
+1. Go to your dashboard in edit mode
+2. Click "Add Card"
+3. Search for "Octopus Energy España Consumption Card"
+4. Configure the card using the visual editor
+
+### YAML Configuration
+
+You can also configure the card directly using YAML:
+
+#### Basic Configuration
 
 ```yaml
 type: custom:octopus-consumption-card
@@ -130,12 +153,17 @@ show_navigation: true
 
 #### Configuration Notes
 
-- **Entity ID**: Must be a valid consumption sensor from the Octopus Energy España integration. The card automatically extracts the `entry_id` from the entity ID or entity attributes.
-- **Tariff Entry IDs**: These are the integration entry IDs configured in Home Assistant. You can find them in the integration settings or entity attributes.
+- **Entity ID**: Must be a valid consumption sensor from the Octopus Energy España integration. The card automatically extracts the `entry_id` from the entity ID or entity attributes. The visual editor filters entities to show only Octopus Energy España sensors.
+- **Tariff Entry IDs**: These are the integration entry IDs configured in Home Assistant. You can find them in the integration settings or entity attributes. In the visual editor, you can add/remove multiple tariff entry IDs.
 - **Period Selection**: The card supports three period types:
   - `"day"`: Shows hourly consumption data for a single day
   - `"week"`: Shows hourly consumption data for a week (7 days)
   - `"month"`: Shows daily consumption data for a month
+- **Visual Editor Features**:
+  - Real-time validation of entity format
+  - Conditional display of tariff comparison options
+  - Easy management of tariff entry IDs list
+  - Intuitive switches and dropdowns for all options
 - **Error Handling**: The card displays user-friendly error messages if:
   - The entity is not found
   - The entry_id cannot be extracted

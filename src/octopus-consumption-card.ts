@@ -7,6 +7,8 @@
 import { LitElement, html, css, PropertyValues, TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import type { OctopusConsumptionCardConfig, ConsumptionDataPoint, ComparisonResult, FetchConsumptionResult, TariffComparisonResult } from "./types";
+// Import editor to ensure it's included in the bundle
+import "./octopus-consumption-card-editor";
 
 // Home Assistant types
 interface HomeAssistant {
@@ -699,6 +701,33 @@ export class OctopusConsumptionCard extends LitElement {
         </div>
       </div>
     `;
+  }
+
+  /**
+   * Returns a stub configuration for the card editor
+   * Used when adding the card through the UI
+   */
+  static getStubConfig(): OctopusConsumptionCardConfig {
+    return {
+      type: "custom:octopus-consumption-card",
+      entity: "",
+      title: "Consumption",
+      show_comparison: true,
+      default_period: "week",
+      chart_type: "line",
+      show_tariff_comparison: false,
+      tariff_entry_ids: [],
+      show_cost_on_chart: false,
+      show_navigation: true,
+    };
+  }
+
+  /**
+   * Returns the config element for the card editor
+   * Used by Home Assistant to show the visual editor
+   */
+  static getConfigElement(): HTMLElement {
+    return document.createElement("octopus-consumption-card-editor");
   }
 }
 

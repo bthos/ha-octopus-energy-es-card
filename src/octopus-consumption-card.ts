@@ -5,7 +5,7 @@
  */
 
 import { LitElement, html, css, PropertyValues, TemplateResult } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { property, state } from "lit/decorators.js";
 import type { OctopusConsumptionCardConfig, ConsumptionDataPoint, ComparisonResult, FetchConsumptionResult, TariffComparisonResult } from "./types";
 // Import editor to ensure it's included in the bundle
 import "./octopus-consumption-card-editor";
@@ -17,7 +17,6 @@ interface HomeAssistant {
   [key: string]: any;
 }
 
-@customElement("octopus-consumption-card")
 export class OctopusConsumptionCard extends LitElement {
   @property({ attribute: false }) public hass!: HomeAssistant;
   @property({ attribute: false }) public config!: OctopusConsumptionCardConfig;
@@ -754,42 +753,13 @@ declare global {
 // This ensures the element is available even if decorators don't work properly
 // Register immediately when module loads (for IIFE bundles)
 if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
-  // Styled console logs for DevTools
-  const VERSION = '0.4.41';
-  console.groupCollapsed(
-    '%c⚡ OCTOPUS ENERGY ESPAÑA',
-    'background: linear-gradient(90deg, #e10090 0%, #c000a0 100%);' +
-    'color: #fff;' +
-    'padding: 4px 8px;' +
-    'border-radius: 4px;' +
-    'font-weight: bold;'
-  );
-  console.log(
-    '%cConsumption Card %cv' + VERSION,
-    'color: #e10090; font-weight: bold;',
-    'color: #999;'
-  );
-  console.log(
-    '%c✓ Custom element registered',
-    'color: #0a0; font-size: 11px;'
-  );
-  console.log(
-    '%c✓ Added to card picker',
-    'color: #0a0; font-size: 11px;'
-  );
-  console.log(
-    '%c✓ Visual editor enabled',
-    'color: #0a0; font-size: 11px;'
-  );
-  console.log(
-    '%cℹ Supported languages: %cen, es, be',
-    'color: #666; font-size: 11px;',
-    'color: #999; font-size: 11px;'
-  );
-  console.groupEnd();
-
-  if (!customElements.get('octopus-consumption-card')) {
-    customElements.define('octopus-consumption-card', OctopusConsumptionCard);
+  // Register the custom element FIRST
+  try {
+    if (!customElements.get('octopus-consumption-card')) {
+      customElements.define('octopus-consumption-card', OctopusConsumptionCard);
+    }
+  } catch (error) {
+    console.error('Failed to register octopus-consumption-card:', error);
   }
   
   // Make the class available globally for Home Assistant card picker
@@ -819,4 +789,47 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
   
   // Also expose directly on window for compatibility
   (window as any).OctopusConsumptionCard = OctopusConsumptionCard;
+
+  // Styled console logs for DevTools (after registration)
+  const VERSION = '0.4.42';
+  const isRegistered = !!customElements.get('octopus-consumption-card');
+  
+  console.groupCollapsed(
+    '%c⚡ OCTOPUS ENERGY ESPAÑA',
+    'background: linear-gradient(90deg, #e10090 0%, #c000a0 100%);' +
+    'color: #fff;' +
+    'padding: 4px 8px;' +
+    'border-radius: 4px;' +
+    'font-weight: bold;'
+  );
+  console.log(
+    '%cConsumption Card %cv' + VERSION,
+    'color: #e10090; font-weight: bold;',
+    'color: #999;'
+  );
+  console.log(
+    '%c' + (isRegistered ? '✓' : '✗') + ' Custom element: %coctopus-consumption-card',
+    isRegistered ? 'color: #0a0; font-size: 11px;' : 'color: #f00; font-size: 11px;',
+    'color: #666; font-size: 11px;'
+  );
+  console.log(
+    '%c✓ Added to card picker',
+    'color: #0a0; font-size: 11px;'
+  );
+  console.log(
+    '%c✓ Visual editor enabled',
+    'color: #0a0; font-size: 11px;'
+  );
+  console.log(
+    '%cℹ Supported languages: %cen, es, be',
+    'color: #666; font-size: 11px;',
+    'color: #999; font-size: 11px;'
+  );
+  
+  // Debug info
+  if (!isRegistered) {
+    console.error('%c✗ Registration failed! Element not found in customElements registry', 'color: #f00; font-weight: bold;');
+  }
+  
+  console.groupEnd();
 }

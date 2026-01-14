@@ -5,7 +5,7 @@
  */
 
 import { LitElement, html, css, PropertyValues, TemplateResult } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { property, state } from "lit/decorators.js";
 import type { OctopusConsumptionCardConfig } from "./types";
 import { localize, computeLabel, computeHelper } from "./localization";
 
@@ -22,7 +22,6 @@ interface LovelaceCardEditor extends HTMLElement {
   hass?: HomeAssistant;
 }
 
-@customElement("octopus-consumption-card-editor")
 export class OctopusConsumptionCardEditor extends LitElement implements LovelaceCardEditor {
   @property({ attribute: false }) public hass?: HomeAssistant;
   @property({ attribute: false }) public config?: OctopusConsumptionCardConfig;

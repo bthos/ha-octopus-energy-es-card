@@ -424,3 +424,11 @@ declare global {
     "octopus-consumption-card-editor": OctopusConsumptionCardEditor;
   }
 }
+
+// Explicitly register the editor custom element for Home Assistant
+// This ensures the element is available even if decorators don't work properly
+if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
+  if (!customElements.get('octopus-consumption-card-editor')) {
+    customElements.define('octopus-consumption-card-editor', OctopusConsumptionCardEditor);
+  }
+}

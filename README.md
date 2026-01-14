@@ -1,8 +1,7 @@
 # 📊 Octopus Energy España Consumption Card
 
 [![HACS Validation](https://img.shields.io/github/actions/workflow/status/bthos/ha-octopus-energy-es-card/validate.yml?branch=main&label=HACS&logo=github)](https://github.com/bthos/ha-octopus-energy-es-card/actions/workflows/validate.yml)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Home Assistant](https://img.shields.io/badge/home%20assistant-2023.1%2B-blue.svg)](https://www.home-assistant.io/)
+[![Tests](https://img.shields.io/github/actions/workflow/status/bthos/ha-octopus-energy-es-card/test.yml?branch=main&label=Tests&logo=github)](https://github.com/bthos/ha-octopus-energy-es-card/actions/workflows/test.yml)
 
 A Lovelace card for Home Assistant that displays consumption graphs and tariff comparisons for the [Octopus Energy España integration](https://github.com/bthos/ha-octopus-energy-es). Visualize your energy consumption data with interactive charts, compare different tariffs, and analyze costs with detailed breakdowns.
 
@@ -65,9 +64,12 @@ The card will be automatically registered as a Lovelace resource and will appear
 
 **Note:** If the card doesn't appear in the card picker, make sure:
 1. The resource is added in **Settings → Dashboards → Resources**
-2. The resource URL is correct: `/hacsfiles/octopus_energy_es_card/octopus-consumption-card.bundle.js`
+2. The resource URL is correct: `/hacsfiles/octopus_energy_es_card/octopus-consumption-card.bundle.js` (for HACS) or `/local/community/octopus_energy_es/octopus-consumption-card.bundle.js` (for manual installation)
 3. The resource type is set to **JavaScript Module**
 4. Home Assistant has been restarted after installation
+5. Clear your browser cache or use incognito mode to ensure the latest version is loaded
+6. Check the browser console (F12) for any JavaScript errors when loading the resource
+7. Verify the file exists and is accessible at the specified path
 
 ### 📁 Manual Installation
 
@@ -228,12 +230,40 @@ The card includes comprehensive error handling and will display user-friendly er
 
 All errors are logged to the browser console for debugging purposes.
 
-### Card Not Appearing
+### Card Not Appearing in Card Picker
 
-- Verify the card resource is registered in Lovelace Resources
-- Check that the file exists: `/hacsfiles/octopus_energy_es/octopus-consumption-card.bundle.js`
-- Restart Home Assistant after installation
-- Check browser console for JavaScript errors
+If the card doesn't appear when clicking "Add Card":
+
+1. **Verify Resource Registration**:
+   - Go to **Settings → Dashboards → Resources**
+   - Ensure the resource is listed with URL: `/hacsfiles/octopus_energy_es_card/octopus-consumption-card.bundle.js` (HACS) or `/local/community/octopus_energy_es/octopus-consumption-card.bundle.js` (manual)
+   - Resource type must be **JavaScript Module**
+
+2. **Check Browser Console**:
+   - Open browser DevTools (F12)
+   - Go to Console tab
+   - Look for errors when loading the resource
+   - Common errors:
+     - `Failed to load resource` - file path is incorrect
+     - `Custom element not found` - element not registered
+     - `SyntaxError` - bundle file is corrupted
+
+3. **Clear Browser Cache**:
+   - Hard refresh: `Ctrl+Shift+R` (Windows/Linux) or `Cmd+Shift+R` (Mac)
+   - Or use incognito/private mode
+
+4. **Verify File Access**:
+   - Check that the bundle file exists at the specified path
+   - For HACS: Check `config/www/community/octopus_energy_es_card/octopus-consumption-card.bundle.js`
+   - For manual: Check `config/www/community/octopus_energy_es/octopus-consumption-card.bundle.js`
+
+5. **Restart Home Assistant**:
+   - After adding/updating the resource, restart Home Assistant completely
+   - Not just reload the dashboard
+
+6. **Check Card Type**:
+   - When adding manually via YAML, use: `type: custom:octopus-consumption-card`
+   - The card should appear in the card picker automatically if resource is registered correctly
 
 ### No Data Displayed
 

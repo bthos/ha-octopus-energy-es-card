@@ -744,4 +744,12 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
   if (!customElements.get('octopus-consumption-card')) {
     customElements.define('octopus-consumption-card', OctopusConsumptionCard);
   }
+  // Make the class available globally for Home Assistant card picker
+  // Home Assistant looks for card classes in window.customCards or window
+  if (typeof (window as any).customCards === 'undefined') {
+    (window as any).customCards = {};
+  }
+  (window as any).customCards['octopus-consumption-card'] = OctopusConsumptionCard;
+  // Also expose directly on window for compatibility
+  (window as any).OctopusConsumptionCard = OctopusConsumptionCard;
 }

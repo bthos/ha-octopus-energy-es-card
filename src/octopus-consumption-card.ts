@@ -670,6 +670,9 @@ export class OctopusConsumptionCard extends LitElement {
       // Store tariff costs if available (for cost display on chart)
       if (consumptionResult.tariff_costs) {
         this._tariffCosts = consumptionResult.tariff_costs;
+      } else {
+        // Clear tariff costs if not available
+        this._tariffCosts = null;
       }
 
       if (this.config.show_tariff_comparison && this.config.tariff_entry_ids?.length) {
@@ -934,16 +937,17 @@ export class OctopusConsumptionCard extends LitElement {
     const minValue = Math.min(...data, 0);
     const range = maxValue - minValue || 1;
     
-    // Check if cost display is enabled
-    const showCost = this.config.show_cost_on_chart && 
-                     this.config.selected_tariff_for_cost && 
-                     this._tariffCosts !== null;
+    // Prepare cost data if enabled
     let costData: number[] = [];
     let maxCost = 0;
     let minCost = 0;
     let costRange = 1;
     
-    if (showCost && this._tariffCosts && this.config.selected_tariff_for_cost) {
+    const costEnabled = this.config.show_cost_on_chart && 
+                        this.config.selected_tariff_for_cost && 
+                        this._tariffCosts !== null;
+    
+    if (costEnabled && this._tariffCosts && this.config.selected_tariff_for_cost) {
       const tariffCost = this._tariffCosts[this.config.selected_tariff_for_cost];
       if (tariffCost) {
         // Use hourly_breakdown for day/week, daily_breakdown for month
@@ -953,12 +957,31 @@ export class OctopusConsumptionCard extends LitElement {
         
         if (breakdown && breakdown.length > 0) {
           costData = breakdown.map((item: { cost: number }) => item.cost);
-          maxCost = Math.max(...costData, 0.01);
-          minCost = Math.min(...costData, 0);
-          costRange = maxCost - minCost || 1;
+          
+          // Validate that cost data length matches consumption data length
+          // If mismatch, log warning and disable cost display
+          if (costData.length !== data.length) {
+            Logger.warn(
+              `Cost data length (${costData.length}) does not match consumption data length (${data.length}). Cost display disabled.`
+            );
+            costData = [];
+          } else {
+            maxCost = Math.max(...costData, 0.01);
+            minCost = Math.min(...costData, 0);
+            costRange = maxCost - minCost || 1;
+          }
+        } else {
+          Logger.warn(`No breakdown data available for tariff ${this.config.selected_tariff_for_cost}. Cost display disabled.`);
         }
+      } else {
+        Logger.warn(`Tariff cost data not found for entry ID: ${this.config.selected_tariff_for_cost}. Cost display disabled.`);
       }
     }
+    
+    // Check if cost display should be shown (validate data availability and length match)
+    const showCost = costEnabled && 
+                     costData.length > 0 && 
+                     costData.length === data.length;
     
     const width = 800;
     const height = 300;
@@ -999,10 +1022,11 @@ export class OctopusConsumptionCard extends LitElement {
     let costLinePath = '';
     let costYAxisLabels: Array<{ value: number; y: number }> = [];
     
-    if (showCost && costData.length > 0) {
+    if (showCost && costData.length > 0 && costData.length === data.length) {
       // Map cost data to chart points (align with consumption data)
+      // Use same xStep as consumption data to ensure alignment
       costPoints = costData.map((cost, index) => {
-        const x = padding.left + (index * chartWidth / (costData.length - 1 || 1));
+        const x = padding.left + index * xStep;
         const y = padding.top + chartHeight - ((cost - minCost) / costRange) * chartHeight;
         return { x, y, value: cost };
       });
@@ -1400,7 +1424,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
   (window as any).OctopusConsumptionCard = OctopusConsumptionCard;
 
   // Styled console logs for DevTools (after registration)
-  const VERSION = '0.4.57';
+  const VERSION = '0.4.58';
   const isRegistered = !!customElements.get('octopus-consumption-card');
   
   // Branding header (keep styled for visual impact)

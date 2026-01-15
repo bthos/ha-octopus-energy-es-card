@@ -18,7 +18,11 @@ export default {
     commonjs(),
     terser({
       compress: {
-        drop_console: false
+        drop_console: false,
+        // Replace process.env.NODE_ENV with 'production' in production builds
+        global_defs: {
+          'process.env.NODE_ENV': '"production"'
+        }
       }
     })
   ]

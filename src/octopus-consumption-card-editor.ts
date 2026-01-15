@@ -4,6 +4,20 @@
  * Visual editor component for configuring the consumption card
  */
 
+// Disable Lit dev mode warnings
+// Must be set before Lit imports
+if (typeof window !== 'undefined') {
+  (window as any).litDisableBundleWarning = true;
+  // Suppress dev mode warning by setting the flag Lit checks
+  if (!(window as any).__LIT_DEV_MODE__) {
+    Object.defineProperty(window, '__LIT_DEV_MODE__', {
+      value: false,
+      writable: false,
+      configurable: false
+    });
+  }
+}
+
 import { LitElement, html, css, PropertyValues, TemplateResult } from "lit";
 import { property, state } from "lit/decorators.js";
 import type { OctopusConsumptionCardConfig } from "./types";
@@ -39,7 +53,7 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
     show_navigation: true,
   };
 
-  @state() private _language: string = "en";
+  private _language: string = "en";
 
   static styles = css`
     .card-config {
@@ -125,23 +139,42 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
   `;
 
   setConfig(config: OctopusConsumptionCardConfig): void {
-    this._config = { ...config };
+    // Only update if config actually changed to prevent unnecessary updates
+    const configStr = JSON.stringify(this._config);
+    const newConfigStr = JSON.stringify(config);
+    if (configStr !== newConfigStr) {
+      this._config = { ...config };
+    }
+  }
+
+  protected willUpdate(changedProperties: PropertyValues): void {
+    // Sync config before update to prevent update cycle
+    if (changedProperties.has("config") && this.config) {
+      const configStr = JSON.stringify(this._config);
+      const newConfigStr = JSON.stringify(this.config);
+      if (configStr !== newConfigStr) {
+        this._config = { ...this.config };
+      }
+    }
+    // Update language if hass changed
+    if (changedProperties.has("hass") && this.hass) {
+      const newLanguage = this.hass.language || "en";
+      if (this._language !== newLanguage) {
+        this._language = newLanguage;
+      }
+    }
   }
 
   protected firstUpdated(): void {
+    // Initial sync if config was provided before first render
     if (this.config) {
-      this.setConfig(this.config);
+      const configStr = JSON.stringify(this._config);
+      const newConfigStr = JSON.stringify(this.config);
+      if (configStr !== newConfigStr) {
+        this._config = { ...this.config };
+      }
     }
     if (this.hass) {
-      this._language = this.hass.language || "en";
-    }
-  }
-
-  protected updated(changedProperties: PropertyValues): void {
-    if (changedProperties.has("config") && this.config) {
-      this.setConfig(this.config);
-    }
-    if (changedProperties.has("hass") && this.hass) {
       this._language = this.hass.language || "en";
     }
   }

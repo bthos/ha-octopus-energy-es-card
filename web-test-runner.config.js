@@ -8,7 +8,10 @@ export default {
     esbuildPlugin({ 
       ts: true, 
       target: 'auto',
-      tsconfig: './tsconfig.json'
+      tsconfig: './tsconfig.json',
+      define: {
+        'process.env.NODE_ENV': '"production"'
+      }
     }),
   ],
   testFramework: {

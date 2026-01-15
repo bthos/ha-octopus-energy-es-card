@@ -4,6 +4,18 @@
  * A Lovelace card for displaying consumption graphs and tariff comparisons.
  */
 
+// Disable Lit dev mode warnings
+// Must be set before Lit imports
+if (typeof window !== 'undefined') {
+  (window as any).litDisableBundleWarning = true;
+  // Suppress dev mode warning by setting the flag Lit checks
+  Object.defineProperty(window, '__LIT_DEV_MODE__', {
+    value: false,
+    writable: false,
+    configurable: false
+  });
+}
+
 import { LitElement, html, css, PropertyValues, TemplateResult } from "lit";
 import { property, state } from "lit/decorators.js";
 import type { OctopusConsumptionCardConfig, ConsumptionDataPoint, ComparisonResult, FetchConsumptionResult, TariffComparisonResult } from "./types";
@@ -14,7 +26,6 @@ import "./octopus-consumption-card-editor";
 interface HomeAssistant {
   states: Record<string, any>;
   callService: (domain: string, service: string, serviceData?: Record<string, any>) => Promise<any>;
-  callWS?: (message: any) => Promise<any>;
   language?: string;
   [key: string]: any;
 }
@@ -310,79 +321,7 @@ export class OctopusConsumptionCard extends LitElement {
       throw new Error("Invalid configuration");
     }
 
-    // Set config synchronously first
     this.config = config;
-
-    // Migration: Handle old entity-based config (async, non-blocking)
-    if (config.entity && !config.source_entry_id && this.hass) {
-      console.warn(
-        '%cOctopus Consumption Card: Migration Needed',
-        'color:#ff9800;font-weight:bold',
-        '\nThe "entity" field is deprecated. Please update to use "source_entry_id".'
-      );
-
-      // Attempt to extract entry_id from entity unique_id
-      // This requires querying the entity registry
-      // Add timeout to prevent hanging in tests
-      Promise.race([
-        this._migrateFromEntity(config.entity),
-        new Promise<string | null>(resolve => setTimeout(() => resolve(null), 1000))
-      ]).then(entry_id => {
-        if (entry_id) {
-          // Auto-update config
-          const updatedConfig = {
-            ...this.config,
-            source_entry_id: entry_id
-          };
-          delete (updatedConfig as any).entity;
-          
-          // Notify user about auto-migration
-          this.hass?.callService('persistent_notification', 'create', {
-            title: 'Octopus Consumption Card Migrated',
-            message: `Card configuration was automatically updated to use the new format. Please save your dashboard.`,
-            notification_id: `octopus_card_migration_${Date.now()}`
-          }).catch(() => {
-            // Ignore notification errors
-          });
-          
-          this.config = updatedConfig;
-        } else {
-          // Can't auto-migrate, show error
-          this._error = 'Migration required: Please select your tariff from the card editor.';
-        }
-      }).catch(() => {
-        // Migration failed, show error but keep config
-        this._error = 'Migration required: Please select your tariff from the card editor.';
-      });
-    }
-  }
-
-  /**
-   * Migrates old entity-based config to source_entry_id
-   */
-  private async _migrateFromEntity(entityId: string): Promise<string | null> {
-    if (!this.hass || !this.hass.callWS) return null;
-
-    try {
-      // Query entity registry for unique_id
-      const entityRegistry = await this.hass.callWS({
-        type: 'config/entity_registry/get',
-        entity_id: entityId
-      });
-
-      // Extract entry_id from unique_id format: {entry_id}_{sensor_key}
-      const uniqueId = entityRegistry?.unique_id;
-      if (uniqueId) {
-        const parts = uniqueId.split('_');
-        if (parts.length >= 1) {
-          return parts[0];  // First part is entry_id
-        }
-      }
-    } catch (error) {
-      console.error('Failed to migrate entity config:', error);
-    }
-
-    return null;
   }
 
   connectedCallback(): void {
@@ -410,20 +349,11 @@ export class OctopusConsumptionCard extends LitElement {
       return;
     }
 
-    // New validation: require source_entry_id (or entity for backward compatibility)
-    if (!this.config.source_entry_id && !this.config.entity) {
+    // Require source_entry_id
+    if (!this.config.source_entry_id) {
       this._error = "source_entry_id is required. Please select your tariff from the card editor.";
       this._loading = false;
       return;
-    }
-
-    // Deprecated entity validation (for backward compatibility)
-    if (this.config.entity && !this.config.source_entry_id) {
-      if (!this.config.entity.startsWith("sensor.octopus_energy_es_")) {
-        this._error = `Invalid entity format. Entity must be an Octopus Energy España sensor (e.g., sensor.octopus_energy_es_*). Got: ${this.config.entity}`;
-        this._loading = false;
-        return;
-      }
     }
 
     if (this.config.show_tariff_comparison && (!this.config.tariff_entry_ids || this.config.tariff_entry_ids.length === 0)) {
@@ -463,32 +393,8 @@ export class OctopusConsumptionCard extends LitElement {
       return;
     }
 
-    // Determine entry_id: prefer source_entry_id, fallback to entity parsing for migration
-    let entryId: string | undefined = this.config.source_entry_id;
-
-    // Migration path: try to extract from entity if source_entry_id not available
-    if (!entryId && this.config.entity) {
-      const entityState = this.hass.states[this.config.entity];
-      if (entityState) {
-        // Try to get entry_id from entity attributes first
-        if (entityState.attributes && entityState.attributes.entry_id) {
-          entryId = entityState.attributes.entry_id;
-        } else {
-          // Fallback: parse from entity_id (deprecated)
-          const entityIdParts = this.config.entity.split("_");
-          const octopusIndex = entityIdParts.indexOf("octopus");
-          const energyIndex = entityIdParts.indexOf("energy");
-          
-          if (octopusIndex >= 0 && energyIndex === octopusIndex + 1) {
-            const startIndex = energyIndex + 2; // After "octopus_energy_es"
-            const endIndex = entityIdParts.length - 2; // Before sensor type
-            if (startIndex < endIndex) {
-              entryId = entityIdParts.slice(startIndex, endIndex).join("_");
-            }
-          }
-        }
-      }
-    }
+    // Use source_entry_id directly
+    const entryId = this.config.source_entry_id;
 
     if (!entryId) {
       this._error = "source_entry_id is required. Please select your tariff from the card editor.";

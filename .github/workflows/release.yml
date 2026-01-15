@@ -96,6 +96,10 @@ jobs:
         if: steps.check_last_commit.outputs.skip == 'false'
         run: npm ci
 
+      - name: Create www directory structure
+        if: steps.check_last_commit.outputs.skip == 'false'
+        run: mkdir -p www/community/octopus_energy_es
+
       - name: Build bundle
         if: steps.check_last_commit.outputs.skip == 'false'
         run: npm run build
@@ -103,11 +107,17 @@ jobs:
       - name: Verify bundle exists
         if: steps.check_last_commit.outputs.skip == 'false'
         run: |
-          if [ ! -f "octopus-consumption-card.bundle.js" ]; then
+          if [ ! -f "www/community/octopus_energy_es/octopus-consumption-card.bundle.js" ]; then
             echo "Error: Bundle file not found after build"
             exit 1
           fi
-          echo "Bundle file exists: $(ls -lh octopus-consumption-card.bundle.js)"
+          echo "Bundle file exists: $(ls -lh www/community/octopus_energy_es/octopus-consumption-card.bundle.js)"
+
+      - name: Copy bundle to root for HACS
+        if: steps.check_last_commit.outputs.skip == 'false'
+        run: |
+          cp www/community/octopus_energy_es/octopus-consumption-card.bundle.js octopus-consumption-card.bundle.js
+          echo "Copied bundle to root for HACS compatibility"
 
       - name: Commit version update and bundle
         if: steps.check_last_commit.outputs.skip == 'false'
@@ -115,7 +125,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add package.json src/octopus-consumption-card.ts
-          git add -f octopus-consumption-card.bundle.js
+          git add -f www/community/octopus_energy_es/octopus-consumption-card.bundle.js octopus-consumption-card.bundle.js
           git commit -m "Bump version to ${{ steps.calculate_version.outputs.new_version }} [skip ci]" || echo "No changes to commit"
           git push || echo "Nothing to push"
 

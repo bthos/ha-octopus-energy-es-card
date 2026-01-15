@@ -37,17 +37,26 @@ jobs:
       - name: Type check
         run: npm run type-check
 
+      - name: Create www directory structure
+        run: mkdir -p www/community/octopus_energy_es
+
       - name: Build
         run: npm run build
 
       - name: Verify bundle exists
-        run: test -f octopus-consumption-card.bundle.js
+        run: test -f www/community/octopus_energy_es/octopus-consumption-card.bundle.js
+
+      - name: Copy bundle to root for HACS
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        run: |
+          cp www/community/octopus_energy_es/octopus-consumption-card.bundle.js octopus-consumption-card.bundle.js
+          echo "Copied bundle to root for HACS compatibility"
 
       - name: Commit bundle (main/master only)
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f octopus-consumption-card.bundle.js
+          git add -f www/community/octopus_energy_es/octopus-consumption-card.bundle.js octopus-consumption-card.bundle.js
           git diff --staged --quiet || git commit -m "Build bundle [skip ci]" || echo "No bundle changes to commit"
           git push || echo "Nothing to push"

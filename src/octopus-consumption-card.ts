@@ -334,6 +334,25 @@ export class OctopusConsumptionCard extends LitElement {
     this.config = config;
   }
 
+  /**
+   * Returns the card size for grid layout
+   * Home Assistant uses this to determine card height in grid layouts
+   * This prevents the "Cannot set properties of undefined (setting 'layout')" error
+   */
+  public getCardSize(): number {
+    // Base size: 1 for basic card
+    // Add 1 if showing navigation controls
+    // Add 1 if showing tariff comparison
+    let size = 1;
+    if (this.config && this.config.show_navigation !== false) {
+      size += 1;
+    }
+    if (this.config && this.config.show_tariff_comparison) {
+      size += 1;
+    }
+    return size;
+  }
+
   connectedCallback(): void {
     super.connectedCallback();
     this._validateConfig();

@@ -21,6 +21,14 @@ import { OctopusConsumptionCardEditor } from "./octopus-consumption-card-editor"
 interface HomeAssistant {
   states: Record<string, any>;
   callService: (domain: string, service: string, serviceData?: Record<string, any>) => Promise<any>;
+  callWS: <T = any>(message: {
+    type: string;
+    domain?: string;
+    service?: string;
+    service_data?: Record<string, any>;
+    return_response?: boolean;
+    [key: string]: any;
+  }) => Promise<T>;
   language?: string;
   [key: string]: any;
 }
@@ -376,7 +384,8 @@ export class OctopusConsumptionCard extends LitElement {
   }
 
   /**
-   * Calls a Home Assistant service with timeout
+   * Calls a Home Assistant service with timeout and returns response data
+   * Uses callWS to get service response data (callService doesn't return response by default)
    */
   private async _callServiceWithTimeout<T>(
     domain: string,
@@ -384,10 +393,50 @@ export class OctopusConsumptionCard extends LitElement {
     serviceData?: Record<string, any>
   ): Promise<T> {
     try {
+      // Try using callWS first (for services that return response data)
+      if (this.hass.callWS) {
+        const wsCall = this.hass.callWS<{ response: T }>({
+          type: "call_service",
+          domain: domain,
+          service: service,
+          service_data: serviceData,
+          return_response: true,
+        });
+        
+        const timeout = this._createTimeoutPromise(this.SERVICE_TIMEOUT);
+        const result = await Promise.race([wsCall, timeout]);
+        
+        // Log raw response for debugging
+        console.log(
+          '%c  Raw WS Response: %c' + JSON.stringify(result, null, 2),
+          'color: #666; font-size: 11px;',
+          'color: #999; font-size: 11px; font-family: monospace;'
+        );
+        
+        // The response might be wrapped in a 'response' field when using callWS
+        if (result && typeof result === 'object') {
+          if ('response' in result) {
+            return (result as any).response as T;
+          }
+          // If no 'response' field, assume the result is the data itself
+          return result as T;
+        }
+        
+        return result as T;
+      }
+      
+      // Fallback to callService (may not return response data)
       const serviceCall = this.hass.callService(domain, service, serviceData);
       const timeout = this._createTimeoutPromise(this.SERVICE_TIMEOUT);
-
       const result = await Promise.race([serviceCall, timeout]);
+      
+      // Log raw response for debugging
+      console.log(
+        '%c  Raw Service Response: %c' + JSON.stringify(result, null, 2),
+        'color: #666; font-size: 11px;',
+        'color: #999; font-size: 11px; font-family: monospace;'
+      );
+      
       return result as T;
     } catch (error) {
       // Re-throw with more context (styled logging happens in caller)
@@ -454,8 +503,9 @@ export class OctopusConsumptionCard extends LitElement {
 
       // Fetch consumption data with timeout
       let consumptionResult: FetchConsumptionResult;
+      let rawResponse: any;
       try {
-        consumptionResult = await this._callServiceWithTimeout<FetchConsumptionResult>(
+        rawResponse = await this._callServiceWithTimeout<any>(
           "octopus_energy_es",
           "fetch_consumption",
           {
@@ -465,6 +515,26 @@ export class OctopusConsumptionCard extends LitElement {
             granularity: this._currentPeriod === "day" ? "hourly" : this._currentPeriod === "week" ? "hourly" : "daily",
           }
         );
+        
+        // Log the raw response immediately
+        console.log(
+          '%c  Raw Service Response (before processing): %c' + JSON.stringify(rawResponse, null, 2),
+          'color: #666; font-size: 11px;',
+          'color: #999; font-size: 11px; font-family: monospace;'
+        );
+        
+        // Handle different response formats
+        if (rawResponse && typeof rawResponse === 'object') {
+          // If response has a 'response' field (from callWS), unwrap it
+          if ('response' in rawResponse) {
+            consumptionResult = rawResponse.response as FetchConsumptionResult;
+          } else {
+            // Assume the response is already in the expected format
+            consumptionResult = rawResponse as FetchConsumptionResult;
+          }
+        } else {
+          consumptionResult = rawResponse as FetchConsumptionResult;
+        }
       } catch (serviceError) {
         // Service call failed (timeout, service not found, etc.)
         const errorMsg = serviceError instanceof Error ? serviceError.message : String(serviceError);

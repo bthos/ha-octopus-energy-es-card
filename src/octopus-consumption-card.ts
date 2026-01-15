@@ -489,39 +489,12 @@ export class OctopusConsumptionCard extends LitElement {
       if (!consumptionResult.success) {
         const errorMsg = consumptionResult.error || "Failed to fetch consumption data";
         
-        // Build a more descriptive error message
-        let fullErrorMsg = errorMsg;
+        // Build user-friendly error message (focus on the actual error)
+        let userErrorMsg = errorMsg;
         
-        // Add context information if available
-        if (consumptionResult.context) {
-          const contextInfo: string[] = [];
-          
-          // Check for common error scenarios
-          if (consumptionResult.context.id && consumptionResult.context.id !== entryId) {
-            contextInfo.push(`Service returned different entry ID: ${consumptionResult.context.id}`);
-          }
-          
-          if (consumptionResult.context.user_id) {
-            contextInfo.push(`User ID: ${consumptionResult.context.user_id}`);
-          }
-          
-          // Add any other relevant context
-          const otherContext = Object.entries(consumptionResult.context)
-            .filter(([key]) => !['id', 'user_id', 'parent_id'].includes(key))
-            .map(([key, value]) => `${key}: ${value}`);
-          
-          if (otherContext.length > 0) {
-            contextInfo.push(...otherContext);
-          }
-          
-          if (contextInfo.length > 0) {
-            fullErrorMsg += ` (${contextInfo.join(', ')})`;
-          }
-        }
-        
-        // Add warning if present
+        // Add warning if present (as it might provide helpful context)
         if (consumptionResult.warning) {
-          fullErrorMsg += `. Warning: ${consumptionResult.warning}`;
+          userErrorMsg += `. ${consumptionResult.warning}`;
         }
         
         console.error(
@@ -530,27 +503,45 @@ export class OctopusConsumptionCard extends LitElement {
           'color: #f00; font-size: 11px;'
         );
         
-        // Log additional context if available
+        // Log request details for debugging
+        console.log(
+          '%c  Requested Entry ID: %c' + entryId,
+          'color: #666; font-size: 11px;',
+          'color: #999; font-size: 11px; font-family: monospace;'
+        );
+        
+        // Log context information for debugging (but don't include in user error)
         if (consumptionResult.context) {
-          console.error(
-            '%c  Context: %c' + JSON.stringify(consumptionResult.context, null, 2),
+          console.log(
+            '%c  Service Context: %c' + JSON.stringify(consumptionResult.context, null, 2),
             'color: #666; font-size: 11px;',
             'color: #999; font-size: 11px; font-family: monospace;'
           );
+          
+          // Only add context ID to error if it's clearly a mismatch issue
+          if (consumptionResult.context.id && consumptionResult.context.id !== entryId) {
+            console.warn(
+              '%c⚠ Note: Service context shows different entry ID (%c' + consumptionResult.context.id + '%c). This may be informational.',
+              'color: #ff9800; font-size: 11px;',
+              'color: #ff9800; font-size: 11px; font-family: monospace;',
+              'color: #ff9800; font-size: 11px;'
+            );
+          }
         }
         
-        // Log warning if present
+        // Log warning separately if present
         if (consumptionResult.warning) {
           console.warn(
-            '%c⚠ Warning: %c' + consumptionResult.warning,
+            '%c⚠ Service Warning: %c' + consumptionResult.warning,
             'color: #ff9800; font-size: 11px;',
             'color: #ff9800; font-size: 11px;'
           );
         }
         
         // Log full response for debugging
-        console.error(
-          '%c  Details: %c' + JSON.stringify({ 
+        console.log(
+          '%c  Full Response: %c' + JSON.stringify({ 
+            success: consumptionResult.success,
             error: consumptionResult.error, 
             warning: consumptionResult.warning,
             context: consumptionResult.context 
@@ -559,7 +550,7 @@ export class OctopusConsumptionCard extends LitElement {
           'color: #999; font-size: 11px; font-family: monospace;'
         );
         
-        throw new Error(fullErrorMsg);
+        throw new Error(userErrorMsg);
       }
 
 

@@ -4,19 +4,13 @@
  * A Lovelace card for displaying consumption graphs and tariff comparisons.
  */
 
-// Disable Lit dev mode warnings
-// Must be set before Lit imports
-if (typeof window !== 'undefined') {
-  (window as any).litDisableBundleWarning = true;
-  // Suppress dev mode warning by setting the flag Lit checks
-  Object.defineProperty(window, '__LIT_DEV_MODE__', {
-    value: false,
-    writable: false,
-    configurable: false
-  });
-}
-
 import { LitElement, html, css, PropertyValues, TemplateResult } from "lit";
+
+// Disable Lit dev mode warnings (only available in dev builds)
+// This will be tree-shaken out in production builds
+if (typeof LitElement !== 'undefined' && (LitElement as any).disableWarning) {
+  (LitElement as any).disableWarning('change-in-update');
+}
 import { property, state } from "lit/decorators.js";
 import type { OctopusConsumptionCardConfig, ConsumptionDataPoint, ComparisonResult, FetchConsumptionResult, TariffComparisonResult } from "./types";
 // Import editor to ensure it's included in the bundle
@@ -31,6 +25,9 @@ interface HomeAssistant {
 }
 
 export class OctopusConsumptionCard extends LitElement {
+  // Disable Lit dev mode warnings for this class
+  static enabledWarnings: string[] = [];
+
   @property({ attribute: false }) public hass!: HomeAssistant;
   @property({ attribute: false }) public config!: OctopusConsumptionCardConfig;
 

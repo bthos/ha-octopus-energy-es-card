@@ -13,16 +13,15 @@ export default {
   plugins: [
     resolve({
       browser: true,
-      preferBuiltins: false
+      preferBuiltins: false,
+      // Do NOT include 'development' export condition to ensure production build
+      // Omitting exportConditions defaults to production build
+      exportConditions: []
     }),
     commonjs(),
     terser({
       compress: {
-        drop_console: false,
-        // Replace process.env.NODE_ENV with 'production' in production builds
-        global_defs: {
-          'process.env.NODE_ENV': '"production"'
-        }
+        drop_console: false
       }
     })
   ]

@@ -4,21 +4,13 @@
  * Visual editor component for configuring the consumption card
  */
 
-// Disable Lit dev mode warnings
-// Must be set before Lit imports
-if (typeof window !== 'undefined') {
-  (window as any).litDisableBundleWarning = true;
-  // Suppress dev mode warning by setting the flag Lit checks
-  if (!(window as any).__LIT_DEV_MODE__) {
-    Object.defineProperty(window, '__LIT_DEV_MODE__', {
-      value: false,
-      writable: false,
-      configurable: false
-    });
-  }
-}
-
 import { LitElement, html, css, PropertyValues, TemplateResult } from "lit";
+
+// Disable Lit dev mode warnings (only available in dev builds)
+// This will be tree-shaken out in production builds
+if (typeof LitElement !== 'undefined' && (LitElement as any).disableWarning) {
+  (LitElement as any).disableWarning('change-in-update');
+}
 import { property, state } from "lit/decorators.js";
 import type { OctopusConsumptionCardConfig } from "./types";
 import { localize, computeLabel, computeHelper } from "./localization";
@@ -37,6 +29,9 @@ interface LovelaceCardEditor extends HTMLElement {
 }
 
 export class OctopusConsumptionCardEditor extends LitElement implements LovelaceCardEditor {
+  // Disable Lit dev mode warnings for this class
+  static enabledWarnings: string[] = [];
+
   @property({ attribute: false }) public hass?: HomeAssistant;
   @property({ attribute: false }) public config?: OctopusConsumptionCardConfig;
 

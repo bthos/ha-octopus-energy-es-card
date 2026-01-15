@@ -61,19 +61,6 @@ export class OctopusConsumptionCard extends LitElement {
       padding: 16px;
     }
 
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-
-    .card-title {
-      font-size: 24px;
-      font-weight: 500;
-      margin: 0;
-    }
-
     .period-selector {
       display: flex;
       gap: 8px;
@@ -831,10 +818,6 @@ export class OctopusConsumptionCard extends LitElement {
     }
 
     return html`
-      <div class="card-header">
-        <h2 class="card-title">${this.config.title || "Consumption"}</h2>
-      </div>
-
       ${this.config.show_navigation !== false ? html`
         <div class="period-selector">
           <button
@@ -1004,7 +987,6 @@ export class OctopusConsumptionCard extends LitElement {
     return {
       type: "custom:octopus-consumption-card",
       source_entry_id: "",
-      title: "Consumption",
       show_comparison: true,
       default_period: "week",
       chart_type: "line",

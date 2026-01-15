@@ -38,7 +38,6 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
   @state() private _config: OctopusConsumptionCardConfig = {
     type: "custom:octopus-consumption-card",
     source_entry_id: "",
-    title: "Consumption",
     show_comparison: true,
     default_period: "week",
     chart_type: "line",
@@ -216,14 +215,6 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
         selector: {
           config_entry: {
             integration: "octopus_energy_es",
-          },
-        },
-      },
-      {
-        name: "title",
-        selector: {
-          text: {
-            type: "text",
           },
         },
       },

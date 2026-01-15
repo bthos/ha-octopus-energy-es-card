@@ -14,7 +14,6 @@ export interface OctopusConsumptionCardConfig {
   /** @deprecated Use source_entry_id instead. Entity-based configuration will be removed in a future version. */
   entity?: string;
   
-  title?: string;
   show_comparison?: boolean;
   default_period?: "day" | "week" | "month";
   chart_type?: "line" | "bar";

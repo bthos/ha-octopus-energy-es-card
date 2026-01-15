@@ -16,8 +16,6 @@ export const translations: Record<string, Translations> = {
     "editor.source_entry_id_helper": "Select the Octopus Energy tariff to display consumption data for",
     "editor.entity_label": "Entity",
     "editor.entity_helper": "Select the Octopus Energy España consumption sensor (deprecated)",
-    "editor.title_label": "Title",
-    "editor.title_helper": "Custom title for the card",
     
     // Display Options
     "editor.display_options": "Display Options",
@@ -72,8 +70,6 @@ export const translations: Record<string, Translations> = {
     "editor.source_entry_id_helper": "Selecciona la tarifa de Octopus Energy para mostrar datos de consumo",
     "editor.entity_label": "Entidad",
     "editor.entity_helper": "Seleccione el sensor de consumo de Octopus Energy España (obsoleto)",
-    "editor.title_label": "Título",
-    "editor.title_helper": "Título personalizado para la tarjeta",
     
     // Display Options
     "editor.display_options": "Opciones de Visualización",
@@ -128,8 +124,6 @@ export const translations: Record<string, Translations> = {
     "editor.source_entry_id_helper": "Выберыце тарыф Octopus Energy для адлюстравання даных спажывання",
     "editor.entity_label": "Сутнасць",
     "editor.entity_helper": "Выберыце сэнсар спажывання Octopus Energy España (састарэлы)",
-    "editor.title_label": "Назва",
-    "editor.title_helper": "Карыстальніцкая назва для карткі",
     
     // Display Options
     "editor.display_options": "Параметры адлюстравання",

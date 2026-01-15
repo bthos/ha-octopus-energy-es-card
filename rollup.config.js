@@ -8,7 +8,13 @@ export default {
     file: 'octopus-consumption-card.bundle.js',
     format: 'iife',
     name: 'OctopusConsumptionCard',
-    sourcemap: false  // Disable source maps for production builds
+    sourcemap: false,  // Disable source maps for production builds
+    // Export functions for Home Assistant
+    globals: {
+      'getCardElement': 'getCardElement',
+      'getCardConfigElement': 'getCardConfigElement',
+      'getStubConfig': 'getStubConfig'
+    }
   },
   plugins: [
     resolve({

@@ -13,8 +13,9 @@ if (typeof LitElement !== 'undefined' && (LitElement as any).disableWarning) {
 }
 import { property, state } from "lit/decorators.js";
 import type { OctopusConsumptionCardConfig, ConsumptionDataPoint, ComparisonResult, FetchConsumptionResult, TariffComparisonResult } from "./types";
-// Import editor to ensure it's included in the bundle
+// Import editor to ensure it's included in the bundle and get the class
 import "./octopus-consumption-card-editor";
+import { OctopusConsumptionCardEditor } from "./octopus-consumption-card-editor";
 
 // Home Assistant types
 interface HomeAssistant {
@@ -379,10 +380,26 @@ export class OctopusConsumptionCard extends LitElement {
     service: string,
     serviceData?: Record<string, any>
   ): Promise<T> {
-    const serviceCall = this.hass.callService(domain, service, serviceData);
-    const timeout = this._createTimeoutPromise(this.SERVICE_TIMEOUT);
-    
-    return Promise.race([serviceCall, timeout]) as Promise<T>;
+    try {
+      const serviceCall = this.hass.callService(domain, service, serviceData);
+      const timeout = this._createTimeoutPromise(this.SERVICE_TIMEOUT);
+
+      const result = await Promise.race([serviceCall, timeout]);
+      return result as T;
+    } catch (error) {
+      // Re-throw with more context (styled logging happens in caller)
+      if (error instanceof Error) {
+        if (error.message.includes("timeout")) {
+          throw new Error(`Service call timeout: ${domain}.${service} took longer than ${this.SERVICE_TIMEOUT}ms`);
+        }
+        // Check if it's a service error
+        if (error.message.includes("Service not found") || error.message.includes("not available")) {
+          throw new Error(`Service ${domain}.${service} is not available. Please ensure the Octopus Energy España integration is installed and configured.`);
+        }
+        throw new Error(`Service call failed: ${domain}.${service} - ${error.message}`);
+      }
+      throw error;
+    }
   }
 
   private async _loadData(): Promise<void> {
@@ -407,21 +424,61 @@ export class OctopusConsumptionCard extends LitElement {
       // Calculate date range based on current period
       const { startDate, endDate } = this._getDateRange();
 
-      // Fetch consumption data with timeout
-      const consumptionResult = await this._callServiceWithTimeout<FetchConsumptionResult>(
-        "octopus_energy_es",
-        "fetch_consumption",
-        {
-          entry_id: entryId,
-          start_date: startDate.toISOString().split("T")[0],
-          end_date: endDate.toISOString().split("T")[0],
-          granularity: this._currentPeriod === "day" ? "hourly" : this._currentPeriod === "week" ? "hourly" : "daily",
-        }
+      // Log request details for debugging (styled)
+      console.log(
+        '%cℹ Fetching consumption data',
+        'color: #666; font-size: 11px;'
+      );
+      console.log(
+        '%c  Entry ID: %c' + entryId + '%c | Period: %c' + this._currentPeriod + '%c | Dates: %c' + startDate.toISOString().split("T")[0] + ' → ' + endDate.toISOString().split("T")[0],
+        'color: #666; font-size: 11px;',
+        'color: #999; font-size: 11px;',
+        'color: #666; font-size: 11px;',
+        'color: #999; font-size: 11px;',
+        'color: #666; font-size: 11px;',
+        'color: #999; font-size: 11px;'
       );
 
-      if (!consumptionResult.success) {
-        throw new Error(consumptionResult.error || "Failed to fetch consumption data");
+      // Fetch consumption data with timeout
+      let consumptionResult: FetchConsumptionResult;
+      try {
+        consumptionResult = await this._callServiceWithTimeout<FetchConsumptionResult>(
+          "octopus_energy_es",
+          "fetch_consumption",
+          {
+            entry_id: entryId,
+            start_date: startDate.toISOString().split("T")[0],
+            end_date: endDate.toISOString().split("T")[0],
+            granularity: this._currentPeriod === "day" ? "hourly" : this._currentPeriod === "week" ? "hourly" : "daily",
+          }
+        );
+      } catch (serviceError) {
+        // Service call failed (timeout, service not found, etc.)
+        const errorMsg = serviceError instanceof Error ? serviceError.message : String(serviceError);
+        console.error(
+          '%c✗ Service call failed: %c' + errorMsg,
+          'color: #f00; font-size: 11px; font-weight: bold;',
+          'color: #f00; font-size: 11px;'
+        );
+        throw serviceError;
       }
+
+      // Check if result indicates failure
+      if (!consumptionResult || typeof consumptionResult !== 'object') {
+        console.error("Invalid service response:", consumptionResult);
+        throw new Error("Invalid response from service: expected object with success field");
+      }
+
+      if (!consumptionResult.success) {
+        const errorMsg = consumptionResult.error || "Failed to fetch consumption data";
+        console.error("Service returned error:", errorMsg, consumptionResult);
+        throw new Error(`Service returned error: ${errorMsg}`);
+      }
+
+      console.debug("Consumption data received:", {
+        dataPoints: consumptionResult.consumption_data?.length || 0,
+        success: consumptionResult.success
+      });
 
       this._consumptionData = consumptionResult.consumption_data || [];
 
@@ -448,12 +505,20 @@ export class OctopusConsumptionCard extends LitElement {
           } else {
             const errorMsg = comparisonResult.error || "Failed to compare tariffs";
             this._comparisonError = errorMsg;
-            console.warn("Tariff comparison failed:", errorMsg);
+            console.warn(
+              '%c⚠ Tariff comparison failed: %c' + errorMsg,
+              'color: #ff9800; font-size: 11px;',
+              'color: #ff9800; font-size: 11px;'
+            );
           }
         } catch (error) {
           const errorMsg = error instanceof Error ? error.message : String(error);
           this._comparisonError = `Tariff comparison error: ${errorMsg}`;
-          console.warn("Tariff comparison error:", error);
+          console.warn(
+            '%c⚠ Tariff comparison error: %c' + errorMsg,
+            'color: #ff9800; font-size: 11px;',
+            'color: #ff9800; font-size: 11px;'
+          );
           // Don't throw - allow consumption data to display even if comparison fails
         }
       }
@@ -719,6 +784,27 @@ export class OctopusConsumptionCard extends LitElement {
   static getConfigElement(): HTMLElement {
     return document.createElement("octopus-consumption-card-editor");
   }
+}
+
+// Export functions for Home Assistant card picker
+// These functions are required by Home Assistant to discover and instantiate the card
+export function getCardElement() {
+  return OctopusConsumptionCard;
+}
+
+export function getCardConfigElement() {
+  return OctopusConsumptionCardEditor;
+}
+
+export function getStubConfig(): OctopusConsumptionCardConfig {
+  return OctopusConsumptionCard.getStubConfig();
+}
+
+// Make functions available globally for Home Assistant (IIFE bundle)
+if (typeof window !== 'undefined') {
+  (window as any).getCardElement = getCardElement;
+  (window as any).getCardConfigElement = getCardConfigElement;
+  (window as any).getStubConfig = getStubConfig;
 }
 
 declare global {

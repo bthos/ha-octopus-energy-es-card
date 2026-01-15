@@ -377,6 +377,13 @@ export class OctopusConsumptionCard extends LitElement {
       margin-top: 4px;
       font-size: 12px;
       color: var(--secondary-text-color);
+      text-align: center;
+    }
+
+    .cost-per-kwh {
+      color: var(--primary-color);
+      font-weight: 500;
+      font-size: 11px;
     }
 
     .best-tariff-badge {
@@ -396,6 +403,72 @@ export class OctopusConsumptionCard extends LitElement {
       background: var(--info-color);
       border-radius: 4px;
       font-size: 14px;
+    }
+
+    .consumption-summary {
+      margin-bottom: 24px;
+      padding: 16px;
+      background: var(--card-background-color);
+      border: 1px solid var(--divider-color);
+      border-radius: 8px;
+    }
+
+    .summary-title {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 16px;
+      color: var(--primary-text-color);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+    }
+
+    .summary-item {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px;
+      background: var(--secondary-background-color);
+      border-radius: 6px;
+    }
+
+    .summary-item.summary-total {
+      background: var(--primary-color);
+      color: var(--text-primary-color);
+    }
+
+    .summary-period {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+
+    .period-icon {
+      font-size: 18px;
+    }
+
+    .period-name {
+      font-weight: 500;
+    }
+
+    .summary-value {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--primary-text-color);
+    }
+
+    .summary-percentage {
+      font-size: 14px;
+      color: var(--secondary-text-color);
+    }
+
+    .summary-total .summary-value,
+    .summary-total .summary-percentage {
+      color: var(--text-primary-color);
     }
   `;
 
@@ -1560,8 +1633,51 @@ export class OctopusConsumptionCard extends LitElement {
 
     const sortedTariffs = [...this._comparisonResult.tariffs].sort((a, b) => a.total_cost - b.total_cost);
     const bestTariffId = this._comparisonResult.best_tariff?.entry_id;
+    
+    // Calculate overall period distribution (use first tariff as reference)
+    const referenceTariff = this._comparisonResult.tariffs[0];
+    const periodBreakdown = referenceTariff?.period_breakdown;
 
     return html`
+      <!-- Consumption Summary -->
+      ${periodBreakdown ? html`
+        <div class="consumption-summary">
+          <div class="summary-title">Period Summary</div>
+          <div class="summary-grid">
+            <div class="summary-item">
+              <div class="summary-period p1">
+                <span class="period-icon">🔴</span>
+                <span class="period-name">Peak (P1)</span>
+              </div>
+              <div class="summary-value">${periodBreakdown.p1_consumption.toFixed(1)} kWh</div>
+              <div class="summary-percentage">${periodBreakdown.p1_percentage.toFixed(1)}%</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-period p2">
+                <span class="period-icon">🟠</span>
+                <span class="period-name">Flat (P2)</span>
+              </div>
+              <div class="summary-value">${periodBreakdown.p2_consumption.toFixed(1)} kWh</div>
+              <div class="summary-percentage">${periodBreakdown.p2_percentage.toFixed(1)}%</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-period p3">
+                <span class="period-icon">🟢</span>
+                <span class="period-name">Valley (P3)</span>
+              </div>
+              <div class="summary-value">${periodBreakdown.p3_consumption.toFixed(1)} kWh</div>
+              <div class="summary-percentage">${periodBreakdown.p3_percentage.toFixed(1)}%</div>
+            </div>
+            <div class="summary-item summary-total">
+              <div class="summary-period">
+                <span class="period-name"><strong>Total</strong></span>
+              </div>
+              <div class="summary-value"><strong>${periodBreakdown.total_consumption.toFixed(1)} kWh</strong></div>
+            </div>
+          </div>
+        </div>
+      ` : ''}
+      
       <div class="tariff-list">
         ${sortedTariffs.map(tariff => html`
           <div class="tariff-item">
@@ -1592,7 +1708,7 @@ export class OctopusConsumptionCard extends LitElement {
               </div>
             </div>
 
-            ${this._renderPeriodBreakdown(tariff.period_breakdown)}
+            ${this._renderPeriodBreakdown(tariff.period_breakdown, tariff)}
           </div>
         `)}
       </div>
@@ -1606,8 +1722,32 @@ export class OctopusConsumptionCard extends LitElement {
     `;
   }
 
-  private _renderPeriodBreakdown(breakdown: TariffComparisonResult["period_breakdown"]): TemplateResult {
+  private _renderPeriodBreakdown(breakdown: TariffComparisonResult["period_breakdown"], tariff: TariffComparisonResult): TemplateResult {
     const maxConsumption = Math.max(breakdown.p1_consumption, breakdown.p2_consumption, breakdown.p3_consumption);
+    
+    // Calculate cost per kWh for each period from hourly breakdown
+    let p1Cost = 0, p2Cost = 0, p3Cost = 0;
+    let p1Hours = 0, p2Hours = 0, p3Hours = 0;
+    
+    if (tariff.hourly_breakdown && tariff.hourly_breakdown.length > 0) {
+      for (const hour of tariff.hourly_breakdown) {
+        if (hour.period === 'P1' && hour.consumption > 0) {
+          p1Cost += hour.cost;
+          p1Hours++;
+        } else if (hour.period === 'P2' && hour.consumption > 0) {
+          p2Cost += hour.cost;
+          p2Hours++;
+        } else if (hour.period === 'P3' && hour.consumption > 0) {
+          p3Cost += hour.cost;
+          p3Hours++;
+        }
+      }
+    }
+    
+    // Calculate average cost per kWh
+    const p1CostPerKwh = breakdown.p1_consumption > 0 ? p1Cost / breakdown.p1_consumption : 0;
+    const p2CostPerKwh = breakdown.p2_consumption > 0 ? p2Cost / breakdown.p2_consumption : 0;
+    const p3CostPerKwh = breakdown.p3_consumption > 0 ? p3Cost / breakdown.p3_consumption : 0;
     
     return html`
       <div class="period-breakdown">
@@ -1619,8 +1759,10 @@ export class OctopusConsumptionCard extends LitElement {
               style="height: ${maxConsumption > 0 ? (breakdown.p1_consumption / maxConsumption) * 100 : 0}%"
             ></div>
             <div class="period-bar-label">
-              P1: ${breakdown.p1_consumption.toFixed(2)} kWh<br>
-              ${breakdown.p1_percentage.toFixed(1)}%
+              <strong>P1 Peak</strong><br>
+              ${breakdown.p1_consumption.toFixed(2)} kWh<br>
+              ${breakdown.p1_percentage.toFixed(1)}%<br>
+              ${p1Cost > 0 ? html`<span class="cost-per-kwh">€${p1CostPerKwh.toFixed(3)}/kWh</span>` : ''}
             </div>
           </div>
           <div class="period-bar">
@@ -1629,8 +1771,10 @@ export class OctopusConsumptionCard extends LitElement {
               style="height: ${maxConsumption > 0 ? (breakdown.p2_consumption / maxConsumption) * 100 : 0}%"
             ></div>
             <div class="period-bar-label">
-              P2: ${breakdown.p2_consumption.toFixed(2)} kWh<br>
-              ${breakdown.p2_percentage.toFixed(1)}%
+              <strong>P2 Flat</strong><br>
+              ${breakdown.p2_consumption.toFixed(2)} kWh<br>
+              ${breakdown.p2_percentage.toFixed(1)}%<br>
+              ${p2Cost > 0 ? html`<span class="cost-per-kwh">€${p2CostPerKwh.toFixed(3)}/kWh</span>` : ''}
             </div>
           </div>
           <div class="period-bar">
@@ -1639,8 +1783,10 @@ export class OctopusConsumptionCard extends LitElement {
               style="height: ${maxConsumption > 0 ? (breakdown.p3_consumption / maxConsumption) * 100 : 0}%"
             ></div>
             <div class="period-bar-label">
-              P3: ${breakdown.p3_consumption.toFixed(2)} kWh<br>
-              ${breakdown.p3_percentage.toFixed(1)}%
+              <strong>P3 Valley</strong><br>
+              ${breakdown.p3_consumption.toFixed(2)} kWh<br>
+              ${breakdown.p3_percentage.toFixed(1)}%<br>
+              ${p3Cost > 0 ? html`<span class="cost-per-kwh">€${p3CostPerKwh.toFixed(3)}/kWh</span>` : ''}
             </div>
           </div>
         </div>

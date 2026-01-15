@@ -333,7 +333,10 @@ export class OctopusConsumptionCard extends LitElement {
     super.updated(changedProperties);
     if (changedProperties.has("config")) {
       this._validateConfig();
-      this._loadData();
+      // Only reload data if config actually changed (not just initial set)
+      if (changedProperties.get("config") !== undefined) {
+        this._loadData();
+      }
     }
   }
 
@@ -465,20 +468,44 @@ export class OctopusConsumptionCard extends LitElement {
 
       // Check if result indicates failure
       if (!consumptionResult || typeof consumptionResult !== 'object') {
-        console.error("Invalid service response:", consumptionResult);
+        console.error(
+          '%c✗ Invalid service response: %cexpected object with success field',
+          'color: #f00; font-size: 11px; font-weight: bold;',
+          'color: #f00; font-size: 11px;'
+        );
         throw new Error("Invalid response from service: expected object with success field");
       }
 
       if (!consumptionResult.success) {
         const errorMsg = consumptionResult.error || "Failed to fetch consumption data";
-        console.error("Service returned error:", errorMsg, consumptionResult);
+        console.error(
+          '%c✗ Service returned error: %c' + errorMsg,
+          'color: #f00; font-size: 11px; font-weight: bold;',
+          'color: #f00; font-size: 11px;'
+        );
+        // Log additional context if available
+        if (consumptionResult.context) {
+          console.error(
+            '%c  Context: %c' + JSON.stringify(consumptionResult.context, null, 2),
+            'color: #666; font-size: 11px;',
+            'color: #999; font-size: 11px; font-family: monospace;'
+          );
+        }
+        // Log full response for debugging (only in dev mode)
+        if (consumptionResult.context || consumptionResult.warning) {
+          console.error(
+            '%c  Details: %c' + JSON.stringify({ 
+              error: consumptionResult.error, 
+              warning: consumptionResult.warning,
+              context: consumptionResult.context 
+            }, null, 2),
+            'color: #666; font-size: 11px;',
+            'color: #999; font-size: 11px; font-family: monospace;'
+          );
+        }
         throw new Error(`Service returned error: ${errorMsg}`);
       }
 
-      console.debug("Consumption data received:", {
-        dataPoints: consumptionResult.consumption_data?.length || 0,
-        success: consumptionResult.success
-      });
 
       this._consumptionData = consumptionResult.consumption_data || [];
 
@@ -855,7 +882,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
   (window as any).OctopusConsumptionCard = OctopusConsumptionCard;
 
   // Styled console logs for DevTools (after registration)
-  const VERSION = '0.4.42';
+  const VERSION = '0.4.45';
   const isRegistered = !!customElements.get('octopus-consumption-card');
   
   console.groupCollapsed(

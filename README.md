@@ -116,7 +116,7 @@ You can also configure the card directly using YAML:
 
 ```yaml
 type: custom:octopus-consumption-card
-entity: sensor.octopus_energy_es_daily_consumption
+source_entry_id: "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6"
 title: "Explora tu consumo"
 ```
 
@@ -124,53 +124,58 @@ title: "Explora tu consumo"
 
 ```yaml
 type: custom:octopus-consumption-card
-entity: sensor.octopus_energy_es_daily_consumption
+source_entry_id: "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6"
 title: "Explora tu consumo"
 show_comparison: true
 default_period: "week"  # "day", "week", "month"
 chart_type: "line"  # "line", "bar"
 show_tariff_comparison: true
 tariff_entry_ids:
-  - "entry_id_1"
-  - "entry_id_2"
+  - "6p5o4n3m-2l1k-0j9i-8h7g-6f5e4d3c2b1a"
+  - "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6"
 show_cost_on_chart: true
-selected_tariff_for_cost: "entry_id_1"
+selected_tariff_for_cost: "6p5o4n3m-2l1k-0j9i-8h7g-6f5e4d3c2b1a"
 show_navigation: true
+consumption_sensor: "sensor.octopus_energy_es_daily_consumption"  # Optional override
 ```
 
 ### Card Options
 
 | Option | Type | Required | Default | Description |
 |--------|------|----------|---------|-------------|
-| `entity` | string | ✅ Yes | - | Consumption sensor entity ID from Octopus Energy España integration (e.g., `sensor.octopus_energy_es_daily_consumption`) |
+| `source_entry_id` | string | ✅ Yes | - | Octopus Energy España integration config entry ID (UUID) for the primary tariff. Select from Visual Editor using the config entry picker. |
 | `title` | string | ❌ No | `"Consumption"` | Card title displayed at the top of the card |
 | `show_comparison` | boolean | ❌ No | `true` | Show period comparison section with summary statistics |
 | `default_period` | string | ❌ No | `"week"` | Default period to display: `"day"`, `"week"`, or `"month"` |
 | `chart_type` | string | ❌ No | `"line"` | Chart visualization type: `"line"` for line chart or `"bar"` for bar chart |
 | `show_tariff_comparison` | boolean | ❌ No | `false` | Enable tariff comparison section showing costs for multiple tariffs |
-| `tariff_entry_ids` | array | ❌ No | `[]` | List of tariff entry IDs to compare (required if `show_tariff_comparison` is `true`) |
+| `tariff_entry_ids` | array | ❌ No | `[]` | List of additional tariff config entry IDs (UUIDs) to compare against the primary tariff (required if `show_tariff_comparison` is `true`) |
 | `show_cost_on_chart` | boolean | ❌ No | `false` | Display cost information on the consumption chart using a secondary axis |
-| `selected_tariff_for_cost` | string | ❌ No | - | Tariff entry ID to use for cost display (required if `show_cost_on_chart` is `true`) |
+| `selected_tariff_for_cost` | string | ❌ No | - | Tariff config entry ID to use for cost display (required if `show_cost_on_chart` is `true`) |
 | `show_navigation` | boolean | ❌ No | `true` | Show Previous/Next navigation buttons to move between periods |
+| `consumption_sensor` | string | ❌ No | - | Optional: Manually specify a consumption sensor entity ID to override integration's automatic data fetching |
 
 #### Configuration Notes
 
-- **Entity ID**: Must be a valid consumption sensor from the Octopus Energy España integration. The card automatically extracts the `entry_id` from the entity ID or entity attributes. The visual editor filters entities to show only Octopus Energy España sensors.
-- **Tariff Entry IDs**: These are the integration entry IDs configured in Home Assistant. You can find them in the integration settings or entity attributes. In the visual editor, you can add/remove multiple tariff entry IDs.
+- **Config Entry ID (source_entry_id)**: This is the UUID of your Octopus Energy España integration instance in Home Assistant. Use the Visual Editor's config entry picker to select it easily, or find it in **Settings → Devices & Services → Octopus Energy España → ⚙️ (three dots) → Download Diagnostics** (look for `entry_id` in the JSON).
+- **Tariff Entry IDs**: These are additional integration config entry IDs for tariff comparison. Each represents a different Octopus Energy tariff configured in Home Assistant. Use the Visual Editor's multi-select config entry picker to choose them.
+- **Consumption Sensor Override**: By default, the card fetches consumption data directly from the integration using the `octopus_energy_es.fetch_consumption` service. Use `consumption_sensor` only if you need to override this behavior with a custom sensor.
 - **Period Selection**: The card supports three period types:
   - `"day"`: Shows hourly consumption data for a single day
   - `"week"`: Shows hourly consumption data for a week (7 days)
   - `"month"`: Shows daily consumption data for a month
 - **Visual Editor Features**:
-  - Real-time validation of entity format
+  - Config entry picker for selecting integration instances
+  - Multi-select for tariff comparison
   - Conditional display of tariff comparison options
   - Easy management of tariff entry IDs list
   - Intuitive switches and dropdowns for all options
+- **Service-Based Architecture**: The card uses integration services (`octopus_energy_es.fetch_consumption`, `octopus_energy_es.compare_tariffs`) instead of parsing entity IDs, providing more reliable data access.
 - **Error Handling**: The card displays user-friendly error messages if:
-  - The entity is not found
-  - The entry_id cannot be extracted
+  - The config entry is not found
   - Service calls fail
   - Data is unavailable
+  - Invalid configuration is provided
 
 ## 📊 Usage Examples
 
@@ -178,7 +183,7 @@ show_navigation: true
 
 ```yaml
 type: custom:octopus-consumption-card
-entity: sensor.octopus_energy_es_daily_consumption
+source_entry_id: "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6"
 title: "My Consumption"
 default_period: "day"
 ```
@@ -187,13 +192,12 @@ default_period: "day"
 
 ```yaml
 type: custom:octopus-consumption-card
-entity: sensor.octopus_energy_es_daily_consumption
+source_entry_id: "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6"  # Your primary tariff (e.g., Flexi)
 title: "Compare Tariffs"
 show_tariff_comparison: true
 tariff_entry_ids:
-  - "flexi_entry_id"
-  - "relax_entry_id"
-  - "solar_entry_id"
+  - "6p5o4n3m-2l1k-0j9i-8h7g-6f5e4d3c2b1a"  # Comparison tariff (e.g., Relax)
+  - "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6"  # Another tariff (e.g., Solar)
 default_period: "month"
 ```
 
@@ -201,10 +205,10 @@ default_period: "month"
 
 ```yaml
 type: custom:octopus-consumption-card
-entity: sensor.octopus_energy_es_daily_consumption
+source_entry_id: "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6"
 title: "Consumption & Cost"
 show_cost_on_chart: true
-selected_tariff_for_cost: "flexi_entry_id"
+selected_tariff_for_cost: "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6"
 default_period: "week"
 ```
 
@@ -222,8 +226,8 @@ The card uses Home Assistant services from the [Octopus Energy España Integrati
 
 The card includes comprehensive error handling and will display user-friendly error messages in the following scenarios:
 
-- **Entity Not Found**: If the specified entity doesn't exist, the card will show: `"Entity <entity_id> not found"`
-- **Entry ID Extraction Failed**: If the card cannot extract the entry_id from the entity, it will show: `"Could not extract entry_id from entity <entity_id>. Please check entity ID format."`
+- **Config Entry Not Found**: If the specified config entry doesn't exist, the card will show: `"Config entry <entry_id> not found"`
+- **Missing Config Entry ID**: If `source_entry_id` is not provided, the card will show: `"source_entry_id is required"`
 - **Service Call Failures**: If the Octopus Energy España integration services fail, the card will display the error message returned by the service
 - **Missing Data**: If consumption data is unavailable, the card will show an appropriate error message
 - **Network Errors**: API failures are caught and displayed to the user

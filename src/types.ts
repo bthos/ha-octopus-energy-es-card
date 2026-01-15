@@ -107,4 +107,5 @@ export interface FetchConsumptionResult {
   tariff_costs?: Record<string, TariffCostBreakdown>;
   error?: string;
   warning?: string;
+  context?: Record<string, any>; // Additional context from service errors
 }

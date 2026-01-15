@@ -84,12 +84,36 @@ jobs:
           sed -i "s/const VERSION = ['\"][^'\"]*['\"];/const VERSION = '$NEW_VERSION';/" src/octopus-consumption-card.ts
           echo "Updated version in src/octopus-consumption-card.ts to $NEW_VERSION"
 
-      - name: Commit version update
+      - name: Set up Node.js
+        if: steps.check_last_commit.outputs.skip == 'false'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        if: steps.check_last_commit.outputs.skip == 'false'
+        run: npm ci
+
+      - name: Build bundle
+        if: steps.check_last_commit.outputs.skip == 'false'
+        run: npm run build
+
+      - name: Verify bundle exists
+        if: steps.check_last_commit.outputs.skip == 'false'
+        run: |
+          if [ ! -f "octopus-consumption-card.bundle.js" ]; then
+            echo "Error: Bundle file not found after build"
+            exit 1
+          fi
+          echo "Bundle file exists: $(ls -lh octopus-consumption-card.bundle.js)"
+
+      - name: Commit version update and bundle
         if: steps.check_last_commit.outputs.skip == 'false'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add package.json src/octopus-consumption-card.ts
+          git add package.json src/octopus-consumption-card.ts octopus-consumption-card.bundle.js
           git commit -m "Bump version to ${{ steps.calculate_version.outputs.new_version }} [skip ci]" || echo "No changes to commit"
           git push || echo "Nothing to push"
 
@@ -188,6 +212,8 @@ jobs:
 
             ---
             *This release was automatically created after successful validation.*
+          files: |
+            octopus-consumption-card.bundle.js
           draft: false
           prerelease: false
 

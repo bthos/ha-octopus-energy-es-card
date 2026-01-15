@@ -40,7 +40,7 @@ When implementing new cards or features for Home Assistant, follow these steps f
 
 5.  **Conditional Fields:** Implement dynamic schemas for the `ha-form` based on the configuration state. Show or hide fields based on other configuration options to simplify the user interface.
 
-6.  **HACS Configuration:** Ensure the `hacs.json` file is correctly configured. The `file` entry should only contain the bundle filename and not the full path. For example:
+6.  **HACS Configuration:** Ensure the `hacs.json` file is correctly configured. The `file` entry should only contain the bundle filename and not the full path. Also, ensure `"content_in_root": true` is set to trigger reload notifications after updates. For example:
 
     ```json
     {
@@ -49,7 +49,7 @@ When implementing new cards or features for Home Assistant, follow these steps f
       "description": "Your card description",
       "render_readme": true,
       "zip_release": true,
-      "content_in_root": false,
+      "content_in_root": true,
       "homeassistant": "2021.1.0"
     }
     ```
@@ -65,3 +65,49 @@ When implementing new cards or features for Home Assistant, follow these steps f
     ```
 
     Use `console.groupCollapsed()` for collapsible blocks, `%c` for inline styles, and `console.table()` for data arrays. This is how Home Assistant custom cards typically log during Lovelace loading.
+
+9. **Card Registration:** To ensure the card is correctly registered and found by Home Assistant, the following steps must be followed:
+
+    *   **Remove `@customElement` decorators:** Remove any `@customElement` decorators from the card class to avoid conflicts with manual registration.
+    *   **Register the custom element first:** Before any other operations, register the custom element using `customElements.define('your-card-name', YourCardClass)`.
+    *   **Make the class available globally:** Ensure the card class is accessible globally for the Home Assistant card picker.
+    *   **Initialize `customCards` array:** Check if `window.customCards` is defined. If not, initialize it as an array:
+
+        ```typescript
+        if (typeof (window as any).customCards === 'undefined') {
+          (window as any).customCards = [];
+        }
+        ```
+
+    *   **Add card metadata to the card picker:** Add the card metadata to the `customCards` array:
+
+        ```typescript
+        (window as any).customCards.push({
+          type: 'custom:your-card-name',
+          name: 'Your Card Name',
+          preview: false,
+          description: 'Your card description'
+        });
+        ```
+
+    *   **Ensure registration with try-catch:** Surround the `customElements.define` call with a `try-catch` block to handle any registration errors:
+
+        ```typescript
+        try {
+          if (!customElements.get('your-card-name')) {
+            customElements.define('your-card-name', YourCardClass);
+          }
+        } catch (error) {
+          console.error('Failed to register your-card-name:', error);
+        }
+        ```
+
+10. **HACS Reload Notifications:** To trigger reload notifications after updates, ensure `"content_in_root": true` is set in `hacs.json`. The `filename` entry should only contain the bundle filename and not the full path.
+
+11. **Refactor Card to Use Integration Services**: Follow this plan to refactor the Octopus Energy España consumption card to work with services instead of trying to extract entry_id from entity names:
+
+    *   **Update configuration model** in `types.ts` - Replace `entity` field with `source_entry_id` (primary tariff) and enhance `tariff_entry_ids` structure. Add `consumption_sensor` as optional field. Keep backward compatibility with deprecated `entity` field.
+    *   **Modify data loading logic** in `undefined` - Remove entity_id parsing code in `_loadData()`. Use `source_entry_id` directly for service calls to `octopus_energy_es.fetch_consumption` and `octopus_energy_es.compare_tariffs`. Add error handling for service failures.
+    *   **Update editor selectors** in `undefined` - Replace manual text input for tariff_entry_ids with `config_entry` selector (integration: "octopus_energy_es"). Add `config_entry` selector for source_entry_id. Update schema builder to use new selectors.
+    *   **Add migration logic** in `undefined` - Detect old configs with `entity` field. Attempt to extract entry_id from entity unique_id or show migration warning. Auto-populate `source_entry_id` if only one integration instance exists.
+    *   **Update localization** in `localization.ts` - Add translations for new fields: source_entry_id (Primary Tariff/Tarifa Principal/Асноўны тарыф), select_tariff (Select Tariff/Seleccionar Tarifa/Выбраць тарыф), migration_warning.

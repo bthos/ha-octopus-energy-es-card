@@ -28,7 +28,7 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
 
   @state() private _config: OctopusConsumptionCardConfig = {
     type: "custom:octopus-consumption-card",
-    entity: "",
+    source_entry_id: "",
     title: "Consumption",
     show_comparison: true,
     default_period: "week",
@@ -39,8 +39,6 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
     show_navigation: true,
   };
 
-  @state() private _tariffEntryIds: string[] = [];
-  @state() private _newTariffEntryId: string = "";
   @state() private _language: string = "en";
 
   static styles = css`
@@ -128,7 +126,6 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
 
   setConfig(config: OctopusConsumptionCardConfig): void {
     this._config = { ...config };
-    this._tariffEntryIds = config.tariff_entry_ids ? [...config.tariff_entry_ids] : [];
   }
 
   protected firstUpdated(): void {
@@ -160,6 +157,7 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
     if (newConfig.show_tariff_comparison === false) {
       newConfig.show_cost_on_chart = false;
       newConfig.selected_tariff_for_cost = undefined;
+      newConfig.tariff_entry_ids = undefined;
     }
 
     if (newConfig.show_cost_on_chart === false) {
@@ -167,7 +165,6 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
     }
 
     this._config = newConfig;
-    this._tariffEntryIds = newConfig.tariff_entry_ids || [];
     this._fireConfigChanged();
   }
 
@@ -182,49 +179,14 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
     this.dispatchEvent(event);
   }
 
-  private _addTariffEntry(): void {
-    if (!this._newTariffEntryId.trim()) {
-      return;
-    }
-
-    const newIds = [...this._tariffEntryIds, this._newTariffEntryId.trim()];
-    this._tariffEntryIds = newIds;
-    this._config = {
-      ...this._config,
-      tariff_entry_ids: newIds,
-    };
-    this._newTariffEntryId = "";
-    this._fireConfigChanged();
-  }
-
-  private _removeTariffEntry(index: number): void {
-    const newIds = this._tariffEntryIds.filter((_, i) => i !== index);
-    this._tariffEntryIds = newIds;
-    this._config = {
-      ...this._config,
-      tariff_entry_ids: newIds,
-    };
-    this._fireConfigChanged();
-  }
-
-  private _validateEntity(entity: string): string | null {
-    if (!entity) {
-      return localize("editor.entity_required", this._language);
-    }
-    if (!entity.startsWith("sensor.octopus_energy_es_")) {
-      return localize("editor.entity_invalid", this._language);
-    }
-    return null;
-  }
 
   private _buildSchema(): any[] {
     const schema: any[] = [
       {
-        name: "entity",
+        name: "source_entry_id",
         required: true,
         selector: {
-          entity: {
-            domain: "sensor",
+          config_entry: {
             integration: "octopus_energy_es",
           },
         },
@@ -282,8 +244,18 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
       },
     ];
 
-    // Add cost-related fields if tariff comparison is enabled
+    // Add tariff comparison section if enabled
     if (this._config.show_tariff_comparison) {
+      schema.push({
+        name: "tariff_entry_ids",
+        selector: {
+          config_entry: {
+            integration: "octopus_energy_es",
+            multiple: true,
+          },
+        },
+      });
+
       schema.push({
         name: "show_cost_on_chart",
         selector: {
@@ -295,13 +267,23 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
         schema.push({
           name: "selected_tariff_for_cost",
           selector: {
-            text: {
-              type: "text",
+            config_entry: {
+              integration: "octopus_energy_es",
             },
           },
         });
       }
     }
+
+    // Optional sensor override
+    schema.push({
+      name: "consumption_sensor",
+      selector: {
+        entity: {
+          domain: "sensor",
+        },
+      },
+    });
 
     return schema;
   }
@@ -319,7 +301,6 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
       return html`<div class="card-config">Loading...</div>`;
     }
 
-    const entityError = this._validateEntity(this._config.entity || "");
     const schema = this._buildSchema();
 
     return html`
@@ -333,64 +314,6 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
           .computeHelper=${this._computeHelper}
           @value-changed=${this._valueChanged}
         ></ha-form>
-
-        ${entityError ? html`<div class="error" style="margin-top: -12px; margin-bottom: 16px;">${entityError}</div>` : ""}
-
-        <!-- Tariff Entry Management (custom UI) -->
-        ${this._config.show_tariff_comparison ? html`
-          <div class="section">
-            <div class="section-title">${localize("editor.tariff_entry_ids_label", this._language)}</div>
-            <div style="font-size: 12px; color: var(--secondary-text-color); margin-bottom: 8px;">
-              ${localize("editor.tariff_entry_ids_helper", this._language)}
-            </div>
-            <div class="tariff-entry-list">
-              ${this._tariffEntryIds.map((id, index) => html`
-                <div class="tariff-entry-item">
-                  <ha-textfield
-                    .value=${id}
-                    @input=${(ev: Event) => {
-                      const target = ev.target as any;
-                      const newIds = [...this._tariffEntryIds];
-                      newIds[index] = target.value;
-                      this._tariffEntryIds = newIds;
-                      this._config = {
-                        ...this._config,
-                        tariff_entry_ids: newIds,
-                      };
-                      this._fireConfigChanged();
-                    }}
-                  ></ha-textfield>
-                  <ha-icon-button
-                    .label=${"Remove"}
-                    @click=${() => this._removeTariffEntry(index)}
-                  >
-                    <ha-icon icon="mdi:delete"></ha-icon>
-                  </ha-icon-button>
-                </div>
-              `)}
-            </div>
-            <div class="add-tariff-entry">
-              <ha-textfield
-                .value=${this._newTariffEntryId}
-                .label=${"New Tariff Entry ID"}
-                @input=${(ev: Event) => {
-                  this._newTariffEntryId = (ev.target as any).value;
-                }}
-                @keydown=${(ev: KeyboardEvent) => {
-                  if (ev.key === "Enter") {
-                    this._addTariffEntry();
-                  }
-                }}
-              ></ha-textfield>
-              <ha-icon-button
-                .label=${"Add"}
-                @click=${this._addTariffEntry}
-              >
-                <ha-icon icon="mdi:plus"></ha-icon>
-              </ha-icon-button>
-            </div>
-          </div>
-        ` : ""}
       </div>
     `;
   }

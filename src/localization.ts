@@ -12,8 +12,10 @@ export const translations: Record<string, Translations> = {
   en: {
     // Basic Settings
     "editor.basic_settings": "Basic Settings",
+    "editor.source_entry_id_label": "Primary Tariff",
+    "editor.source_entry_id_helper": "Select the Octopus Energy tariff to display consumption data for",
     "editor.entity_label": "Entity",
-    "editor.entity_helper": "Select the Octopus Energy España consumption sensor",
+    "editor.entity_helper": "Select the Octopus Energy España consumption sensor (deprecated)",
     "editor.title_label": "Title",
     "editor.title_helper": "Custom title for the card",
     
@@ -32,8 +34,8 @@ export const translations: Record<string, Translations> = {
     "editor.tariff_comparison": "Tariff Comparison",
     "editor.show_tariff_comparison_label": "Show Tariff Comparison",
     "editor.show_tariff_comparison_helper": "Compare consumption costs across different tariffs",
-    "editor.tariff_entry_ids_label": "Tariff Entry IDs",
-    "editor.tariff_entry_ids_helper": "List of tariff entry IDs to compare",
+    "editor.tariff_entry_ids_label": "Comparison Tariffs",
+    "editor.tariff_entry_ids_helper": "Optional: Select additional tariffs to compare costs",
     
     // Cost Display
     "editor.cost_display": "Cost Display",
@@ -41,6 +43,14 @@ export const translations: Record<string, Translations> = {
     "editor.show_cost_on_chart_helper": "Display cost information on the chart",
     "editor.selected_tariff_for_cost_label": "Selected Tariff for Cost",
     "editor.selected_tariff_for_cost_helper": "Tariff entry ID to use for cost calculation",
+    
+    // Sensor Override
+    "editor.consumption_sensor_label": "Consumption Sensor Override",
+    "editor.consumption_sensor_helper": "Optional: Manually specify a consumption sensor instead of using integration data",
+    
+    // Migration messages
+    "editor.migration_warning": "Configuration migration required. Please edit the card and select your tariff.",
+    "editor.select_tariff": "Select a tariff to get started",
     
     // Chart Type Options
     "editor.chart_type_line": "Line",
@@ -58,8 +68,10 @@ export const translations: Record<string, Translations> = {
   es: {
     // Basic Settings
     "editor.basic_settings": "Configuración Básica",
+    "editor.source_entry_id_label": "Tarifa Principal",
+    "editor.source_entry_id_helper": "Selecciona la tarifa de Octopus Energy para mostrar datos de consumo",
     "editor.entity_label": "Entidad",
-    "editor.entity_helper": "Seleccione el sensor de consumo de Octopus Energy España",
+    "editor.entity_helper": "Seleccione el sensor de consumo de Octopus Energy España (obsoleto)",
     "editor.title_label": "Título",
     "editor.title_helper": "Título personalizado para la tarjeta",
     
@@ -78,8 +90,8 @@ export const translations: Record<string, Translations> = {
     "editor.tariff_comparison": "Comparación de Tarifas",
     "editor.show_tariff_comparison_label": "Mostrar Comparación de Tarifas",
     "editor.show_tariff_comparison_helper": "Comparar costes de consumo entre diferentes tarifas",
-    "editor.tariff_entry_ids_label": "IDs de Entrada de Tarifa",
-    "editor.tariff_entry_ids_helper": "Lista de IDs de entrada de tarifa para comparar",
+    "editor.tariff_entry_ids_label": "Tarifas de Comparación",
+    "editor.tariff_entry_ids_helper": "Opcional: Selecciona tarifas adicionales para comparar costes",
     
     // Cost Display
     "editor.cost_display": "Visualización de Costes",
@@ -87,6 +99,14 @@ export const translations: Record<string, Translations> = {
     "editor.show_cost_on_chart_helper": "Mostrar información de costes en el gráfico",
     "editor.selected_tariff_for_cost_label": "Tarifa Seleccionada para Coste",
     "editor.selected_tariff_for_cost_helper": "ID de entrada de tarifa a usar para cálculo de costes",
+    
+    // Sensor Override
+    "editor.consumption_sensor_label": "Sensor de Consumo Manual",
+    "editor.consumption_sensor_helper": "Opcional: Especifica manualmente un sensor de consumo en lugar de usar datos de integración",
+    
+    // Migration messages
+    "editor.migration_warning": "Se requiere migración de configuración. Por favor, edita la tarjeta y selecciona tu tarifa.",
+    "editor.select_tariff": "Selecciona una tarifa para comenzar",
     
     // Chart Type Options
     "editor.chart_type_line": "Línea",
@@ -104,8 +124,10 @@ export const translations: Record<string, Translations> = {
   be: {
     // Basic Settings
     "editor.basic_settings": "Асноўныя налады",
+    "editor.source_entry_id_label": "Асноўны тарыф",
+    "editor.source_entry_id_helper": "Выберыце тарыф Octopus Energy для адлюстравання даных спажывання",
     "editor.entity_label": "Сутнасць",
-    "editor.entity_helper": "Выберыце сэнсар спажывання Octopus Energy España",
+    "editor.entity_helper": "Выберыце сэнсар спажывання Octopus Energy España (састарэлы)",
     "editor.title_label": "Назва",
     "editor.title_helper": "Карыстальніцкая назва для карткі",
     
@@ -124,8 +146,8 @@ export const translations: Record<string, Translations> = {
     "editor.tariff_comparison": "Параўнанне тарыфаў",
     "editor.show_tariff_comparison_label": "Паказаць параўнанне тарыфаў",
     "editor.show_tariff_comparison_helper": "Параўнаць выдаткі на спажыванне паміж рознымі тарыфамі",
-    "editor.tariff_entry_ids_label": "ID запісаў тарыфаў",
-    "editor.tariff_entry_ids_helper": "Спіс ID запісаў тарыфаў для параўнання",
+    "editor.tariff_entry_ids_label": "Тарыфы для параўнання",
+    "editor.tariff_entry_ids_helper": "Неабавязкова: Выберыце дадатковыя тарыфы для параўнання кошту",
     
     // Cost Display
     "editor.cost_display": "Адлюстраванне кошту",
@@ -133,6 +155,14 @@ export const translations: Record<string, Translations> = {
     "editor.show_cost_on_chart_helper": "Адлюстраваць інфармацыю аб кошце на дыяграме",
     "editor.selected_tariff_for_cost_label": "Выбраны тарыф для кошту",
     "editor.selected_tariff_for_cost_helper": "ID запісу тарыфу для разліку кошту",
+    
+    // Sensor Override
+    "editor.consumption_sensor_label": "Ручны сенсар спажывання",
+    "editor.consumption_sensor_helper": "Неабавязкова: Укажыце сенсар спажывання ўручную замест выкарыстання даных інтэграцыі",
+    
+    // Migration messages
+    "editor.migration_warning": "Патрабуецца міграцыя канфігурацыі. Калі ласка, адрэдагуйце картку і выберыце свой тарыф.",
+    "editor.select_tariff": "Выберыце тарыф для пачатку",
     
     // Chart Type Options
     "editor.chart_type_line": "Лінія",

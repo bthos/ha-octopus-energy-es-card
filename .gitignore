@@ -36,6 +36,9 @@ yarn-error.log*
 *.temp
 .cache/
 
+# Planning documents
+plans/
+
 # Test coverage
 coverage/
 .nyc_output/

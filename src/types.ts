@@ -4,14 +4,22 @@
 
 export interface OctopusConsumptionCardConfig {
   type: "custom:octopus-consumption-card";
-  entity: string;
+  
+  // New fields - service-based architecture
+  source_entry_id?: string;  // Primary tariff config entry ID (required if entity not provided)
+  tariff_entry_ids?: string[];  // Additional tariffs for comparison
+  consumption_sensor?: string;  // Optional sensor override
+  
+  // Deprecated - kept for backward compatibility
+  /** @deprecated Use source_entry_id instead. Entity-based configuration will be removed in a future version. */
+  entity?: string;
+  
   title?: string;
   show_comparison?: boolean;
   default_period?: "day" | "week" | "month";
   chart_type?: "line" | "bar";
   // Tariff comparison options
   show_tariff_comparison?: boolean;
-  tariff_entry_ids?: string[];
   show_cost_on_chart?: boolean;
   selected_tariff_for_cost?: string;
   // Period navigation

@@ -16,13 +16,17 @@ export interface OctopusConsumptionCardConfig {
   
   show_comparison?: boolean;
   default_period?: "day" | "week" | "month";
-  chart_type?: "line" | "bar";
+  chart_type?: "line" | "bar" | "stacked-area";
   // Tariff comparison options
   show_tariff_comparison?: boolean;
   show_cost_on_chart?: boolean;
   selected_tariff_for_cost?: string;
   // Period navigation
   show_navigation?: boolean;
+  // Advanced visualization options
+  show_period_distribution?: boolean; // Show P1/P2/P3 breakdown on chart
+  show_moving_average?: boolean; // Show moving average trend line
+  moving_average_days?: number; // Days for moving average (default: 7)
 }
 
 export interface ConsumptionDataPoint {
@@ -30,6 +34,10 @@ export interface ConsumptionDataPoint {
   consumption: number;
   value?: number;
   date?: string;
+  period?: string | null; // P1, P2, P3 or null for period tariffs
+  p1_consumption?: number; // Consumption during P1 hours
+  p2_consumption?: number; // Consumption during P2 hours
+  p3_consumption?: number; // Consumption during P3 hours
 }
 
 export interface PriceDataPoint {

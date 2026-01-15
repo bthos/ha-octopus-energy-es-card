@@ -124,9 +124,50 @@ export class OctopusConsumptionCard extends LitElement {
       stroke-dasharray: 5, 5;
     }
 
+    .chart-line-moving-avg {
+      fill: none;
+      stroke: var(--info-color, #2196f3);
+      stroke-width: 2;
+      stroke-dasharray: 3, 3;
+      opacity: 0.8;
+    }
+
     .chart-area {
       fill: var(--primary-color, #03a9f4);
       opacity: 0.2;
+    }
+
+    .chart-area-p1 {
+      fill: var(--error-color, #f44336);
+      opacity: 0.6;
+    }
+
+    .chart-area-p2 {
+      fill: var(--warning-color, #ff9800);
+      opacity: 0.6;
+    }
+
+    .chart-area-p3 {
+      fill: var(--success-color, #4caf50);
+      opacity: 0.6;
+    }
+
+    .chart-line-p1 {
+      stroke: var(--error-color, #f44336);
+      stroke-width: 1;
+      fill: none;
+    }
+
+    .chart-line-p2 {
+      stroke: var(--warning-color, #ff9800);
+      stroke-width: 1;
+      fill: none;
+    }
+
+    .chart-line-p3 {
+      stroke: var(--success-color, #4caf50);
+      stroke-width: 1;
+      fill: none;
     }
 
     .chart-bar {
@@ -850,6 +891,113 @@ export class OctopusConsumptionCard extends LitElement {
     this._loadData();
   }
 
+  /**
+   * Extracts period breakdown data (P1/P2/P3) from tariff costs
+   * Returns array of period data matching consumption data length
+   */
+  private _extractPeriodData(): Array<{ p1: number; p2: number; p3: number; timestamp: string }> | null {
+    // Try to get period data from tariff costs first
+    if (this._tariffCosts && this.config.source_entry_id) {
+      const tariffCost = this._tariffCosts[this.config.source_entry_id];
+      if (tariffCost && tariffCost.hourly_breakdown) {
+        // Group hourly data by timestamp and aggregate by period
+        const periodMap = new Map<string, { p1: number; p2: number; p3: number }>();
+        
+        for (const hourData of tariffCost.hourly_breakdown) {
+          const timestamp = hourData.hour || '';
+          const consumption = hourData.consumption || 0;
+          const period = hourData.period;
+          
+          if (!periodMap.has(timestamp)) {
+            periodMap.set(timestamp, { p1: 0, p2: 0, p3: 0 });
+          }
+          
+          const entry = periodMap.get(timestamp)!;
+          if (period === 'P1') {
+            entry.p1 += consumption;
+          } else if (period === 'P2') {
+            entry.p2 += consumption;
+          } else if (period === 'P3') {
+            entry.p3 += consumption;
+          }
+        }
+        
+        // Convert map to array matching consumption data order
+        const result = Array.from(periodMap.entries()).map(([timestamp, periods]) => ({
+          timestamp,
+          ...periods
+        }));
+        
+        if (result.length > 0) {
+          return result;
+        }
+      }
+      
+      // Try daily breakdown for month view
+      if (tariffCost && tariffCost.daily_breakdown && this._currentPeriod === 'month') {
+        // For daily data, we need to estimate P1/P2/P3 distribution
+        // Use the period_breakdown percentages to estimate
+        if (tariffCost.period_breakdown) {
+          const p1Pct = tariffCost.period_breakdown.p1_percentage / 100;
+          const p2Pct = tariffCost.period_breakdown.p2_percentage / 100;
+          const p3Pct = tariffCost.period_breakdown.p3_percentage / 100;
+          
+          return tariffCost.daily_breakdown.map(day => ({
+            timestamp: day.date,
+            p1: day.consumption * p1Pct,
+            p2: day.consumption * p2Pct,
+            p3: day.consumption * p3Pct,
+          }));
+        }
+      }
+    }
+    
+    // Try to extract from consumption data if it has period information
+    if (this._consumptionData.length > 0) {
+      const firstPoint = this._consumptionData[0];
+      if (firstPoint.p1_consumption !== undefined || firstPoint.period) {
+        return this._consumptionData.map(point => ({
+          timestamp: point.start_time || point.date || '',
+          p1: point.p1_consumption || (point.period === 'P1' ? point.consumption : 0),
+          p2: point.p2_consumption || (point.period === 'P2' ? point.consumption : 0),
+          p3: point.p3_consumption || (point.period === 'P3' ? point.consumption : 0),
+        }));
+      }
+    }
+    
+    return null;
+  }
+
+  /**
+   * Calculate moving average for consumption data
+   * @param data - Array of consumption values
+   * @param windowSize - Number of periods for moving average
+   * @returns Array of moving average values (same length as input, nulls for insufficient data)
+   */
+  private _calculateMovingAverage(data: number[], windowSize: number): (number | null)[] {
+    if (windowSize < 2 || data.length === 0) {
+      return data.map(() => null);
+    }
+    
+    const result: (number | null)[] = [];
+    
+    for (let i = 0; i < data.length; i++) {
+      if (i < windowSize - 1) {
+        // Not enough data points yet for moving average
+        result.push(null);
+      } else {
+        // Calculate average of window
+        let sum = 0;
+        for (let j = 0; j < windowSize; j++) {
+          sum += data[i - j];
+        }
+        result.push(sum / windowSize);
+      }
+    }
+    
+    return result;
+  }
+
   protected render(): TemplateResult {
     if (this._loading) {
       return html`
@@ -1164,7 +1312,153 @@ export class OctopusConsumptionCard extends LitElement {
       `;
     }
 
-    // Line chart
+    // Stacked Area Chart
+    if (chartType === "stacked-area") {
+      // Extract period data from tariff costs
+      const periodData = this._extractPeriodData();
+      
+      if (!periodData || periodData.length === 0) {
+        return html`
+          <div class="error-message">
+            <div class="error-title">Stacked Area Chart Unavailable</div>
+            <div class="error-details">
+              Period breakdown data (P1/P2/P3) is not available. 
+              Please ensure tariff comparison is enabled or period data is available from the service.
+            </div>
+          </div>
+        `;
+      }
+
+      // Calculate stacked values
+      const p1Data = periodData.map(d => d.p1 || 0);
+      const p2Data = periodData.map(d => d.p2 || 0);
+      const p3Data = periodData.map(d => d.p3 || 0);
+      
+      // Calculate cumulative values for stacking
+      const p3Cumulative = p3Data;
+      const p2Cumulative = p3Data.map((p3, i) => p3 + (p2Data[i] || 0));
+      const p1Cumulative = p2Cumulative.map((p2p3, i) => p2p3 + (p1Data[i] || 0));
+      
+      const maxStackedValue = Math.max(...p1Cumulative, 1);
+      const minStackedValue = 0; // Stacked charts always start at 0
+      const stackedRange = maxStackedValue - minStackedValue || 1;
+
+      // Generate stacked area paths
+      const generateStackedPath = (cumulativeData: number[], baseData: number[]) => {
+        if (cumulativeData.length === 0) return '';
+        
+        const topPoints = cumulativeData.map((value, index) => {
+          const x = padding.left + index * xStep;
+          const y = padding.top + chartHeight - ((value - minStackedValue) / stackedRange) * chartHeight;
+          return { x, y };
+        });
+        
+        const bottomPoints = baseData.map((value, index) => {
+          const x = padding.left + index * xStep;
+          const y = padding.top + chartHeight - ((value - minStackedValue) / stackedRange) * chartHeight;
+          return { x, y };
+        }).reverse();
+        
+        const topPath = topPoints.map((p, i) => i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`).join(' ');
+        const bottomPath = bottomPoints.map(p => `L ${p.x} ${p.y}`).join(' ');
+        
+        return `${topPath} ${bottomPath} Z`;
+      };
+
+      // Generate Y-axis labels for stacked chart
+      const stackedYAxisLabels: Array<{ value: number; y: number }> = [];
+      for (let i = 0; i <= yAxisSteps; i++) {
+        const value = minStackedValue + (stackedRange * i / yAxisSteps);
+        const y = padding.top + chartHeight - (i / yAxisSteps) * chartHeight;
+        stackedYAxisLabels.push({ value, y });
+      }
+
+      // Base line (zero)
+      const baseLineY = padding.top + chartHeight;
+      const zeroLine = new Array(periodData.length).fill(0);
+
+      // Generate paths for each period layer
+      const p3Path = generateStackedPath(p3Cumulative, zeroLine);
+      const p2Path = generateStackedPath(p2Cumulative, p3Cumulative);
+      const p1Path = generateStackedPath(p1Cumulative, p2Cumulative);
+
+      return html`
+        <svg class="chart-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet">
+          <!-- Grid lines -->
+          ${stackedYAxisLabels.map(label => html`
+            <line class="chart-grid-line" 
+              x1="${padding.left}" y1="${label.y}" 
+              x2="${width - padding.right}" y2="${label.y}"/>
+          `)}
+          
+          <!-- Stacked areas (bottom to top: P3, P2, P1) -->
+          <path class="chart-area-p3" d="${p3Path}"/>
+          <path class="chart-area-p2" d="${p2Path}"/>
+          <path class="chart-area-p1" d="${p1Path}"/>
+          
+          <!-- Y-axis -->
+          <line class="chart-axis" 
+            x1="${padding.left}" y1="${padding.top}" 
+            x2="${padding.left}" y2="${height - padding.bottom}"/>
+          
+          <!-- X-axis -->
+          <line class="chart-axis" 
+            x1="${padding.left}" y1="${height - padding.bottom}" 
+            x2="${width - padding.right}" y2="${height - padding.bottom}"/>
+          
+          <!-- Y-axis labels -->
+          ${stackedYAxisLabels.map(label => html`
+            <text class="chart-text" x="${padding.left - 10}" y="${label.y + 4}" text-anchor="end">
+              ${label.value.toFixed(1)} kWh
+            </text>
+          `)}
+          
+          <!-- X-axis labels -->
+          ${xAxisLabels.map(label => html`
+            <text class="chart-text" x="${label.x}" y="${height - padding.bottom + 20}" text-anchor="middle">
+              ${label.label}
+            </text>
+          `)}
+          
+          <!-- Legend -->
+          <g>
+            <rect x="${padding.left + 10}" y="${padding.top + 5}" width="12" height="12" 
+              fill="var(--error-color, #f44336)" opacity="0.6"/>
+            <text x="${padding.left + 28}" y="${padding.top + 15}" class="chart-text" font-size="11px">P1 (Peak)</text>
+            
+            <rect x="${padding.left + 100}" y="${padding.top + 5}" width="12" height="12" 
+              fill="var(--warning-color, #ff9800)" opacity="0.6"/>
+            <text x="${padding.left + 118}" y="${padding.top + 15}" class="chart-text" font-size="11px">P2 (Flat)</text>
+            
+            <rect x="${padding.left + 190}" y="${padding.top + 5}" width="12" height="12" 
+              fill="var(--success-color, #4caf50)" opacity="0.6"/>
+            <text x="${padding.left + 208}" y="${padding.top + 15}" class="chart-text" font-size="11px">P3 (Valley)</text>
+          </g>
+        </svg>
+      `;
+    }
+
+    // Line chart (default)
+    // Calculate moving average if enabled
+    let movingAvgPath = '';
+    if (this.config.show_moving_average) {
+      const windowSize = this.config.moving_average_days || 7;
+      const movingAvg = this._calculateMovingAverage(data, windowSize);
+      
+      const movingAvgPoints = movingAvg
+        .map((value, index) => {
+          if (value === null) return null;
+          const x = padding.left + index * xStep;
+          const y = padding.top + chartHeight - ((value - minValue) / range) * chartHeight;
+          return { x, y, value };
+        })
+        .filter((p): p is { x: number; y: number; value: number } => p !== null);
+      
+      if (movingAvgPoints.length > 0) {
+        movingAvgPath = `M ${movingAvgPoints[0].x} ${movingAvgPoints[0].y} ${movingAvgPoints.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ')}`;
+      }
+    }
+
     return html`
       <svg class="chart-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet">
         <!-- Grid lines -->
@@ -1179,6 +1473,11 @@ export class OctopusConsumptionCard extends LitElement {
         
         <!-- Line -->
         <path class="chart-line" d="${linePath}"/>
+        
+        <!-- Moving average line -->
+        ${this.config.show_moving_average && movingAvgPath ? html`
+          <path class="chart-line-moving-avg" d="${movingAvgPath}"/>
+        ` : ''}
         
         <!-- Data points -->
         ${points.map(point => html`
@@ -1229,6 +1528,27 @@ export class OctopusConsumptionCard extends LitElement {
             ${label.label}
           </text>
         `)}
+        
+        <!-- Legend -->
+        ${showCost || this.config.show_moving_average ? html`
+          <g>
+            ${showCost ? html`
+              <rect x="${width - padding.right - 120}" y="${padding.top + 5}" width="15" height="10" 
+                fill="var(--primary-color, #03a9f4)" opacity="0.7"/>
+              <text x="${width - padding.right - 100}" y="${padding.top + 14}" class="chart-text" font-size="11px">Consumption</text>
+              <line x1="${width - padding.right - 120}" y1="${padding.top + 25}" x2="${width - padding.right - 105}" y2="${padding.top + 25}" 
+                stroke="var(--accent-color, #ff9800)" stroke-width="2" stroke-dasharray="5,5"/>
+              <text x="${width - padding.right - 95}" y="${padding.top + 29}" class="chart-text" font-size="11px" fill="var(--accent-color, #ff9800)">Cost</text>
+            ` : ''}
+            ${this.config.show_moving_average ? html`
+              <line x1="${padding.left + 10}" y1="${padding.top + 10}" x2="${padding.left + 25}" y2="${padding.top + 10}" 
+                stroke="var(--info-color, #2196f3)" stroke-width="2" stroke-dasharray="3,3" opacity="0.8"/>
+              <text x="${padding.left + 30}" y="${padding.top + 14}" class="chart-text" font-size="11px" fill="var(--info-color, #2196f3)">
+                ${this.config.moving_average_days || 7}-day avg
+              </text>
+            ` : ''}
+          </g>
+        ` : ''}
       </svg>
     `;
   }
@@ -1343,6 +1663,9 @@ export class OctopusConsumptionCard extends LitElement {
       tariff_entry_ids: [],
       show_cost_on_chart: false,
       show_navigation: true,
+      show_period_distribution: false,
+      show_moving_average: false,
+      moving_average_days: 7,
     };
   }
 

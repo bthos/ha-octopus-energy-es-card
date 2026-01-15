@@ -45,6 +45,9 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
     tariff_entry_ids: [],
     show_cost_on_chart: false,
     show_navigation: true,
+    show_period_distribution: false,
+    show_moving_average: false,
+    moving_average_days: 7,
   };
 
   private _language: string = "en";
@@ -245,6 +248,7 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
             options: [
               { value: "line", label: localize("editor.chart_type_line", this._language) },
               { value: "bar", label: localize("editor.chart_type_bar", this._language) },
+              { value: "stacked-area", label: localize("editor.chart_type_stacked_area", this._language) },
             ],
           },
         },
@@ -256,12 +260,39 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
         },
       },
       {
-        name: "show_tariff_comparison",
+        name: "show_period_distribution",
+        selector: {
+          boolean: {},
+        },
+      },
+      {
+        name: "show_moving_average",
         selector: {
           boolean: {},
         },
       },
     ];
+
+    // Add moving average days if enabled
+    if (this._config.show_moving_average) {
+      schema.push({
+        name: "moving_average_days",
+        selector: {
+          number: {
+            min: 2,
+            max: 30,
+            mode: "box",
+          },
+        },
+      });
+    }
+
+    schema.push({
+      name: "show_tariff_comparison",
+      selector: {
+        boolean: {},
+      },
+    });
 
     // Add tariff comparison section if enabled
     if (this._config.show_tariff_comparison) {

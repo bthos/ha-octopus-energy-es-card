@@ -12,7 +12,7 @@ if (typeof LitElement !== 'undefined' && (LitElement as any).disableWarning) {
   (LitElement as any).disableWarning('change-in-update');
 }
 import { property, state } from "lit/decorators.js";
-import type { OctopusConsumptionCardConfig, ConsumptionDataPoint, ComparisonResult, FetchConsumptionResult, TariffComparisonResult } from "./types";
+import type { OctopusConsumptionCardConfig, ConsumptionDataPoint, ComparisonResult, FetchConsumptionResult, TariffComparisonResult, TariffCostBreakdown } from "./types";
 // Import editor to ensure it's included in the bundle and get the class
 import "./octopus-consumption-card-editor";
 import { OctopusConsumptionCardEditor } from "./octopus-consumption-card-editor";
@@ -43,6 +43,7 @@ export class OctopusConsumptionCard extends LitElement {
 
   @state() private _consumptionData: ConsumptionDataPoint[] = [];
   @state() private _comparisonResult: ComparisonResult | null = null;
+  @state() private _tariffCosts: Record<string, TariffCostBreakdown> | null = null;
   @state() private _loading = false;
   @state() private _error: string | null = null;
   @state() private _comparisonError: string | null = null;
@@ -100,6 +101,53 @@ export class OctopusConsumptionCard extends LitElement {
     .chart-container {
       margin-bottom: 24px;
       min-height: 300px;
+      position: relative;
+      width: 100%;
+    }
+
+    .chart-svg {
+      width: 100%;
+      height: 300px;
+      display: block;
+    }
+
+    .chart-line {
+      fill: none;
+      stroke: var(--primary-color, #03a9f4);
+      stroke-width: 2;
+    }
+
+    .chart-line-cost {
+      fill: none;
+      stroke: var(--accent-color, #ff9800);
+      stroke-width: 2;
+      stroke-dasharray: 5, 5;
+    }
+
+    .chart-area {
+      fill: var(--primary-color, #03a9f4);
+      opacity: 0.2;
+    }
+
+    .chart-bar {
+      fill: var(--primary-color, #03a9f4);
+      opacity: 0.7;
+    }
+
+    .chart-axis {
+      stroke: var(--divider-color, #e0e0e0);
+      stroke-width: 1;
+    }
+
+    .chart-text {
+      fill: var(--secondary-text-color, #888);
+      font-size: 12px;
+    }
+
+    .chart-grid-line {
+      stroke: var(--divider-color, #e0e0e0);
+      stroke-width: 1;
+      stroke-dasharray: 2, 2;
     }
 
     .loading {
@@ -618,6 +666,11 @@ export class OctopusConsumptionCard extends LitElement {
 
       const consumptionResult = await this._fetchConsumptionData(entryId, startDate, endDate);
       this._consumptionData = consumptionResult.consumption_data || [];
+      
+      // Store tariff costs if available (for cost display on chart)
+      if (consumptionResult.tariff_costs) {
+        this._tariffCosts = consumptionResult.tariff_costs;
+      }
 
       if (this.config.show_tariff_comparison && this.config.tariff_entry_ids?.length) {
         await this._fetchTariffComparison(entryId, startDate, endDate);
@@ -871,16 +924,288 @@ export class OctopusConsumptionCard extends LitElement {
   }
 
   private _renderChart(): TemplateResult {
-    // Placeholder for chart - will be implemented with ha-chart-base or similar
     if (this._consumptionData.length === 0) {
-      return html`<p>No consumption data available</p>`;
+      return html`<div class="loading">No consumption data available</div>`;
     }
 
+    const chartType = this.config.chart_type || "line";
+    const data = this._consumptionData.map(d => d.consumption || d.value || 0);
+    const maxValue = Math.max(...data, 1);
+    const minValue = Math.min(...data, 0);
+    const range = maxValue - minValue || 1;
+    
+    // Check if cost display is enabled
+    const showCost = this.config.show_cost_on_chart && 
+                     this.config.selected_tariff_for_cost && 
+                     this._tariffCosts !== null;
+    let costData: number[] = [];
+    let maxCost = 0;
+    let minCost = 0;
+    let costRange = 1;
+    
+    if (showCost && this._tariffCosts && this.config.selected_tariff_for_cost) {
+      const tariffCost = this._tariffCosts[this.config.selected_tariff_for_cost];
+      if (tariffCost) {
+        // Use hourly_breakdown for day/week, daily_breakdown for month
+        const breakdown = this._currentPeriod === "month" 
+          ? tariffCost.daily_breakdown 
+          : tariffCost.hourly_breakdown;
+        
+        if (breakdown && breakdown.length > 0) {
+          costData = breakdown.map((item: { cost: number }) => item.cost);
+          maxCost = Math.max(...costData, 0.01);
+          minCost = Math.min(...costData, 0);
+          costRange = maxCost - minCost || 1;
+        }
+      }
+    }
+    
+    const width = 800;
+    const height = 300;
+    const rightPadding = showCost ? 60 : 20;
+    const padding = { top: 20, right: rightPadding, bottom: 40, left: 60 };
+    const chartWidth = width - padding.left - padding.right;
+    const chartHeight = height - padding.top - padding.bottom;
+
+    // Calculate x positions
+    const xStep = chartWidth / (data.length - 1 || 1);
+    const points: Array<{ x: number; y: number; value: number }> = data.map((value, index) => {
+      const x = padding.left + index * xStep;
+      const y = padding.top + chartHeight - ((value - minValue) / range) * chartHeight;
+      return { x, y, value };
+    });
+
+    // Generate path for line chart
+    const linePath = points.length > 0 
+      ? `M ${points[0].x} ${points[0].y} ${points.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ')}`
+      : '';
+
+    // Generate area path (line + bottom)
+    const areaPath = points.length > 0
+      ? `${linePath} L ${points[points.length - 1].x} ${height - padding.bottom} L ${points[0].x} ${height - padding.bottom} Z`
+      : '';
+
+    // Generate Y-axis labels for consumption (left axis)
+    const yAxisSteps = 5;
+    const yAxisLabels: Array<{ value: number; y: number }> = [];
+    for (let i = 0; i <= yAxisSteps; i++) {
+      const value = minValue + (range * i / yAxisSteps);
+      const y = padding.top + chartHeight - (i / yAxisSteps) * chartHeight;
+      yAxisLabels.push({ value, y });
+    }
+
+    // Generate cost points and Y-axis labels for cost (right axis) if enabled
+    let costPoints: Array<{ x: number; y: number; value: number }> = [];
+    let costLinePath = '';
+    let costYAxisLabels: Array<{ value: number; y: number }> = [];
+    
+    if (showCost && costData.length > 0) {
+      // Map cost data to chart points (align with consumption data)
+      costPoints = costData.map((cost, index) => {
+        const x = padding.left + (index * chartWidth / (costData.length - 1 || 1));
+        const y = padding.top + chartHeight - ((cost - minCost) / costRange) * chartHeight;
+        return { x, y, value: cost };
+      });
+      
+      // Generate path for cost line
+      if (costPoints.length > 0) {
+        costLinePath = `M ${costPoints[0].x} ${costPoints[0].y} ${costPoints.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ')}`;
+      }
+      
+      // Generate Y-axis labels for cost (right axis)
+      for (let i = 0; i <= yAxisSteps; i++) {
+        const value = minCost + (costRange * i / yAxisSteps);
+        const y = padding.top + chartHeight - (i / yAxisSteps) * chartHeight;
+        costYAxisLabels.push({ value, y });
+      }
+    }
+
+    // Generate X-axis labels (show first, middle, last)
+    const xAxisLabels: Array<{ label: string; x: number }> = [];
+    if (points.length > 0) {
+      const firstPoint = this._consumptionData[0];
+      const lastPoint = this._consumptionData[this._consumptionData.length - 1];
+      const midIndex = Math.floor(this._consumptionData.length / 2);
+      const midPoint = this._consumptionData[midIndex];
+
+      const formatDate = (dateStr: string) => {
+        try {
+          const date = new Date(dateStr);
+          return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        } catch {
+          return dateStr.split('T')[0];
+        }
+      };
+
+      if (firstPoint.start_time || firstPoint.date) {
+        xAxisLabels.push({ label: formatDate(firstPoint.start_time || firstPoint.date || ''), x: points[0].x });
+      }
+      if (midPoint && midPoint.start_time || midPoint.date) {
+        xAxisLabels.push({ label: formatDate(midPoint.start_time || midPoint.date || ''), x: points[midIndex]?.x || points[0].x });
+      }
+      if (lastPoint.start_time || lastPoint.date) {
+        xAxisLabels.push({ label: formatDate(lastPoint.start_time || lastPoint.date || ''), x: points[points.length - 1].x });
+      }
+    }
+
+    if (chartType === "bar") {
+      return html`
+        <svg class="chart-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet">
+          <!-- Grid lines -->
+          ${yAxisLabels.map(label => html`
+            <line class="chart-grid-line" 
+              x1="${padding.left}" y1="${label.y}" 
+              x2="${width - padding.right}" y2="${label.y}"/>
+          `)}
+          
+          <!-- Bars -->
+          ${points.map((point, index) => {
+            const barWidth = Math.max(xStep * 0.6, 2);
+            const barX = point.x - barWidth / 2;
+            const barHeight = height - padding.bottom - point.y;
+            return html`
+              <rect class="chart-bar"
+                x="${barX}" 
+                y="${point.y}" 
+                width="${barWidth}" 
+                height="${barHeight}"/>
+            `;
+          })}
+          
+          <!-- Y-axis -->
+          <line class="chart-axis" 
+            x1="${padding.left}" y1="${padding.top}" 
+            x2="${padding.left}" y2="${height - padding.bottom}"/>
+          
+          <!-- X-axis -->
+          <line class="chart-axis" 
+            x1="${padding.left}" y1="${height - padding.bottom}" 
+            x2="${width - padding.right}" y2="${height - padding.bottom}"/>
+          
+          <!-- Y-axis labels (consumption - left) -->
+          ${yAxisLabels.map(label => html`
+            <text class="chart-text" x="${padding.left - 10}" y="${label.y + 4}" text-anchor="end">
+              ${label.value.toFixed(1)} kWh
+            </text>
+          `)}
+          
+          <!-- Cost Y-axis labels (right) -->
+          ${showCost ? costYAxisLabels.map(label => html`
+            <text class="chart-text" x="${width - padding.right + 10}" y="${label.y + 4}" text-anchor="start" fill="var(--accent-color, #ff9800)">
+              €${label.value.toFixed(2)}
+            </text>
+          `) : ''}
+          
+          <!-- Cost Y-axis (right) -->
+          ${showCost ? html`
+            <line class="chart-axis" 
+              x1="${width - padding.right}" y1="${padding.top}" 
+              x2="${width - padding.right}" y2="${height - padding.bottom}"
+              stroke="var(--accent-color, #ff9800)" opacity="0.5"/>
+          ` : ''}
+          
+          <!-- Cost line overlay (for bar chart) -->
+          ${showCost && costLinePath ? html`
+            <path class="chart-line-cost" d="${costLinePath}"/>
+            ${costPoints.map(point => html`
+              <circle 
+                cx="${point.x}" 
+                cy="${point.y}" 
+                r="3" 
+                fill="var(--accent-color, #ff9800)"
+                stroke="var(--card-background-color, #fff)"
+                stroke-width="2"/>
+            `)}
+          ` : ''}
+          
+          <!-- X-axis labels -->
+          ${xAxisLabels.map(label => html`
+            <text class="chart-text" x="${label.x}" y="${height - padding.bottom + 20}" text-anchor="middle">
+              ${label.label}
+            </text>
+          `)}
+          
+          <!-- Legend -->
+          ${showCost ? html`
+            <g>
+              <rect x="${width - padding.right - 100}" y="${padding.top + 5}" width="15" height="10" 
+                fill="var(--primary-color, #03a9f4)" opacity="0.7"/>
+              <text x="${width - padding.right - 80}" y="${padding.top + 14}" class="chart-text" font-size="11px">Consumption</text>
+              <line x1="${width - padding.right - 100}" y1="${padding.top + 25}" x2="${width - padding.right - 85}" y2="${padding.top + 25}" 
+                stroke="var(--accent-color, #ff9800)" stroke-width="2" stroke-dasharray="5,5"/>
+              <text x="${width - padding.right - 75}" y="${padding.top + 29}" class="chart-text" font-size="11px" fill="var(--accent-color, #ff9800)">Cost</text>
+            </g>
+          ` : ''}
+        </svg>
+      `;
+    }
+
+    // Line chart
     return html`
-      <div>
-        <p>Chart will be rendered here (${this._consumptionData.length} data points)</p>
-        <p>Total consumption: ${this._consumptionData.reduce((sum, d) => sum + (d.consumption || d.value || 0), 0).toFixed(2)} kWh</p>
-      </div>
+      <svg class="chart-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet">
+        <!-- Grid lines -->
+        ${yAxisLabels.map(label => html`
+          <line class="chart-grid-line" 
+            x1="${padding.left}" y1="${label.y}" 
+            x2="${width - padding.right}" y2="${label.y}"/>
+        `)}
+        
+        <!-- Area under line -->
+        <path class="chart-area" d="${areaPath}"/>
+        
+        <!-- Line -->
+        <path class="chart-line" d="${linePath}"/>
+        
+        <!-- Data points -->
+        ${points.map(point => html`
+          <circle 
+            cx="${point.x}" 
+            cy="${point.y}" 
+            r="3" 
+            fill="var(--primary-color, #03a9f4)"
+            stroke="var(--card-background-color, #fff)"
+            stroke-width="2"/>
+        `)}
+        
+        <!-- Y-axis -->
+        <line class="chart-axis" 
+          x1="${padding.left}" y1="${padding.top}" 
+          x2="${padding.left}" y2="${height - padding.bottom}"/>
+        
+        <!-- X-axis -->
+        <line class="chart-axis" 
+          x1="${padding.left}" y1="${height - padding.bottom}" 
+          x2="${width - padding.right}" y2="${height - padding.bottom}"/>
+        
+        <!-- Y-axis labels (consumption - left) -->
+        ${yAxisLabels.map(label => html`
+          <text class="chart-text" x="${padding.left - 10}" y="${label.y + 4}" text-anchor="end">
+            ${label.value.toFixed(1)} kWh
+          </text>
+        `)}
+        
+        <!-- Cost Y-axis labels (right) -->
+        ${showCost ? costYAxisLabels.map(label => html`
+          <text class="chart-text" x="${width - padding.right + 10}" y="${label.y + 4}" text-anchor="start" fill="var(--accent-color, #ff9800)">
+            €${label.value.toFixed(2)}
+          </text>
+        `) : ''}
+        
+        <!-- Cost Y-axis (right) -->
+        ${showCost ? html`
+          <line class="chart-axis" 
+            x1="${width - padding.right}" y1="${padding.top}" 
+            x2="${width - padding.right}" y2="${height - padding.bottom}"
+            stroke="var(--accent-color, #ff9800)" opacity="0.5"/>
+        ` : ''}
+        
+        <!-- X-axis labels -->
+        ${xAxisLabels.map(label => html`
+          <text class="chart-text" x="${label.x}" y="${height - padding.bottom + 20}" text-anchor="middle">
+            ${label.label}
+          </text>
+        `)}
+      </svg>
     `;
   }
 

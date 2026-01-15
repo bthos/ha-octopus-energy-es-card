@@ -16,11 +16,20 @@ import type { OctopusConsumptionCardConfig, ConsumptionDataPoint, ComparisonResu
 // Import editor to ensure it's included in the bundle and get the class
 import "./octopus-consumption-card-editor";
 import { OctopusConsumptionCardEditor } from "./octopus-consumption-card-editor";
+import { Logger } from "./logger";
 
 // Home Assistant types
 interface HomeAssistant {
   states: Record<string, any>;
   callService: (domain: string, service: string, serviceData?: Record<string, any>) => Promise<any>;
+  callWS?: <T = any>(message: {
+    type: string;
+    domain?: string;
+    service?: string;
+    service_data?: Record<string, any>;
+    return_response?: boolean;
+    [key: string]: any;
+  }) => Promise<T>;
   language?: string;
   [key: string]: any;
 }
@@ -40,8 +49,11 @@ export class OctopusConsumptionCard extends LitElement {
   @state() private _currentPeriod: "day" | "week" | "month" = "week";
   @state() private _currentDate: Date = new Date();
 
-  // Service call timeout in milliseconds (10 seconds)
-  private readonly SERVICE_TIMEOUT = 10000;
+  // Constants
+  private static readonly SERVICE_TIMEOUT = 10000;
+  private static readonly SERVICE_DOMAIN = "octopus_energy_es";
+  private static readonly SERVICE_FETCH_CONSUMPTION = "fetch_consumption";
+  private static readonly SERVICE_COMPARE_TARIFFS = "compare_tariffs";
 
   static styles = css`
     :host {
@@ -358,11 +370,11 @@ export class OctopusConsumptionCard extends LitElement {
     }
 
     if (this.config.show_tariff_comparison && (!this.config.tariff_entry_ids || this.config.tariff_entry_ids.length === 0)) {
-      console.warn("show_tariff_comparison is enabled but no tariff_entry_ids provided. Comparison will be disabled.");
+      Logger.warn("show_tariff_comparison is enabled but no tariff_entry_ids provided. Comparison will be disabled.");
     }
 
     if (this.config.show_cost_on_chart && !this.config.selected_tariff_for_cost) {
-      console.warn("show_cost_on_chart is enabled but selected_tariff_for_cost is not set. Cost display will be disabled.");
+      Logger.warn("show_cost_on_chart is enabled but selected_tariff_for_cost is not set. Cost display will be disabled.");
     }
   }
 
@@ -377,91 +389,197 @@ export class OctopusConsumptionCard extends LitElement {
 
   /**
    * Calls a Home Assistant service with timeout and returns response data
-   * Uses callService which may return data if the service supports it
+   * 
+   * For services registered with SupportsResponse.OPTIONAL (like octopus_energy_es.fetch_consumption),
+   * uses callWS with return_response: true to get response data.
+   * Falls back to callService if callWS is unavailable or fails.
+   * 
+   * @param domain - Service domain (e.g., "octopus_energy_es")
+   * @param service - Service name (e.g., "fetch_consumption")
+   * @param serviceData - Service parameters
+   * @param returnResponse - Whether to request response data (default: true)
    */
   private async _callServiceWithTimeout<T>(
     domain: string,
     service: string,
-    serviceData?: Record<string, any>
+    serviceData?: Record<string, any>,
+    returnResponse: boolean = true
   ): Promise<T> {
     try {
-      // Ensure we're not passing return_response - explicitly exclude it
-      const cleanServiceData = { ...serviceData };
-      if (cleanServiceData && 'return_response' in cleanServiceData) {
-        delete cleanServiceData.return_response;
+      Logger.serviceCall(domain, service, returnResponse);
+      if (serviceData) {
+        Logger.serviceData(serviceData);
       }
       
-      // Log what we're calling
-      console.log(
-        '%c  Calling service: %c' + domain + '.' + service,
-        'color: #666; font-size: 11px;',
-        'color: #999; font-size: 11px; font-family: monospace;'
-      );
-      console.log(
-        '%c  Service data: %c' + JSON.stringify(cleanServiceData, null, 2),
-        'color: #666; font-size: 11px;',
-        'color: #999; font-size: 11px; font-family: monospace;'
-      );
+      // Use callWS for services that support return_response (SupportsResponse.OPTIONAL)
+      let result: any;
+      if (returnResponse && typeof this.hass.callWS === 'function') {
+        try {
+          result = await this._callServiceViaWebSocket<T>(domain, service, serviceData);
+        } catch (wsError) {
+          // If callWS fails, fallback to callService
+          const errorMsg = wsError instanceof Error ? wsError.message : String(wsError);
+          Logger.warn('⚠ WebSocket call failed, falling back to callService: ', errorMsg);
+          result = await this._callServiceViaStandard<T>(domain, service, serviceData);
+        }
+      } else {
+        // Use standard callService for services that don't need return_response
+        result = await this._callServiceViaStandard<T>(domain, service, serviceData);
+      }
       
-      // Use callService directly - some services return data through the promise
-      // Note: callService should NOT automatically add return_response
-      const serviceCall = this.hass.callService(domain, service, cleanServiceData);
-      const timeout = this._createTimeoutPromise(this.SERVICE_TIMEOUT);
-      const result = await Promise.race([serviceCall, timeout]);
-      
-      // Log raw response for debugging
-      console.log(
-        '%c  Raw Service Response: %c' + JSON.stringify(result, null, 2),
-        'color: #666; font-size: 11px;',
-        'color: #999; font-size: 11px; font-family: monospace;'
-      );
-      
+      Logger.serviceResponse(result);
       return result as T;
     } catch (error) {
-      // Log the full error object for debugging
-      console.error(
-        '%c  Service Error Details: %c' + JSON.stringify(error, Object.getOwnPropertyNames(error), 2),
-        'color: #f00; font-size: 11px;',
-        'color: #f00; font-size: 11px; font-family: monospace;'
-      );
-      
-      // Re-throw with more context (styled logging happens in caller)
-      if (error instanceof Error) {
-        if (error.message.includes("timeout")) {
-          throw new Error(`Service call timeout: ${domain}.${service} took longer than ${this.SERVICE_TIMEOUT}ms`);
-        }
-        // Check if it's a service error
-        if (error.message.includes("Service not found") || error.message.includes("not available")) {
-          throw new Error(`Service ${domain}.${service} is not available. Please ensure the Octopus Energy España integration is installed and configured.`);
-        }
-        // Handle validation errors
-        if ((error as any).code === 'service_validation_error') {
-          const errorObj = error as any;
-          let message = errorObj.message || errorObj.translation_key || 'Service validation error';
-          
-          // Provide user-friendly message for return_response error
-          if (message.includes('return_response')) {
-            message = "The Octopus Energy España integration service does not support response data. This is a limitation of the integration. Please update the integration to the latest version, or contact the integration maintainer. The service may need to be updated to support response data properly.";
-          }
-          
-          throw new Error(`Service validation error: ${message}`);
-        }
-        throw new Error(`Service call failed: ${domain}.${service} - ${error.message}`);
-      }
-      // Handle non-Error objects (like the validation error object)
-      if (error && typeof error === 'object') {
-        const errorObj = error as any;
-        let message = errorObj.message || errorObj.translation_key || 'Unknown service error';
-        
-        // Provide user-friendly message for return_response error
-        if (errorObj.code === 'service_validation_error' && message.includes('return_response')) {
-          message = "The Octopus Energy España integration service does not support response data. This is a limitation of the integration. Please update the integration to the latest version, or contact the integration maintainer. The service may need to be updated to support response data properly.";
-        }
-        
-        throw new Error(`Service call failed: ${domain}.${service} - ${message}`);
-      }
-      throw error;
+      Logger.serviceError(error);
+      throw this._handleServiceError(error, domain, service);
     }
+  }
+
+  /**
+   * Handles service call errors and converts them to user-friendly messages
+   */
+  private _handleServiceError(error: any, domain: string, service: string): Error {
+    if (error instanceof Error) {
+      if (error.message.includes("timeout")) {
+        return new Error(`Service call timeout: ${domain}.${service} took longer than ${OctopusConsumptionCard.SERVICE_TIMEOUT}ms`);
+      }
+      if (error.message.includes("Service not found") || error.message.includes("not available")) {
+        return new Error(`Service ${domain}.${service} is not available. Please ensure the Octopus Energy España integration is installed and configured.`);
+      }
+      if ((error as any).code === 'service_validation_error') {
+        return this._handleValidationError(error);
+      }
+      return new Error(`Service call failed: ${domain}.${service} - ${error.message}`);
+    }
+    
+    if (error && typeof error === 'object') {
+      const errorObj = error as any;
+      if (errorObj.code === 'service_validation_error') {
+        return this._handleValidationError(errorObj);
+      }
+      const message = errorObj.message || errorObj.translation_key || 'Unknown service error';
+      return new Error(`Service call failed: ${domain}.${service} - ${message}`);
+    }
+    
+    return error instanceof Error ? error : new Error(String(error));
+  }
+
+  /**
+   * Handles service validation errors with user-friendly messages
+   */
+  private _handleValidationError(error: any): Error {
+    const errorObj = error instanceof Error ? error as any : error;
+    let message = errorObj.message || errorObj.translation_key || 'Service validation error';
+    
+    if (message.includes('return_response')) {
+      message = "The service integration may not support response data yet. Please ensure you're using the latest version of the Octopus Energy España integration and that it has been reloaded after updating.";
+    }
+    
+    return new Error(`Service validation error: ${message}`);
+  }
+
+  /**
+   * Validates consumption service response structure
+   */
+  private _validateConsumptionResponse(result: any): void {
+    if (!result || typeof result !== 'object') {
+      Logger.error('✗ Invalid service response: ', 'expected object with success field');
+      throw new Error("Invalid response from service: expected object with success field");
+    }
+
+    if (!('success' in result)) {
+      Logger.error('✗ Invalid service response format: ', 'response does not contain success field');
+      Logger.data('Received response', result);
+      throw new Error("Service returned unexpected response format. The service may not be returning data correctly. Please check the integration configuration and ensure the service supports returning response data.");
+    }
+  }
+
+  /**
+   * Extracts error message from various error types
+   */
+  private _extractErrorMessage(error: any): string {
+    if (error instanceof Error) {
+      return error.message;
+    }
+    if (error && typeof error === 'object') {
+      return error.message || error.translation_key || JSON.stringify(error);
+    }
+    return String(error);
+  }
+
+  /**
+   * Creates user-friendly error message from service error
+   */
+  private _createUserFriendlyError(error: any): Error {
+    if (error instanceof Error) {
+      return error;
+    }
+    
+    if (error && typeof error === 'object') {
+      const errorObj = error as any;
+      let message = errorObj.message || errorObj.translation_key || JSON.stringify(error);
+      
+      if (errorObj.code === 'service_validation_error') {
+        if (message.includes('return_response')) {
+          message = "The service integration may not support response data yet. Please ensure you're using the latest version of the Octopus Energy España integration and that it has been reloaded after updating.";
+        } else {
+          message = message || "Service validation error. Please check your configuration.";
+        }
+      }
+      
+      return new Error(message);
+    }
+    
+    return new Error(String(error));
+  }
+
+  /**
+   * Extracts response data from WebSocket result
+   */
+  private _extractWebSocketResponse<T>(wsResult: any): T {
+    if (wsResult && typeof wsResult === 'object') {
+      if ('service_response' in wsResult) {
+        return wsResult.service_response as T;
+      }
+      if ('response' in wsResult) {
+        return wsResult.response as T;
+      }
+      return wsResult as T;
+    }
+    return wsResult as T;
+  }
+
+  /**
+   * Calls service via WebSocket API with return_response support
+   */
+  private async _callServiceViaWebSocket<T>(
+    domain: string,
+    service: string,
+    serviceData?: Record<string, any>
+  ): Promise<T> {
+    const wsCall = this.hass.callWS<{ response?: T; service_response?: T }>({
+      type: 'call_service',
+      domain: domain,
+      service: service,
+      service_data: serviceData,
+      return_response: true
+    });
+    const timeout = this._createTimeoutPromise(OctopusConsumptionCard.SERVICE_TIMEOUT);
+    const wsResult = await Promise.race([wsCall, timeout]);
+    return this._extractWebSocketResponse<T>(wsResult);
+  }
+
+  /**
+   * Calls service via standard callService API (fallback)
+   */
+  private async _callServiceViaStandard<T>(
+    domain: string,
+    service: string,
+    serviceData?: Record<string, any>
+  ): Promise<T> {
+    const serviceCall = this.hass.callService(domain, service, serviceData);
+    const timeout = this._createTimeoutPromise(OctopusConsumptionCard.SERVICE_TIMEOUT);
+    return await Promise.race([serviceCall, timeout]) as T;
   }
 
   private async _loadData(): Promise<void> {
@@ -469,9 +587,7 @@ export class OctopusConsumptionCard extends LitElement {
       return;
     }
 
-    // Use source_entry_id directly
     const entryId = this.config.source_entry_id;
-
     if (!entryId) {
       this._error = "source_entry_id is required. Please select your tariff from the card editor.";
       this._loading = false;
@@ -483,232 +599,150 @@ export class OctopusConsumptionCard extends LitElement {
     this._comparisonError = null;
 
     try {
-      // Calculate date range based on current period
       const { startDate, endDate } = this._getDateRange();
+      this._validateDateRange(startDate, endDate);
 
-      // Validate date range
-      const now = new Date();
-      if (startDate > now) {
-        throw new Error(`Invalid date range: start date (${startDate.toISOString().split("T")[0]}) is in the future. Please navigate to a past period.`);
-      }
-      
-      if (startDate > endDate) {
-        throw new Error(`Invalid date range: start date is after end date.`);
-      }
-
-      // Log request details for debugging (styled)
-      console.log(
-        '%cℹ Fetching consumption data',
-        'color: #666; font-size: 11px;'
-      );
-      console.log(
-        '%c  Entry ID: %c' + entryId + '%c | Period: %c' + this._currentPeriod + '%c | Dates: %c' + startDate.toISOString().split("T")[0] + ' → ' + endDate.toISOString().split("T")[0],
-        'color: #666; font-size: 11px;',
-        'color: #999; font-size: 11px;',
-        'color: #666; font-size: 11px;',
-        'color: #999; font-size: 11px;',
-        'color: #666; font-size: 11px;',
-        'color: #999; font-size: 11px;'
+      Logger.info(
+        'ℹ Fetching consumption data',
+        `Entry ID: ${entryId} | Period: ${this._currentPeriod} | Dates: ${startDate.toISOString().split("T")[0]} → ${endDate.toISOString().split("T")[0]}`
       );
 
-      // Fetch consumption data with timeout
-      let consumptionResult: FetchConsumptionResult;
-      let rawResponse: any;
-      try {
-        rawResponse = await this._callServiceWithTimeout<any>(
-          "octopus_energy_es",
-          "fetch_consumption",
-          {
-            entry_id: entryId,
-            start_date: startDate.toISOString().split("T")[0],
-            end_date: endDate.toISOString().split("T")[0],
-            granularity: this._currentPeriod === "day" ? "hourly" : this._currentPeriod === "week" ? "hourly" : "daily",
-          }
-        );
-        
-        // Log the raw response immediately
-        console.log(
-          '%c  Raw Service Response (before processing): %c' + JSON.stringify(rawResponse, null, 2),
-          'color: #666; font-size: 11px;',
-          'color: #999; font-size: 11px; font-family: monospace;'
-        );
-        
-        // Handle response format - callService returns the response directly
-        if (rawResponse && typeof rawResponse === 'object') {
-          consumptionResult = rawResponse as FetchConsumptionResult;
-        } else {
-          consumptionResult = rawResponse as FetchConsumptionResult;
-        }
-      } catch (serviceError) {
-        // Service call failed (timeout, service not found, etc.)
-        let errorMsg: string;
-        let userFriendlyMsg: string;
-        
-        if (serviceError instanceof Error) {
-          errorMsg = serviceError.message;
-          userFriendlyMsg = errorMsg;
-        } else if (serviceError && typeof serviceError === 'object') {
-          const errorObj = serviceError as any;
-          errorMsg = errorObj.message || errorObj.translation_key || JSON.stringify(serviceError);
-          
-          // Handle specific service validation errors
-          if (errorObj.code === 'service_validation_error') {
-            // Check if it's the return_response error
-            if (errorMsg.includes('return_response')) {
-              userFriendlyMsg = "The Octopus Energy España integration service does not support response data. This is a limitation of the integration. Please update the integration to the latest version, or contact the integration maintainer. The service may need to be updated to support response data properly.";
-            } else {
-              userFriendlyMsg = errorMsg || "Service validation error. Please check your configuration.";
-            }
-          } else {
-            userFriendlyMsg = errorMsg;
-          }
-        } else {
-          errorMsg = String(serviceError);
-          userFriendlyMsg = errorMsg;
-        }
-        
-        console.error(
-          '%c✗ Service call failed: %c' + errorMsg,
-          'color: #f00; font-size: 11px; font-weight: bold;',
-          'color: #f00; font-size: 11px;'
-        );
-        
-        // Log full error object for debugging
-        console.error(
-          '%c  Full Error Object: %c' + JSON.stringify(serviceError, Object.getOwnPropertyNames(serviceError), 2),
-          'color: #666; font-size: 11px;',
-          'color: #999; font-size: 11px; font-family: monospace;'
-        );
-        
-        // Throw a user-friendly error
-        throw new Error(userFriendlyMsg);
-      }
-
-      // Check if result indicates failure
-      if (!consumptionResult || typeof consumptionResult !== 'object') {
-        console.error(
-          '%c✗ Invalid service response: %cexpected object with success field',
-          'color: #f00; font-size: 11px; font-weight: bold;',
-          'color: #f00; font-size: 11px;'
-        );
-        throw new Error("Invalid response from service: expected object with success field");
-      }
-
-      if (!consumptionResult.success) {
-        const errorMsg = consumptionResult.error || "Failed to fetch consumption data";
-        
-        // Build user-friendly error message (focus on the actual error)
-        let userErrorMsg = errorMsg;
-        
-        // Add warning if present (as it might provide helpful context)
-        if (consumptionResult.warning) {
-          userErrorMsg += `. ${consumptionResult.warning}`;
-        }
-        
-        console.error(
-          '%c✗ Service returned error: %c' + errorMsg,
-          'color: #f00; font-size: 11px; font-weight: bold;',
-          'color: #f00; font-size: 11px;'
-        );
-        
-        // Log request details for debugging
-        console.log(
-          '%c  Requested Entry ID: %c' + entryId,
-          'color: #666; font-size: 11px;',
-          'color: #999; font-size: 11px; font-family: monospace;'
-        );
-        
-        // Log context information for debugging (but don't include in user error)
-        if (consumptionResult.context) {
-          console.log(
-            '%c  Service Context: %c' + JSON.stringify(consumptionResult.context, null, 2),
-            'color: #666; font-size: 11px;',
-            'color: #999; font-size: 11px; font-family: monospace;'
-          );
-          
-          // Only add context ID to error if it's clearly a mismatch issue
-          if (consumptionResult.context.id && consumptionResult.context.id !== entryId) {
-            console.warn(
-              '%c⚠ Note: Service context shows different entry ID (%c' + consumptionResult.context.id + '%c). This may be informational.',
-              'color: #ff9800; font-size: 11px;',
-              'color: #ff9800; font-size: 11px; font-family: monospace;',
-              'color: #ff9800; font-size: 11px;'
-            );
-          }
-        }
-        
-        // Log warning separately if present
-        if (consumptionResult.warning) {
-          console.warn(
-            '%c⚠ Service Warning: %c' + consumptionResult.warning,
-            'color: #ff9800; font-size: 11px;',
-            'color: #ff9800; font-size: 11px;'
-          );
-        }
-        
-        // Log full response for debugging
-        console.log(
-          '%c  Full Response: %c' + JSON.stringify({ 
-            success: consumptionResult.success,
-            error: consumptionResult.error, 
-            warning: consumptionResult.warning,
-            context: consumptionResult.context 
-          }, null, 2),
-          'color: #666; font-size: 11px;',
-          'color: #999; font-size: 11px; font-family: monospace;'
-        );
-        
-        throw new Error(userErrorMsg);
-      }
-
-
+      const consumptionResult = await this._fetchConsumptionData(entryId, startDate, endDate);
       this._consumptionData = consumptionResult.consumption_data || [];
 
-      // Fetch tariff comparison if enabled (with graceful degradation)
-      this._comparisonError = null;
-      if (this.config.show_tariff_comparison && this.config.tariff_entry_ids && this.config.tariff_entry_ids.length > 0) {
-        try {
-          const period = this._currentPeriod === "day" ? "daily" : this._currentPeriod === "week" ? "weekly" : "monthly";
-          
-          const comparisonResult = await this._callServiceWithTimeout<{ success: boolean; result?: ComparisonResult; error?: string }>(
-            "octopus_energy_es",
-            "compare_tariffs",
-            {
-              tariff_entry_ids: this.config.tariff_entry_ids,
-              source_entry_id: entryId,
-              period: period,
-              start_date: startDate.toISOString().split("T")[0],
-              end_date: endDate.toISOString().split("T")[0],
-            }
-          );
-
-          if (comparisonResult.success && comparisonResult.result) {
-            this._comparisonResult = comparisonResult.result;
-          } else {
-            const errorMsg = comparisonResult.error || "Failed to compare tariffs";
-            this._comparisonError = errorMsg;
-            console.warn(
-              '%c⚠ Tariff comparison failed: %c' + errorMsg,
-              'color: #ff9800; font-size: 11px;',
-              'color: #ff9800; font-size: 11px;'
-            );
-          }
-        } catch (error) {
-          const errorMsg = error instanceof Error ? error.message : String(error);
-          this._comparisonError = `Tariff comparison error: ${errorMsg}`;
-          console.warn(
-            '%c⚠ Tariff comparison error: %c' + errorMsg,
-            'color: #ff9800; font-size: 11px;',
-            'color: #ff9800; font-size: 11px;'
-          );
-          // Don't throw - allow consumption data to display even if comparison fails
-        }
+      if (this.config.show_tariff_comparison && this.config.tariff_entry_ids?.length) {
+        await this._fetchTariffComparison(entryId, startDate, endDate);
       }
     } catch (error) {
       this._error = error instanceof Error ? error.message : String(error);
-      console.error("Error loading data:", error);
+      Logger.error("Error loading data: ", this._extractErrorMessage(error));
+      Logger.data("Error details", error);
     } finally {
       this._loading = false;
+    }
+  }
+
+  /**
+   * Validates date range for consumption data request
+   */
+  private _validateDateRange(startDate: Date, endDate: Date): void {
+    const now = new Date();
+    if (startDate > now) {
+      throw new Error(`Invalid date range: start date (${startDate.toISOString().split("T")[0]}) is in the future. Please navigate to a past period.`);
+    }
+    
+    if (startDate > endDate) {
+      throw new Error(`Invalid date range: start date is after end date.`);
+    }
+  }
+
+  /**
+   * Fetches consumption data from the service
+   */
+  private async _fetchConsumptionData(
+    entryId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<FetchConsumptionResult> {
+    const granularity = this._currentPeriod === "day" ? "hourly" : this._currentPeriod === "week" ? "hourly" : "daily";
+    
+    let rawResponse: any;
+    try {
+      rawResponse = await this._callServiceWithTimeout<any>(
+        OctopusConsumptionCard.SERVICE_DOMAIN,
+        OctopusConsumptionCard.SERVICE_FETCH_CONSUMPTION,
+        {
+          entry_id: entryId,
+          start_date: startDate.toISOString().split("T")[0],
+          end_date: endDate.toISOString().split("T")[0],
+          granularity: granularity,
+        }
+      );
+      
+      Logger.data('Raw Service Response (before processing)', rawResponse);
+      
+      const consumptionResult = rawResponse as FetchConsumptionResult;
+      this._validateConsumptionResponse(consumptionResult);
+
+      if (!consumptionResult.success) {
+        this._handleConsumptionError(consumptionResult, entryId);
+      }
+
+      return consumptionResult;
+    } catch (serviceError) {
+      Logger.error('✗ Service call failed: ', this._extractErrorMessage(serviceError));
+      Logger.data('Full Error Object', serviceError);
+      throw this._createUserFriendlyError(serviceError);
+    }
+  }
+
+  /**
+   * Handles consumption service error response
+   */
+  private _handleConsumptionError(result: FetchConsumptionResult, entryId: string): void {
+    const errorMsg = result.error || "Failed to fetch consumption data";
+    let userErrorMsg = errorMsg;
+    
+    if (result.warning) {
+      userErrorMsg += `. ${result.warning}`;
+      Logger.warn('⚠ Service Warning: ', result.warning);
+    }
+    
+    Logger.error('✗ Service returned error: ', errorMsg);
+    Logger.data('Requested Entry ID', entryId);
+    
+    if (result.context) {
+      Logger.data('Service Context', result.context);
+      if (result.context.id && result.context.id !== entryId) {
+        Logger.warn('⚠ Note: Service context shows different entry ID (', result.context.id + '). This may be informational.');
+      }
+    }
+    
+    Logger.data('Full Response', {
+      success: result.success,
+      error: result.error,
+      warning: result.warning,
+      context: result.context
+    });
+    
+    throw new Error(userErrorMsg);
+  }
+
+  /**
+   * Fetches tariff comparison data
+   */
+  private async _fetchTariffComparison(
+    entryId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<void> {
+    try {
+      const period = this._currentPeriod === "day" ? "daily" : this._currentPeriod === "week" ? "weekly" : "monthly";
+      
+      const comparisonResult = await this._callServiceWithTimeout<{ success: boolean; result?: ComparisonResult; error?: string }>(
+        OctopusConsumptionCard.SERVICE_DOMAIN,
+        OctopusConsumptionCard.SERVICE_COMPARE_TARIFFS,
+        {
+          tariff_entry_ids: this.config.tariff_entry_ids!,
+          source_entry_id: entryId,
+          period: period,
+          start_date: startDate.toISOString().split("T")[0],
+          end_date: endDate.toISOString().split("T")[0],
+        }
+      );
+
+      if (comparisonResult.success && comparisonResult.result) {
+        this._comparisonResult = comparisonResult.result;
+      } else {
+        const errorMsg = comparisonResult.error || "Failed to compare tariffs";
+        this._comparisonError = errorMsg;
+        Logger.warn('⚠ Tariff comparison failed: ', errorMsg);
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      this._comparisonError = `Tariff comparison error: ${errorMsg}`;
+      Logger.warn('⚠ Tariff comparison error: ', errorMsg);
+      // Don't throw - allow consumption data to display even if comparison fails
     }
   }
 

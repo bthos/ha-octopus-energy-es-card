@@ -413,7 +413,7 @@ export class OctopusConsumptionCard extends LitElement {
       
       // Use callWS for services that support return_response (SupportsResponse.OPTIONAL)
       let result: any;
-      if (returnResponse && typeof this.hass.callWS === 'function') {
+      if (returnResponse && this.hass.callWS) {
         try {
           result = await this._callServiceViaWebSocket<T>(domain, service, serviceData);
         } catch (wsError) {
@@ -557,6 +557,9 @@ export class OctopusConsumptionCard extends LitElement {
     service: string,
     serviceData?: Record<string, any>
   ): Promise<T> {
+    if (!this.hass.callWS) {
+      throw new Error('callWS is not available');
+    }
     const wsCall = this.hass.callWS<{ response?: T; service_response?: T }>({
       type: 'call_service',
       domain: domain,
@@ -1039,7 +1042,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
       customElements.define('octopus-consumption-card', OctopusConsumptionCard);
     }
   } catch (error) {
-    console.error('Failed to register octopus-consumption-card:', error);
+    Logger.error('Failed to register octopus-consumption-card: ', error instanceof Error ? error.message : String(error));
   }
   
   // Make the class available globally for Home Assistant card picker
@@ -1074,6 +1077,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
   const VERSION = '0.4.55';
   const isRegistered = !!customElements.get('octopus-consumption-card');
   
+  // Branding header (keep styled for visual impact)
   console.groupCollapsed(
     '%c⚡ OCTOPUS ENERGY ESPAÑA',
     'background: linear-gradient(90deg, #e10090 0%, #c000a0 100%);' +
@@ -1082,33 +1086,15 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
     'border-radius: 4px;' +
     'font-weight: bold;'
   );
-  console.log(
-    '%cConsumption Card %cv' + VERSION,
-    'color: #e10090; font-weight: bold;',
-    'color: #999;'
-  );
-  console.log(
-    '%c' + (isRegistered ? '✓' : '✗') + ' Custom element: %coctopus-consumption-card',
-    isRegistered ? 'color: #0a0; font-size: 11px;' : 'color: #f00; font-size: 11px;',
-    'color: #666; font-size: 11px;'
-  );
-  console.log(
-    '%c✓ Added to card picker',
-    'color: #0a0; font-size: 11px;'
-  );
-  console.log(
-    '%c✓ Visual editor enabled',
-    'color: #0a0; font-size: 11px;'
-  );
-  console.log(
-    '%cℹ Supported languages: %cen, es, be',
-    'color: #666; font-size: 11px;',
-    'color: #999; font-size: 11px;'
-  );
   
-  // Debug info
+  Logger.info('Consumption Card', `v${VERSION}`);
+  Logger.info(isRegistered ? '✓ Custom element: ' : '✗ Custom element: ', 'octopus-consumption-card');
+  Logger.success('✓ Added to card picker');
+  Logger.success('✓ Visual editor enabled');
+  Logger.info('ℹ Supported languages: ', 'en, es, be');
+  
   if (!isRegistered) {
-    console.error('%c✗ Registration failed! Element not found in customElements registry', 'color: #f00; font-weight: bold;');
+    Logger.error('✗ Registration failed! Element not found in customElements registry');
   }
   
   console.groupEnd();

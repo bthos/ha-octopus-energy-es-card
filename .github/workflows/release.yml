@@ -113,7 +113,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add package.json src/octopus-consumption-card.ts octopus-consumption-card.bundle.js
+          git add package.json src/octopus-consumption-card.ts
+          git add -f octopus-consumption-card.bundle.js
           git commit -m "Bump version to ${{ steps.calculate_version.outputs.new_version }} [skip ci]" || echo "No changes to commit"
           git push || echo "Nothing to push"
 

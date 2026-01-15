@@ -385,7 +385,7 @@ export class OctopusConsumptionCard extends LitElement {
 
   /**
    * Calls a Home Assistant service with timeout and returns response data
-   * Uses callWS to get service response data (callService doesn't return response by default)
+   * Uses callService which may return data if the service supports it
    */
   private async _callServiceWithTimeout<T>(
     domain: string,
@@ -393,39 +393,7 @@ export class OctopusConsumptionCard extends LitElement {
     serviceData?: Record<string, any>
   ): Promise<T> {
     try {
-      // Try using callWS first (for services that return response data)
-      if (this.hass.callWS) {
-        const wsCall = this.hass.callWS<{ response: T }>({
-          type: "call_service",
-          domain: domain,
-          service: service,
-          service_data: serviceData,
-          return_response: true,
-        });
-        
-        const timeout = this._createTimeoutPromise(this.SERVICE_TIMEOUT);
-        const result = await Promise.race([wsCall, timeout]);
-        
-        // Log raw response for debugging
-        console.log(
-          '%c  Raw WS Response: %c' + JSON.stringify(result, null, 2),
-          'color: #666; font-size: 11px;',
-          'color: #999; font-size: 11px; font-family: monospace;'
-        );
-        
-        // The response might be wrapped in a 'response' field when using callWS
-        if (result && typeof result === 'object') {
-          if ('response' in result) {
-            return (result as any).response as T;
-          }
-          // If no 'response' field, assume the result is the data itself
-          return result as T;
-        }
-        
-        return result as T;
-      }
-      
-      // Fallback to callService (may not return response data)
+      // Use callService directly - some services return data through the promise
       const serviceCall = this.hass.callService(domain, service, serviceData);
       const timeout = this._createTimeoutPromise(this.SERVICE_TIMEOUT);
       const result = await Promise.race([serviceCall, timeout]);
@@ -439,6 +407,13 @@ export class OctopusConsumptionCard extends LitElement {
       
       return result as T;
     } catch (error) {
+      // Log the full error object for debugging
+      console.error(
+        '%c  Service Error Details: %c' + JSON.stringify(error, Object.getOwnPropertyNames(error), 2),
+        'color: #f00; font-size: 11px;',
+        'color: #f00; font-size: 11px; font-family: monospace;'
+      );
+      
       // Re-throw with more context (styled logging happens in caller)
       if (error instanceof Error) {
         if (error.message.includes("timeout")) {
@@ -448,7 +423,19 @@ export class OctopusConsumptionCard extends LitElement {
         if (error.message.includes("Service not found") || error.message.includes("not available")) {
           throw new Error(`Service ${domain}.${service} is not available. Please ensure the Octopus Energy España integration is installed and configured.`);
         }
+        // Handle validation errors
+        if ((error as any).code === 'service_validation_error') {
+          const errorObj = error as any;
+          const message = errorObj.message || errorObj.translation_key || 'Service validation error';
+          throw new Error(`Service validation error: ${message}`);
+        }
         throw new Error(`Service call failed: ${domain}.${service} - ${error.message}`);
+      }
+      // Handle non-Error objects (like the validation error object)
+      if (error && typeof error === 'object') {
+        const errorObj = error as any;
+        const message = errorObj.message || errorObj.translation_key || 'Unknown service error';
+        throw new Error(`Service call failed: ${domain}.${service} - ${message}`);
       }
       throw error;
     }
@@ -537,12 +524,29 @@ export class OctopusConsumptionCard extends LitElement {
         }
       } catch (serviceError) {
         // Service call failed (timeout, service not found, etc.)
-        const errorMsg = serviceError instanceof Error ? serviceError.message : String(serviceError);
+        let errorMsg: string;
+        if (serviceError instanceof Error) {
+          errorMsg = serviceError.message;
+        } else if (serviceError && typeof serviceError === 'object') {
+          const errorObj = serviceError as any;
+          errorMsg = errorObj.message || errorObj.translation_key || JSON.stringify(serviceError);
+        } else {
+          errorMsg = String(serviceError);
+        }
+        
         console.error(
           '%c✗ Service call failed: %c' + errorMsg,
           'color: #f00; font-size: 11px; font-weight: bold;',
           'color: #f00; font-size: 11px;'
         );
+        
+        // Log full error object for debugging
+        console.error(
+          '%c  Full Error Object: %c' + JSON.stringify(serviceError, Object.getOwnPropertyNames(serviceError), 2),
+          'color: #666; font-size: 11px;',
+          'color: #999; font-size: 11px; font-family: monospace;'
+        );
+        
         throw serviceError;
       }
 

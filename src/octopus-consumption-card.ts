@@ -1071,7 +1071,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
   (window as any).OctopusConsumptionCard = OctopusConsumptionCard;
 
   // Styled console logs for DevTools (after registration)
-  const VERSION = '0.4.54';
+  const VERSION = '0.4.55';
   const isRegistered = !!customElements.get('octopus-consumption-card');
   
   console.groupCollapsed(

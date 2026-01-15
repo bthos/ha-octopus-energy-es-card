@@ -30,7 +30,7 @@ interface LovelaceCardEditor extends HTMLElement {
 
 export class OctopusConsumptionCardEditor extends LitElement implements LovelaceCardEditor {
   // Disable Lit dev mode warnings for this class
-  static enabledWarnings: string[] = [];
+  static enabledWarnings: ('migration' | 'change-in-update')[] = [];
 
   @property({ attribute: false }) public hass?: HomeAssistant;
   @property({ attribute: false }) public config?: OctopusConsumptionCardConfig;

@@ -39,10 +39,6 @@ yarn-error.log*
 # Planning documents
 plans/
 
-# Test coverage
+# Test coverage (if tests are added in future)
 coverage/
 .nyc_output/
-
-# Playwright
-test-results/
-playwright-report/

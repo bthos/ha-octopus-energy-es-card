@@ -26,7 +26,7 @@ interface HomeAssistant {
 
 export class OctopusConsumptionCard extends LitElement {
   // Disable Lit dev mode warnings for this class
-  static enabledWarnings: string[] = [];
+  static enabledWarnings: ('migration' | 'change-in-update')[] = [];
 
   @property({ attribute: false }) public hass!: HomeAssistant;
   @property({ attribute: false }) public config!: OctopusConsumptionCardConfig;

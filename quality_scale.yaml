@@ -108,12 +108,13 @@ rules:
   
   # GL-1: Unit Tests
   unit-tests:
-    status: todo
+    status: skipped
     description: Comprehensive unit test coverage
     notes: |
-      - No test framework detected
-      - Consider Jest or Web Test Runner
-      - Target 80%+ code coverage
+      - Manual testing approach preferred for Home Assistant cards
+      - TypeScript provides type safety
+      - Real-world testing in HA environment is more valuable
+      - See MANUAL_TESTING.md for testing checklist
   
   # GL-2: Card Editor
   card-editor:

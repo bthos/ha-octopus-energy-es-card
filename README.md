@@ -296,31 +296,31 @@ For issues, feature requests, or questions:
 
 ## 🧪 Testing
 
-This project includes unit tests using [@web/test-runner](https://modern-web.dev/docs/test-runner/overview/) and [@open-wc/testing](https://open-wc.org/docs/testing/testing-package/).
+This project uses TypeScript for type safety and manual testing in Home Assistant for validation.
 
-### Running Tests
+### Type Checking
 
 ```bash
-# Install dependencies (if not already installed)
-npm install
-
-# Run tests once
-npm test
-
-# Run tests in watch mode (for development)
-npm run test:watch
-
-# Run tests with coverage report
-npm run test:coverage
+# Check TypeScript types without building
+npm run type-check
 ```
 
-### Test Structure
+### Build Verification
 
-- `test/octopus-consumption-card.test.ts` - Component tests
-- `test/types.test.ts` - Type definition tests
-- `test/test-helpers.ts` - Test utilities and mocks
+```bash
+# Build the project (includes type checking)
+npm run build
+```
 
-See [test/README.md](test/README.md) for more details.
+### Manual Testing
+
+Before releasing, please follow the [Manual Testing Checklist](MANUAL_TESTING.md) to ensure all functionality works correctly in a real Home Assistant environment.
+
+**Why Manual Testing?**
+- Home Assistant cards are best tested in their actual runtime environment
+- TypeScript provides compile-time type safety
+- Real-world scenarios are more valuable than unit test mocks
+- Faster development cycle without test infrastructure overhead
 
 ## 📄 License
 

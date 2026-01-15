@@ -1,6 +1,11 @@
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import terser from '@rollup/plugin-terser';
+import { readFileSync } from 'fs';
+
+// Read version from package.json to inject into code
+const packageJson = JSON.parse(readFileSync('./package.json', 'utf8'));
+const VERSION = packageJson.version;
 
 export default {
   input: 'dist/octopus-consumption-card.js',
@@ -25,6 +30,20 @@ export default {
       exportConditions: []
     }),
     commonjs(),
+    // Replace version placeholder with actual version from package.json
+    {
+      name: 'replace-version',
+      transform(code, id) {
+        if (id.includes('octopus-consumption-card.js')) {
+          // Replace version constant with actual version from package.json
+          return code.replace(
+            /const VERSION = ['"][^'"]+['"];?/g,
+            `const VERSION = '${VERSION}';`
+          );
+        }
+        return null;
+      }
+    },
     terser({
       compress: {
         drop_console: false

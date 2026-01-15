@@ -427,6 +427,16 @@ export class OctopusConsumptionCard extends LitElement {
       // Calculate date range based on current period
       const { startDate, endDate } = this._getDateRange();
 
+      // Validate date range
+      const now = new Date();
+      if (startDate > now) {
+        throw new Error(`Invalid date range: start date (${startDate.toISOString().split("T")[0]}) is in the future. Please navigate to a past period.`);
+      }
+      
+      if (startDate > endDate) {
+        throw new Error(`Invalid date range: start date is after end date.`);
+      }
+
       // Log request details for debugging (styled)
       console.log(
         '%cℹ Fetching consumption data',
@@ -478,11 +488,48 @@ export class OctopusConsumptionCard extends LitElement {
 
       if (!consumptionResult.success) {
         const errorMsg = consumptionResult.error || "Failed to fetch consumption data";
+        
+        // Build a more descriptive error message
+        let fullErrorMsg = errorMsg;
+        
+        // Add context information if available
+        if (consumptionResult.context) {
+          const contextInfo: string[] = [];
+          
+          // Check for common error scenarios
+          if (consumptionResult.context.id && consumptionResult.context.id !== entryId) {
+            contextInfo.push(`Service returned different entry ID: ${consumptionResult.context.id}`);
+          }
+          
+          if (consumptionResult.context.user_id) {
+            contextInfo.push(`User ID: ${consumptionResult.context.user_id}`);
+          }
+          
+          // Add any other relevant context
+          const otherContext = Object.entries(consumptionResult.context)
+            .filter(([key]) => !['id', 'user_id', 'parent_id'].includes(key))
+            .map(([key, value]) => `${key}: ${value}`);
+          
+          if (otherContext.length > 0) {
+            contextInfo.push(...otherContext);
+          }
+          
+          if (contextInfo.length > 0) {
+            fullErrorMsg += ` (${contextInfo.join(', ')})`;
+          }
+        }
+        
+        // Add warning if present
+        if (consumptionResult.warning) {
+          fullErrorMsg += `. Warning: ${consumptionResult.warning}`;
+        }
+        
         console.error(
           '%c✗ Service returned error: %c' + errorMsg,
           'color: #f00; font-size: 11px; font-weight: bold;',
           'color: #f00; font-size: 11px;'
         );
+        
         // Log additional context if available
         if (consumptionResult.context) {
           console.error(
@@ -491,19 +538,28 @@ export class OctopusConsumptionCard extends LitElement {
             'color: #999; font-size: 11px; font-family: monospace;'
           );
         }
-        // Log full response for debugging (only in dev mode)
-        if (consumptionResult.context || consumptionResult.warning) {
-          console.error(
-            '%c  Details: %c' + JSON.stringify({ 
-              error: consumptionResult.error, 
-              warning: consumptionResult.warning,
-              context: consumptionResult.context 
-            }, null, 2),
-            'color: #666; font-size: 11px;',
-            'color: #999; font-size: 11px; font-family: monospace;'
+        
+        // Log warning if present
+        if (consumptionResult.warning) {
+          console.warn(
+            '%c⚠ Warning: %c' + consumptionResult.warning,
+            'color: #ff9800; font-size: 11px;',
+            'color: #ff9800; font-size: 11px;'
           );
         }
-        throw new Error(`Service returned error: ${errorMsg}`);
+        
+        // Log full response for debugging
+        console.error(
+          '%c  Details: %c' + JSON.stringify({ 
+            error: consumptionResult.error, 
+            warning: consumptionResult.warning,
+            context: consumptionResult.context 
+          }, null, 2),
+          'color: #666; font-size: 11px;',
+          'color: #999; font-size: 11px; font-family: monospace;'
+        );
+        
+        throw new Error(fullErrorMsg);
       }
 
 
@@ -882,7 +938,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
   (window as any).OctopusConsumptionCard = OctopusConsumptionCard;
 
   // Styled console logs for DevTools (after registration)
-  const VERSION = '0.4.45';
+  const VERSION = '0.4.46';
   const isRegistered = !!customElements.get('octopus-consumption-card');
   
   console.groupCollapsed(

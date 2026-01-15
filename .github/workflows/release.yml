@@ -76,12 +76,20 @@ jobs:
           EOF
           echo "Updated package.json to version $NEW_VERSION"
 
+      - name: Update version in source code
+        if: steps.check_last_commit.outputs.skip == 'false'
+        run: |
+          NEW_VERSION="${{ steps.calculate_version.outputs.new_version }}"
+          # Update version in octopus-consumption-card.ts
+          sed -i "s/const VERSION = ['\"][^'\"]*['\"];/const VERSION = '$NEW_VERSION';/" src/octopus-consumption-card.ts
+          echo "Updated version in src/octopus-consumption-card.ts to $NEW_VERSION"
+
       - name: Commit version update
         if: steps.check_last_commit.outputs.skip == 'false'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add package.json
+          git add package.json src/octopus-consumption-card.ts
           git commit -m "Bump version to ${{ steps.calculate_version.outputs.new_version }} [skip ci]" || echo "No changes to commit"
           git push || echo "Nothing to push"
 

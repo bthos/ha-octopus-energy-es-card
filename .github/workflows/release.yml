@@ -104,20 +104,25 @@ jobs:
         if: steps.check_last_commit.outputs.skip == 'false'
         run: npm run build
 
-      - name: Verify bundle exists
+      - name: Verify bundle exists and is unique
         if: steps.check_last_commit.outputs.skip == 'false'
         run: |
-          if [ ! -f "www/community/octopus_energy_es/octopus-consumption-card.bundle.js" ]; then
-            echo "Error: Bundle file not found after build"
+          BUNDLE_PATH="www/community/octopus_energy_es/octopus-consumption-card.bundle.js"
+          if [ ! -f "$BUNDLE_PATH" ]; then
+            echo "Error: Bundle file not found at $BUNDLE_PATH"
             exit 1
           fi
-          echo "Bundle file exists: $(ls -lh www/community/octopus_energy_es/octopus-consumption-card.bundle.js)"
-
-      - name: Copy bundle to root for HACS
-        if: steps.check_last_commit.outputs.skip == 'false'
-        run: |
-          cp www/community/octopus_energy_es/octopus-consumption-card.bundle.js octopus-consumption-card.bundle.js
-          echo "Copied bundle to root for HACS compatibility"
+          
+          # Count bundle files in www directory (should be exactly 1)
+          BUNDLE_COUNT=$(find www -name "*.bundle.js" -type f | wc -l)
+          if [ "$BUNDLE_COUNT" -ne 1 ]; then
+            echo "Error: Expected exactly 1 bundle file, found $BUNDLE_COUNT"
+            find www -name "*.bundle.js" -type f
+            exit 1
+          fi
+          
+          echo "✓ Bundle file exists and is unique: $BUNDLE_PATH"
+          echo "Bundle size: $(ls -lh $BUNDLE_PATH | awk '{print $5}')"
 
       - name: Commit version update and bundle
         if: steps.check_last_commit.outputs.skip == 'false'
@@ -125,7 +130,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add package.json src/octopus-consumption-card.ts
-          git add -f www/community/octopus_energy_es/octopus-consumption-card.bundle.js octopus-consumption-card.bundle.js
+          git add -f www/community/octopus_energy_es/octopus-consumption-card.bundle.js
           git commit -m "Bump version to ${{ steps.calculate_version.outputs.new_version }} [skip ci]" || echo "No changes to commit"
           git push || echo "Nothing to push"
 
@@ -225,7 +230,7 @@ jobs:
             ---
             *This release was automatically created after successful validation.*
           files: |
-            octopus-consumption-card.bundle.js
+            www/community/octopus_energy_es/octopus-consumption-card.bundle.js
           draft: false
           prerelease: false
 

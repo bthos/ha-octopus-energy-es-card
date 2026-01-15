@@ -21,14 +21,6 @@ import { OctopusConsumptionCardEditor } from "./octopus-consumption-card-editor"
 interface HomeAssistant {
   states: Record<string, any>;
   callService: (domain: string, service: string, serviceData?: Record<string, any>) => Promise<any>;
-  callWS: <T = any>(message: {
-    type: string;
-    domain?: string;
-    service?: string;
-    service_data?: Record<string, any>;
-    return_response?: boolean;
-    [key: string]: any;
-  }) => Promise<T>;
   language?: string;
   [key: string]: any;
 }
@@ -393,8 +385,27 @@ export class OctopusConsumptionCard extends LitElement {
     serviceData?: Record<string, any>
   ): Promise<T> {
     try {
+      // Ensure we're not passing return_response - explicitly exclude it
+      const cleanServiceData = { ...serviceData };
+      if (cleanServiceData && 'return_response' in cleanServiceData) {
+        delete cleanServiceData.return_response;
+      }
+      
+      // Log what we're calling
+      console.log(
+        '%c  Calling service: %c' + domain + '.' + service,
+        'color: #666; font-size: 11px;',
+        'color: #999; font-size: 11px; font-family: monospace;'
+      );
+      console.log(
+        '%c  Service data: %c' + JSON.stringify(cleanServiceData, null, 2),
+        'color: #666; font-size: 11px;',
+        'color: #999; font-size: 11px; font-family: monospace;'
+      );
+      
       // Use callService directly - some services return data through the promise
-      const serviceCall = this.hass.callService(domain, service, serviceData);
+      // Note: callService should NOT automatically add return_response
+      const serviceCall = this.hass.callService(domain, service, cleanServiceData);
       const timeout = this._createTimeoutPromise(this.SERVICE_TIMEOUT);
       const result = await Promise.race([serviceCall, timeout]);
       
@@ -426,7 +437,13 @@ export class OctopusConsumptionCard extends LitElement {
         // Handle validation errors
         if ((error as any).code === 'service_validation_error') {
           const errorObj = error as any;
-          const message = errorObj.message || errorObj.translation_key || 'Service validation error';
+          let message = errorObj.message || errorObj.translation_key || 'Service validation error';
+          
+          // Provide user-friendly message for return_response error
+          if (message.includes('return_response')) {
+            message = "The Octopus Energy España integration service does not support response data. This is a limitation of the integration. Please update the integration to the latest version, or contact the integration maintainer. The service may need to be updated to support response data properly.";
+          }
+          
           throw new Error(`Service validation error: ${message}`);
         }
         throw new Error(`Service call failed: ${domain}.${service} - ${error.message}`);
@@ -434,7 +451,13 @@ export class OctopusConsumptionCard extends LitElement {
       // Handle non-Error objects (like the validation error object)
       if (error && typeof error === 'object') {
         const errorObj = error as any;
-        const message = errorObj.message || errorObj.translation_key || 'Unknown service error';
+        let message = errorObj.message || errorObj.translation_key || 'Unknown service error';
+        
+        // Provide user-friendly message for return_response error
+        if (errorObj.code === 'service_validation_error' && message.includes('return_response')) {
+          message = "The Octopus Energy España integration service does not support response data. This is a limitation of the integration. Please update the integration to the latest version, or contact the integration maintainer. The service may need to be updated to support response data properly.";
+        }
+        
         throw new Error(`Service call failed: ${domain}.${service} - ${message}`);
       }
       throw error;
@@ -510,28 +533,38 @@ export class OctopusConsumptionCard extends LitElement {
           'color: #999; font-size: 11px; font-family: monospace;'
         );
         
-        // Handle different response formats
+        // Handle response format - callService returns the response directly
         if (rawResponse && typeof rawResponse === 'object') {
-          // If response has a 'response' field (from callWS), unwrap it
-          if ('response' in rawResponse) {
-            consumptionResult = rawResponse.response as FetchConsumptionResult;
-          } else {
-            // Assume the response is already in the expected format
-            consumptionResult = rawResponse as FetchConsumptionResult;
-          }
+          consumptionResult = rawResponse as FetchConsumptionResult;
         } else {
           consumptionResult = rawResponse as FetchConsumptionResult;
         }
       } catch (serviceError) {
         // Service call failed (timeout, service not found, etc.)
         let errorMsg: string;
+        let userFriendlyMsg: string;
+        
         if (serviceError instanceof Error) {
           errorMsg = serviceError.message;
+          userFriendlyMsg = errorMsg;
         } else if (serviceError && typeof serviceError === 'object') {
           const errorObj = serviceError as any;
           errorMsg = errorObj.message || errorObj.translation_key || JSON.stringify(serviceError);
+          
+          // Handle specific service validation errors
+          if (errorObj.code === 'service_validation_error') {
+            // Check if it's the return_response error
+            if (errorMsg.includes('return_response')) {
+              userFriendlyMsg = "The Octopus Energy España integration service does not support response data. This is a limitation of the integration. Please update the integration to the latest version, or contact the integration maintainer. The service may need to be updated to support response data properly.";
+            } else {
+              userFriendlyMsg = errorMsg || "Service validation error. Please check your configuration.";
+            }
+          } else {
+            userFriendlyMsg = errorMsg;
+          }
         } else {
           errorMsg = String(serviceError);
+          userFriendlyMsg = errorMsg;
         }
         
         console.error(
@@ -547,7 +580,8 @@ export class OctopusConsumptionCard extends LitElement {
           'color: #999; font-size: 11px; font-family: monospace;'
         );
         
-        throw serviceError;
+        // Throw a user-friendly error
+        throw new Error(userFriendlyMsg);
       }
 
       // Check if result indicates failure

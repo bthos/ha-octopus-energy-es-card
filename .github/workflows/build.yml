@@ -43,20 +43,30 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Verify bundle exists
-        run: test -f www/community/octopus_energy_es/octopus-consumption-card.bundle.js
-
-      - name: Copy bundle to root for HACS
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      - name: Verify bundle exists and is unique
         run: |
-          cp www/community/octopus_energy_es/octopus-consumption-card.bundle.js octopus-consumption-card.bundle.js
-          echo "Copied bundle to root for HACS compatibility"
+          BUNDLE_PATH="www/community/octopus_energy_es/octopus-consumption-card.bundle.js"
+          if [ ! -f "$BUNDLE_PATH" ]; then
+            echo "Error: Bundle file not found at $BUNDLE_PATH"
+            exit 1
+          fi
+          
+          # Count bundle files in www directory (should be exactly 1)
+          BUNDLE_COUNT=$(find www -name "*.bundle.js" -type f | wc -l)
+          if [ "$BUNDLE_COUNT" -ne 1 ]; then
+            echo "Error: Expected exactly 1 bundle file, found $BUNDLE_COUNT"
+            find www -name "*.bundle.js" -type f
+            exit 1
+          fi
+          
+          echo "✓ Bundle file exists and is unique: $BUNDLE_PATH"
+          echo "Bundle size: $(ls -lh $BUNDLE_PATH | awk '{print $5}')"
 
       - name: Commit bundle (main/master only)
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f www/community/octopus_energy_es/octopus-consumption-card.bundle.js octopus-consumption-card.bundle.js
+          git add -f www/community/octopus_energy_es/octopus-consumption-card.bundle.js
           git diff --staged --quiet || git commit -m "Build bundle [skip ci]" || echo "No bundle changes to commit"
           git push || echo "Nothing to push"

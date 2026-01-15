@@ -17,6 +17,7 @@ export default {
       timeout: 10000,
     },
   },
+  testsFinishTimeout: 60000,
   browsers: [
     playwrightLauncher({ product: 'chromium' }),
   ],

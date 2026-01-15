@@ -26,7 +26,7 @@ export function createMockHass(overrides: Partial<any> = {}): any {
 export function createMockConfig(overrides: Partial<any> = {}): any {
   return {
     type: 'custom:octopus-consumption-card',
-    entity: 'sensor.octopus_energy_es_test_entry_daily_consumption',
+    source_entry_id: 'test_entry_id',
     title: 'Test Card',
     show_comparison: true,
     default_period: 'week',
@@ -122,7 +122,7 @@ export async function waitForUpdate(element: any): Promise<void> {
 /**
  * Wait for async data loading to complete
  */
-export async function waitForDataLoad(element: any, timeout: number = 500): Promise<void> {
+export async function waitForDataLoad(element: any, timeout: number = 200): Promise<void> {
   // Wait for initial render
   await waitForUpdate(element);
   
@@ -173,20 +173,20 @@ export async function waitForDataLoad(element: any, timeout: number = 500): Prom
   await waitForUpdate(element);
   
   // Additional wait to ensure shadow DOM is ready
-  await new Promise(resolve => setTimeout(resolve, 100));
+  await new Promise(resolve => setTimeout(resolve, 50));
 }
 
 /**
  * Wait for element to be in a stable state (not loading)
  */
-export async function waitForStableState(element: any, maxAttempts: number = 20): Promise<void> {
+export async function waitForStableState(element: any, maxAttempts: number = 10): Promise<void> {
   // Wait for shadowRoot to be created
   for (let i = 0; i < maxAttempts; i++) {
     await waitForUpdate(element);
     if (element.shadowRoot) {
       break;
     }
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise(resolve => setTimeout(resolve, 20));
   }
   
   // Wait for loading to complete and component to be in stable state
@@ -202,7 +202,7 @@ export async function waitForStableState(element: any, maxAttempts: number = 20)
         break;
       }
     }
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, 50));
   }
 }
 

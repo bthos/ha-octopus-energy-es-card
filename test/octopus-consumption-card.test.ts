@@ -32,7 +32,7 @@ describe('OctopusConsumptionCard', () => {
       expect(el.hass).to.equal(hass);
     });
 
-    it('validates required entity', async () => {
+    it('validates required source_entry_id', async () => {
       const config = { type: 'custom:octopus-consumption-card' } as any;
       const hass = createMockHass();
       
@@ -52,11 +52,11 @@ describe('OctopusConsumptionCard', () => {
       
       const errorMessage = el.shadowRoot.querySelector('.error-message');
       expect(errorMessage).to.exist;
-      expect(errorMessage?.textContent).to.contain('Entity is required');
+      expect(errorMessage?.textContent).to.contain('source_entry_id is required');
     });
 
-    it('validates entity format', async () => {
-      const config = createMockConfig({ entity: 'sensor.invalid_entity' });
+    it('validates source_entry_id is provided', async () => {
+      const config = createMockConfig({ source_entry_id: undefined });
       const hass = createMockHass();
       
       const el = await fixture<OctopusConsumptionCard>(html`
@@ -75,18 +75,15 @@ describe('OctopusConsumptionCard', () => {
       
       const errorMessage = el.shadowRoot.querySelector('.error-message');
       expect(errorMessage).to.exist;
-      // Entity format validation passes (starts with "sensor."), but entity is not found
-      // So we check for either validation error or entity not found error
+      // Should show error about source_entry_id being required
       const errorText = errorMessage?.textContent || '';
-      expect(errorText).to.satisfy((text: string) => 
-        text.includes('Invalid entity format') || text.includes('not found')
-      );
+      expect(errorText).to.contain('source_entry_id is required');
     });
   });
 
   describe('Error Handling', () => {
-    it('shows error for missing entity', async () => {
-      const config = createMockConfig({ entity: 'sensor.octopus_energy_es_nonexistent_daily_consumption' });
+    it('shows error for missing source_entry_id', async () => {
+      const config = createMockConfig({ source_entry_id: undefined });
       const hass = createMockHass({ states: {} });
       
       const el = await fixture<OctopusConsumptionCard>(html`
@@ -119,42 +116,8 @@ describe('OctopusConsumptionCard', () => {
       expect(errorMessage).to.exist;
     });
 
-    it('shows error for invalid entry_id extraction', async () => {
-      const config = createMockConfig({ entity: 'sensor.octopus_energy_es_invalid' });
-      const hass = createMockHass({
-        states: {
-          'sensor.octopus_energy_es_invalid': {
-            state: 'unknown',
-            attributes: {},
-          },
-        },
-      });
-      
-      const el = await fixture<OctopusConsumptionCard>(html`
-        <octopus-consumption-card
-          .config=${config}
-          .hass=${hass}
-        ></octopus-consumption-card>
-      `);
-      
-      // Wait for async operations to complete
-      await waitForDataLoad(el, 800);
-      await waitForStableState(el);
-      await waitForUpdate(el);
-      
-      // Check that component rendered and has error state
-      expect(el.shadowRoot).to.exist;
-      if (!el.shadowRoot) return;
-      
-      const loading = el.shadowRoot.querySelector('.loading');
-      const errorMessage = el.shadowRoot.querySelector('.error-message');
-      
-      expect(loading).to.be.null;
-      expect(errorMessage).to.exist;
-    });
-
     it('displays error message with retry button', async () => {
-      const config = createMockConfig({ entity: 'sensor.octopus_energy_es_nonexistent_daily_consumption' });
+      const config = createMockConfig({ source_entry_id: undefined });
       const hass = createMockHass({ states: {} });
       
       const el = await fixture<OctopusConsumptionCard>(html`
@@ -186,12 +149,6 @@ describe('OctopusConsumptionCard', () => {
     it('handles service call failures gracefully', async () => {
       const config = createMockConfig();
       const hass = createMockHass({
-        states: {
-          [config.entity]: {
-            state: 'unknown',
-            attributes: { entry_id: 'test_entry' },
-          },
-        },
         callService: async () => ({
           success: false,
           error: 'Service unavailable',
@@ -227,12 +184,6 @@ describe('OctopusConsumptionCard', () => {
       const config = createMockConfig();
       const mockData = createMockConsumptionData();
       const hass = createMockHass({
-        states: {
-          [config.entity]: {
-            state: 'unknown',
-            attributes: { entry_id: 'test_entry' },
-          },
-        },
         callService: async () => ({
           success: true,
           consumption_data: mockData,
@@ -271,12 +222,6 @@ describe('OctopusConsumptionCard', () => {
     it('handles empty consumption data', async () => {
       const config = createMockConfig();
       const hass = createMockHass({
-        states: {
-          [config.entity]: {
-            state: 'unknown',
-            attributes: { entry_id: 'test_entry' },
-          },
-        },
         callService: async () => ({
           success: true,
           consumption_data: [],
@@ -316,12 +261,6 @@ describe('OctopusConsumptionCard', () => {
       });
       const mockComparison = createMockComparisonResult();
       const hass = createMockHass({
-        states: {
-          [config.entity]: {
-            state: 'unknown',
-            attributes: { entry_id: 'test_entry' },
-          },
-        },
         callService: async (domain: string, service: string) => {
           if (service === 'fetch_consumption') {
             return { success: true, consumption_data: createMockConsumptionData() };
@@ -369,12 +308,6 @@ describe('OctopusConsumptionCard', () => {
         tariff_entry_ids: ['entry_1', 'entry_2'],
       });
       const hass = createMockHass({
-        states: {
-          [config.entity]: {
-            state: 'unknown',
-            attributes: { entry_id: 'test_entry' },
-          },
-        },
         callService: async (domain: string, service: string) => {
           if (service === 'fetch_consumption') {
             return { success: true, consumption_data: createMockConsumptionData() };
@@ -420,12 +353,6 @@ describe('OctopusConsumptionCard', () => {
     it('sets default period from config', async () => {
       const config = createMockConfig({ default_period: 'day' });
       const hass = createMockHass({
-        states: {
-          [config.entity]: {
-            state: 'unknown',
-            attributes: { entry_id: 'test_entry' },
-          },
-        },
         callService: async () => ({
           success: true,
           consumption_data: createMockConsumptionData(),
@@ -472,12 +399,6 @@ describe('OctopusConsumptionCard', () => {
     it('navigates to previous period', async () => {
       const config = createMockConfig();
       const hass = createMockHass({
-        states: {
-          [config.entity]: {
-            state: 'unknown',
-            attributes: { entry_id: 'test_entry' },
-          },
-        },
         callService: async () => ({
           success: true,
           consumption_data: createMockConsumptionData(),
@@ -527,12 +448,6 @@ describe('OctopusConsumptionCard', () => {
     it('navigates to next period', async () => {
       const config = createMockConfig();
       const hass = createMockHass({
-        states: {
-          [config.entity]: {
-            state: 'unknown',
-            attributes: { entry_id: 'test_entry' },
-          },
-        },
         callService: async () => ({
           success: true,
           consumption_data: createMockConsumptionData(),

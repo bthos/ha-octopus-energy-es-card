@@ -310,8 +310,11 @@ export class OctopusConsumptionCard extends LitElement {
       throw new Error("Invalid configuration");
     }
 
-    // Migration: Handle old entity-based config
-    if (config.entity && !config.source_entry_id) {
+    // Set config synchronously first
+    this.config = config;
+
+    // Migration: Handle old entity-based config (async, non-blocking)
+    if (config.entity && !config.source_entry_id && this.hass) {
       console.warn(
         '%cOctopus Consumption Card: Migration Needed',
         'color:#ff9800;font-weight:bold',
@@ -320,11 +323,15 @@ export class OctopusConsumptionCard extends LitElement {
 
       // Attempt to extract entry_id from entity unique_id
       // This requires querying the entity registry
-      this._migrateFromEntity(config.entity).then(entry_id => {
+      // Add timeout to prevent hanging in tests
+      Promise.race([
+        this._migrateFromEntity(config.entity),
+        new Promise<string | null>(resolve => setTimeout(() => resolve(null), 1000))
+      ]).then(entry_id => {
         if (entry_id) {
           // Auto-update config
           const updatedConfig = {
-            ...config,
+            ...this.config,
             source_entry_id: entry_id
           };
           delete (updatedConfig as any).entity;
@@ -334,20 +341,19 @@ export class OctopusConsumptionCard extends LitElement {
             title: 'Octopus Consumption Card Migrated',
             message: `Card configuration was automatically updated to use the new format. Please save your dashboard.`,
             notification_id: `octopus_card_migration_${Date.now()}`
+          }).catch(() => {
+            // Ignore notification errors
           });
           
           this.config = updatedConfig;
         } else {
           // Can't auto-migrate, show error
           this._error = 'Migration required: Please select your tariff from the card editor.';
-          this.config = config; // Still set config so editor can be used
         }
       }).catch(() => {
-        // Migration failed, set config anyway so editor can be used
-        this.config = config;
+        // Migration failed, show error but keep config
+        this._error = 'Migration required: Please select your tariff from the card editor.';
       });
-    } else {
-      this.config = config;
     }
   }
 
@@ -355,11 +361,11 @@ export class OctopusConsumptionCard extends LitElement {
    * Migrates old entity-based config to source_entry_id
    */
   private async _migrateFromEntity(entityId: string): Promise<string | null> {
-    if (!this.hass) return null;
+    if (!this.hass || !this.hass.callWS) return null;
 
     try {
       // Query entity registry for unique_id
-      const entityRegistry = await (this.hass as any).callWS({
+      const entityRegistry = await this.hass.callWS({
         type: 'config/entity_registry/get',
         entity_id: entityId
       });

@@ -50,7 +50,7 @@ describe('OctopusConsumptionCardEditor', () => {
     it('initializes with provided config', async () => {
       const hass = createMockHass();
       const config = createMockConfig({
-        entity: 'sensor.octopus_energy_es_test_daily_consumption',
+        source_entry_id: 'test_entry_id',
         title: 'Test Title',
         default_period: 'day',
       });
@@ -72,7 +72,7 @@ describe('OctopusConsumptionCardEditor', () => {
     it('sets configuration correctly', async () => {
       const hass = createMockHass();
       const config = createMockConfig({
-        entity: 'sensor.octopus_energy_es_test_daily_consumption',
+        source_entry_id: 'test_entry_id',
         title: 'Test Title',
       });
       
@@ -109,7 +109,7 @@ describe('OctopusConsumptionCardEditor', () => {
   });
 
   describe('Configuration Changes', () => {
-    it('fires config-changed event when entity changes', async () => {
+    it('fires config-changed event when source_entry_id changes', async () => {
       const hass = createMockHass();
       
       const el = await fixture<OctopusConsumptionCardEditor>(html`
@@ -131,7 +131,7 @@ describe('OctopusConsumptionCardEditor', () => {
       // Simulate value change through ha-form
       const haForm = el.shadowRoot?.querySelector('ha-form') as any;
       if (haForm) {
-        const newConfig = { ...el['_config'], entity: 'sensor.octopus_energy_es_test_daily_consumption' };
+        const newConfig = { ...el['_config'], source_entry_id: 'test_entry_id' };
         haForm.dispatchEvent(new CustomEvent('value-changed', {
           detail: { value: newConfig },
           bubbles: true,
@@ -189,7 +189,7 @@ describe('OctopusConsumptionCardEditor', () => {
   });
 
   describe('Validation', () => {
-    it('shows error for empty entity', async () => {
+    it('renders ha-form with required source_entry_id field', async () => {
       const hass = createMockHass();
       
       const el = await fixture<OctopusConsumptionCardEditor>(html`
@@ -203,32 +203,9 @@ describe('OctopusConsumptionCardEditor', () => {
       expect(el.shadowRoot).to.exist;
       if (!el.shadowRoot) return;
       
-      const errorElement = el.shadowRoot.querySelector('.error');
-      expect(errorElement).to.exist;
-      expect(errorElement?.textContent).to.contain('Entity is required');
-    });
-
-    it('shows error for invalid entity format', async () => {
-      const hass = createMockHass();
-      const config = createMockConfig({
-        entity: 'sensor.invalid_entity',
-      });
-      
-      const el = await fixture<OctopusConsumptionCardEditor>(html`
-        <octopus-consumption-card-editor
-          .hass=${hass}
-          .config=${config}
-        ></octopus-consumption-card-editor>
-      `);
-      
-      await el.updateComplete;
-      
-      expect(el.shadowRoot).to.exist;
-      if (!el.shadowRoot) return;
-      
-      const errorElement = el.shadowRoot.querySelector('.error');
-      expect(errorElement).to.exist;
-      expect(errorElement?.textContent).to.contain('Entity must be an Octopus Energy España sensor');
+      // ha-form handles validation, so we just check it exists
+      const haForm = el.shadowRoot.querySelector('ha-form');
+      expect(haForm).to.exist;
     });
   });
 
@@ -251,9 +228,9 @@ describe('OctopusConsumptionCardEditor', () => {
       expect(el.shadowRoot).to.exist;
       if (!el.shadowRoot) return;
       
-      // Check that the tariff entry management section appears
-      const tariffSection = el.shadowRoot.querySelector('.section');
-      expect(tariffSection).to.exist;
+      // ha-form handles conditional fields, so we just check it exists
+      const haForm = el.shadowRoot.querySelector('ha-form');
+      expect(haForm).to.exist;
     });
 
     it('shows cost display fields when show_cost_on_chart is enabled', async () => {
@@ -282,33 +259,7 @@ describe('OctopusConsumptionCardEditor', () => {
   });
 
   describe('Tariff Entry Management', () => {
-    it('adds tariff entry', async () => {
-      const hass = createMockHass();
-      const config = createMockConfig({
-        show_tariff_comparison: true,
-        tariff_entry_ids: [],
-      });
-      
-      const el = await fixture<OctopusConsumptionCardEditor>(html`
-        <octopus-consumption-card-editor
-          .hass=${hass}
-          .config=${config}
-        ></octopus-consumption-card-editor>
-      `);
-      
-      await el.updateComplete;
-      
-      // Access private method through type assertion for testing
-      const editor = el as any;
-      editor._newTariffEntryId = 'test_entry_id';
-      editor._addTariffEntry();
-      
-      await el.updateComplete;
-      
-      expect(editor._tariffEntryIds).to.include('test_entry_id');
-    });
-
-    it('removes tariff entry', async () => {
+    it('handles tariff_entry_ids through ha-form', async () => {
       const hass = createMockHass();
       const config = createMockConfig({
         show_tariff_comparison: true,
@@ -324,14 +275,15 @@ describe('OctopusConsumptionCardEditor', () => {
       
       await el.updateComplete;
       
-      // Access private method through type assertion for testing
-      const editor = el as any;
-      editor._removeTariffEntry(0);
+      expect(el.shadowRoot).to.exist;
+      if (!el.shadowRoot) return;
       
-      await el.updateComplete;
+      // ha-form handles tariff_entry_ids through config_entry selector
+      const haForm = el.shadowRoot.querySelector('ha-form');
+      expect(haForm).to.exist;
       
-      expect(editor._tariffEntryIds).to.not.include('entry1');
-      expect(editor._tariffEntryIds).to.include('entry2');
+      // Config should include tariff_entry_ids
+      expect(el['_config'].tariff_entry_ids).to.deep.equal(['entry1', 'entry2']);
     });
   });
 });

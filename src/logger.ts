@@ -72,4 +72,43 @@ export class Logger {
       this.STYLES.errorValue
     );
   }
+
+  /**
+   * Start a collapsible group for service call logging
+   */
+  static groupServiceCall(domain: string, service: string): void {
+    console.groupCollapsed(
+      `%c🔧 Service Call: %c${domain}.${service}`,
+      this.STYLES.info,
+      this.STYLES.infoValue
+    );
+  }
+
+  /**
+   * End a collapsible group
+   */
+  static groupEnd(): void {
+    console.groupEnd();
+  }
+
+  /**
+   * Start a collapsible group for data loading
+   */
+  static groupDataLoad(entryId: string, period: string, dates: string): void {
+    console.groupCollapsed(
+      `%c📊 Loading Data: %cEntry: ${entryId} | Period: ${period} | ${dates}`,
+      this.STYLES.info,
+      this.STYLES.infoValue
+    );
+  }
+
+  /**
+   * Start a collapsible group for errors
+   */
+  static groupError(title: string): void {
+    console.groupCollapsed(
+      `%c❌ ${title}`,
+      this.STYLES.error
+    );
+  }
 }

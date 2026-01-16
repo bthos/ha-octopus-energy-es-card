@@ -573,6 +573,7 @@ export class OctopusConsumptionCard extends LitElement {
     serviceData?: Record<string, any>,
     returnResponse: boolean = true
   ): Promise<T> {
+    Logger.groupServiceCall(domain, service);
     try {
       Logger.serviceCall(domain, service, returnResponse);
       if (serviceData) {
@@ -596,9 +597,11 @@ export class OctopusConsumptionCard extends LitElement {
       }
       
       Logger.serviceResponse(result);
+      Logger.groupEnd();
       return result as T;
     } catch (error) {
       Logger.serviceError(error);
+      Logger.groupEnd();
       throw this._handleServiceError(error, domain, service);
     }
   }
@@ -651,13 +654,17 @@ export class OctopusConsumptionCard extends LitElement {
    */
   private _validateConsumptionResponse(result: any): void {
     if (!result || typeof result !== 'object') {
+      Logger.groupError('Invalid service response');
       Logger.error('✗ Invalid service response: ', 'expected object with success field');
+      Logger.groupEnd();
       throw new Error("Invalid response from service: expected object with success field");
     }
 
     if (!('success' in result)) {
+      Logger.groupError('Invalid service response format');
       Logger.error('✗ Invalid service response format: ', 'response does not contain success field');
       Logger.data('Received response', result);
+      Logger.groupEnd();
       throw new Error("Service returned unexpected response format. The service may not be returning data correctly. Please check the integration configuration and ensure the service supports returning response data.");
     }
   }
@@ -773,10 +780,8 @@ export class OctopusConsumptionCard extends LitElement {
       const { startDate, endDate } = this._getDateRange();
       this._validateDateRange(startDate, endDate);
 
-      Logger.info(
-        'ℹ Fetching consumption data',
-        `Entry ID: ${entryId} | Period: ${this._currentPeriod} | Dates: ${startDate.toISOString().split("T")[0]} → ${endDate.toISOString().split("T")[0]}`
-      );
+      const dateRange = `${startDate.toISOString().split("T")[0]} → ${endDate.toISOString().split("T")[0]}`;
+      Logger.groupDataLoad(entryId, this._currentPeriod, dateRange);
 
       const consumptionResult = await this._fetchConsumptionData(entryId, startDate, endDate);
       this._consumptionData = consumptionResult.consumption_data || [];
@@ -792,10 +797,14 @@ export class OctopusConsumptionCard extends LitElement {
       if (this.config.show_tariff_comparison && this.config.tariff_entry_ids?.length) {
         await this._fetchTariffComparison(entryId, startDate, endDate);
       }
+
+      Logger.groupEnd();
     } catch (error) {
+      Logger.groupError("Error loading data");
       this._error = error instanceof Error ? error.message : String(error);
       Logger.error("Error loading data: ", this._extractErrorMessage(error));
       Logger.data("Error details", error);
+      Logger.groupEnd();
     } finally {
       this._loading = false;
     }
@@ -839,7 +848,7 @@ export class OctopusConsumptionCard extends LitElement {
       );
       
       Logger.data('Raw Service Response (before processing)', rawResponse);
-      
+
       const consumptionResult = rawResponse as FetchConsumptionResult;
       this._validateConsumptionResponse(consumptionResult);
 
@@ -849,8 +858,10 @@ export class OctopusConsumptionCard extends LitElement {
 
       return consumptionResult;
     } catch (serviceError) {
+      Logger.groupError('Service call failed');
       Logger.error('✗ Service call failed: ', this._extractErrorMessage(serviceError));
       Logger.data('Full Error Object', serviceError);
+      Logger.groupEnd();
       throw this._createUserFriendlyError(serviceError);
     }
   }
@@ -867,15 +878,17 @@ export class OctopusConsumptionCard extends LitElement {
       Logger.warn('⚠ Service Warning: ', result.warning);
     }
     
+    Logger.groupError('Service returned error');
     Logger.error('✗ Service returned error: ', errorMsg);
     Logger.data('Requested Entry ID', entryId);
-    
+
     if (result.context) {
       Logger.data('Service Context', result.context);
       if (result.context.id && result.context.id !== entryId) {
         Logger.warn('⚠ Note: Service context shows different entry ID (', result.context.id + '). This may be informational.');
       }
     }
+    Logger.groupEnd();
     
     Logger.data('Full Response', {
       success: result.success,
@@ -915,12 +928,16 @@ export class OctopusConsumptionCard extends LitElement {
       } else {
         const errorMsg = comparisonResult.error || "Failed to compare tariffs";
         this._comparisonError = errorMsg;
+        Logger.groupError('Tariff comparison failed');
         Logger.warn('⚠ Tariff comparison failed: ', errorMsg);
+        Logger.groupEnd();
       }
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       this._comparisonError = `Tariff comparison error: ${errorMsg}`;
+      Logger.groupError('Tariff comparison error');
       Logger.warn('⚠ Tariff comparison error: ', errorMsg);
+      Logger.groupEnd();
       // Don't throw - allow consumption data to display even if comparison fails
     }
   }
@@ -1898,7 +1915,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
   
   // Branding header (keep styled for visual impact)
   console.groupCollapsed(
-    '%c⚡ OCTOPUS ENERGY ESPAÑA',
+    '%c⚡ Octopus Energy España',
     'background: linear-gradient(90deg, #e10090 0%, #c000a0 100%);' +
     'color: #fff;' +
     'padding: 4px 8px;' +

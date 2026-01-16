@@ -53,6 +53,16 @@ export const translations: Record<string, Translations> = {
     // Chart Type Options
     "editor.chart_type_line": "Line",
     "editor.chart_type_bar": "Bar",
+    "editor.chart_type_stacked_area": "Stacked Area",
+    
+    // Advanced Visualization Options
+    "editor.advanced_visualization": "Advanced Visualization",
+    "editor.show_period_distribution_label": "Show Period Distribution",
+    "editor.show_period_distribution_helper": "Show P1/P2/P3 consumption breakdown on chart",
+    "editor.show_moving_average_label": "Show Moving Average",
+    "editor.show_moving_average_helper": "Display trend line with moving average",
+    "editor.moving_average_days_label": "Moving Average Days",
+    "editor.moving_average_days_helper": "Number of days for moving average calculation (default: 7)",
     
     // Period Options
     "editor.period_day": "Day",
@@ -107,6 +117,16 @@ export const translations: Record<string, Translations> = {
     // Chart Type Options
     "editor.chart_type_line": "Línea",
     "editor.chart_type_bar": "Barras",
+    "editor.chart_type_stacked_area": "Área Apilada",
+    
+    // Advanced Visualization Options
+    "editor.advanced_visualization": "Visualización Avanzada",
+    "editor.show_period_distribution_label": "Mostrar Distribución por Períodos",
+    "editor.show_period_distribution_helper": "Mostrar desglose de consumo P1/P2/P3 en el gráfico",
+    "editor.show_moving_average_label": "Mostrar Media Móvil",
+    "editor.show_moving_average_helper": "Mostrar línea de tendencia con media móvil",
+    "editor.moving_average_days_label": "Días de Media Móvil",
+    "editor.moving_average_days_helper": "Número de días para el cálculo de la media móvil (predeterminado: 7)",
     
     // Period Options
     "editor.period_day": "Día",
@@ -161,6 +181,16 @@ export const translations: Record<string, Translations> = {
     // Chart Type Options
     "editor.chart_type_line": "Лінія",
     "editor.chart_type_bar": "Слупкі",
+    "editor.chart_type_stacked_area": "Стопачная дыяграма",
+    
+    // Advanced Visualization Options
+    "editor.advanced_visualization": "Пашыраная візуалізацыя",
+    "editor.show_period_distribution_label": "Паказаць размеркаванне па перыядах",
+    "editor.show_period_distribution_helper": "Паказаць разбіўку спажывання P1/P2/P3 на дыяграме",
+    "editor.show_moving_average_label": "Паказаць рухомае сярэдняе",
+    "editor.show_moving_average_helper": "Паказаць лінію трэнду з рухомым сярэднім",
+    "editor.moving_average_days_label": "Дні рухомага сярэдняга",
+    "editor.moving_average_days_helper": "Колькасць дзён для разліку рухомага сярэдняга (па змаўчанні: 7)",
     
     // Period Options
     "editor.period_day": "Дзень",

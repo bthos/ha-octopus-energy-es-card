@@ -33,13 +33,24 @@ When you sign up using the button below, **you'll receive 50€ credit** on your
 
 ## ✨ Features
 
-- **Consumption Visualization**: Display consumption data for day/week/month periods
-- **Period Navigation**: Navigate between periods with Previous/Next buttons
-- **Tariff Comparison**: Compare multiple tariffs side-by-side with cost breakdown
+### 📊 Visualization Options
+- **Multiple Chart Types**: Line chart, bar chart, and **stacked area chart** for period distribution
+- **Stacked Area Chart**: Visualize P1/P2/P3 consumption distribution over time with color-coded layers
+- **Moving Average**: Display trend lines with configurable moving average (2-30 days)
+- **Period Navigation**: Navigate between day/week/month periods with Previous/Next buttons
+
+### 💰 Tariff Analysis
+- **Tariff Comparison**: Compare multiple tariffs side-by-side with detailed cost breakdown
 - **Period Breakdown**: Visual breakdown of consumption by P1/P2/P3 periods for each tariff
-- **Cost Analysis**: Detailed cost breakdown including energy, power, management fees, and taxes
+- **Cost per kWh**: Shows actual cost per kWh for each tariff period (Peak/Flat/Valley)
+- **Cost Analysis**: Detailed breakdown including energy, power, management fees, and taxes
 - **Best Tariff Highlighting**: Automatically highlights the most economical tariff
 - **Savings Calculation**: Shows potential savings when switching to the best tariff
+
+### 📈 Advanced Analytics
+- **Consumption Summary**: At-a-glance view of period distribution with percentages
+- **Period Distribution**: See how your consumption splits across Peak (P1), Flat (P2), and Valley (P3) hours
+- **Cost Optimization Insights**: Identify which periods consume the most and cost the most
 
 ## 📦 Installation
 
@@ -128,7 +139,7 @@ source_entry_id: "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6"
 title: "Explora tu consumo"
 show_comparison: true
 default_period: "week"  # "day", "week", "month"
-chart_type: "line"  # "line", "bar"
+chart_type: "stacked-area"  # "line", "bar", "stacked-area"
 show_tariff_comparison: true
 tariff_entry_ids:
   - "6p5o4n3m-2l1k-0j9i-8h7g-6f5e4d3c2b1a"
@@ -136,6 +147,9 @@ tariff_entry_ids:
 show_cost_on_chart: true
 selected_tariff_for_cost: "6p5o4n3m-2l1k-0j9i-8h7g-6f5e4d3c2b1a"
 show_navigation: true
+show_period_distribution: true
+show_moving_average: true
+moving_average_days: 7
 consumption_sensor: "sensor.octopus_energy_es_daily_consumption"  # Optional override
 ```
 
@@ -147,12 +161,15 @@ consumption_sensor: "sensor.octopus_energy_es_daily_consumption"  # Optional ove
 | `title` | string | ❌ No | `"Consumption"` | Card title displayed at the top of the card |
 | `show_comparison` | boolean | ❌ No | `true` | Show period comparison section with summary statistics |
 | `default_period` | string | ❌ No | `"week"` | Default period to display: `"day"`, `"week"`, or `"month"` |
-| `chart_type` | string | ❌ No | `"line"` | Chart visualization type: `"line"` for line chart or `"bar"` for bar chart |
+| `chart_type` | string | ❌ No | `"line"` | Chart visualization type: `"line"` for line chart, `"bar"` for bar chart, or `"stacked-area"` for period distribution |
 | `show_tariff_comparison` | boolean | ❌ No | `false` | Enable tariff comparison section showing costs for multiple tariffs |
 | `tariff_entry_ids` | array | ❌ No | `[]` | List of additional tariff config entry IDs (UUIDs) to compare against the primary tariff (required if `show_tariff_comparison` is `true`) |
 | `show_cost_on_chart` | boolean | ❌ No | `false` | Display cost information on the consumption chart using a secondary axis |
 | `selected_tariff_for_cost` | string | ❌ No | - | Tariff config entry ID to use for cost display (required if `show_cost_on_chart` is `true`) |
 | `show_navigation` | boolean | ❌ No | `true` | Show Previous/Next navigation buttons to move between periods |
+| `show_period_distribution` | boolean | ❌ No | `false` | Show P1/P2/P3 consumption breakdown on chart (works with stacked-area chart type) |
+| `show_moving_average` | boolean | ❌ No | `false` | Display trend line with moving average calculation |
+| `moving_average_days` | number | ❌ No | `7` | Number of days for moving average calculation (2-30) |
 | `consumption_sensor` | string | ❌ No | - | Optional: Manually specify a consumption sensor entity ID to override integration's automatic data fetching |
 
 #### Configuration Notes
@@ -188,7 +205,43 @@ title: "My Consumption"
 default_period: "day"
 ```
 
-### Tariff Comparison
+### Stacked Area Chart (Period Distribution)
+
+Visualize how your consumption is distributed across P1 (Peak), P2 (Flat), and P3 (Valley) periods:
+
+```yaml
+type: custom:octopus-consumption-card
+source_entry_id: "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6"
+title: "Consumption by Period"
+chart_type: "stacked-area"
+show_tariff_comparison: true
+default_period: "week"
+```
+
+This chart helps you understand:
+- Which periods consume the most energy
+- Opportunities to shift consumption to cheaper periods (P3 Valley)
+- Daily patterns of consumption across different tariff periods
+
+### Consumption with Moving Average
+
+Track trends over time with a moving average line:
+
+```yaml
+type: custom:octopus-consumption-card
+source_entry_id: "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6"
+title: "Consumption Trends"
+show_moving_average: true
+moving_average_days: 7
+default_period: "month"
+```
+
+Perfect for:
+- Identifying consumption trends
+- Spotting seasonal variations
+- Monitoring energy-saving efforts
+
+### Tariff Comparison with Detailed Breakdown
 
 ```yaml
 type: custom:octopus-consumption-card
@@ -201,6 +254,12 @@ tariff_entry_ids:
 default_period: "month"
 ```
 
+Shows:
+- Cost per kWh for each period (P1/P2/P3)
+- Total cost breakdown by tariff
+- Consumption distribution summary
+- Potential savings with best tariff
+
 ### Cost Visualization
 
 ```yaml
@@ -209,8 +268,94 @@ source_entry_id: "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6"
 title: "Consumption & Cost"
 show_cost_on_chart: true
 selected_tariff_for_cost: "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6"
+show_moving_average: true
+moving_average_days: 7
 default_period: "week"
 ```
+
+### Complete Analysis Dashboard
+
+Combine all features for comprehensive insights:
+
+```yaml
+type: custom:octopus-consumption-card
+source_entry_id: "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6"
+title: "Energy Analysis"
+chart_type: "stacked-area"
+show_tariff_comparison: true
+tariff_entry_ids:
+  - "6p5o4n3m-2l1k-0j9i-8h7g-6f5e4d3c2b1a"
+  - "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6"
+show_period_distribution: true
+show_moving_average: true
+moving_average_days: 7
+default_period: "month"
+```
+
+## 📖 Understanding Your Energy Data
+
+### Spanish Tariff Periods Explained
+
+In Spain, electricity tariffs are typically divided into three periods (P1/P2/P3) with different pricing:
+
+- **P1 (Peak / Punta)** 🔴: Highest cost per kWh
+  - Weekdays: 10:00-14:00 and 18:00-22:00
+  - Most expensive - minimize usage during these hours
+
+- **P2 (Flat / Llano)** 🟠: Medium cost per kWh
+  - Weekdays: 08:00-10:00, 14:00-18:00, and 22:00-00:00
+  - Saturdays: 08:00-14:00 and 18:00-22:00
+  - Moderate pricing
+
+- **P3 (Valley / Valle)** 🟢: Lowest cost per kWh
+  - Weekdays: 00:00-08:00
+  - Saturdays: 00:00-08:00, 14:00-18:00, and 22:00-00:00
+  - Sundays and holidays: All day
+  - Most economical - shift consumption here when possible
+
+### Reading the Stacked Area Chart
+
+The stacked area chart shows how your consumption is distributed across these three periods:
+
+- **Green (P3)**: Your valley consumption - the cheapest hours
+- **Orange (P2)**: Your flat consumption - moderate pricing
+- **Red (P1)**: Your peak consumption - the most expensive
+
+**Optimization Tip**: If you see a lot of red (P1), consider:
+- Running dishwashers/washing machines during P3 (overnight or weekends)
+- Charging electric vehicles during P3 hours
+- Using timers for water heaters to heat during P3
+
+### Understanding Cost per kWh
+
+In the tariff comparison section, you'll see "€X.XXX/kWh" for each period:
+
+- This shows the actual average cost you're paying per unit of energy
+- Compare these across tariffs to understand which offers better rates for your usage pattern
+- If you consume mostly during P3 but have high P3 costs, consider switching tariffs
+
+### Moving Average Trends
+
+The moving average line helps identify patterns:
+
+- **Downward trend**: Your consumption is decreasing (good!)
+- **Upward trend**: Your consumption is increasing (investigate why)
+- **Flat trend**: Consistent consumption
+- **Spikes**: Look for unusual days - what caused the spike?
+
+### Example Scenario
+
+Let's say your comparison shows:
+- P1 (Peak): 136.6 kWh (32.6%) at €0.454/kWh = €61.97
+- P2 (Flat): 193.8 kWh (46.3%) at €0.240/kWh = €46.51
+- P3 (Valley): 108.4 kWh (25.9%) at €0.200/kWh = €21.68
+
+**Analysis**: Despite P1 being only 32.6% of consumption, it costs almost as much as the other two periods combined! 
+
+**Action**: Try shifting 50 kWh from P1 to P3:
+- New P1: 86.6 kWh at €0.454/kWh = €39.32 (save €22.65)
+- New P3: 158.4 kWh at €0.200/kWh = €31.68 (extra €10)
+- **Net savings**: €12.65 per period!
 
 ## 🔄 How It Works
 

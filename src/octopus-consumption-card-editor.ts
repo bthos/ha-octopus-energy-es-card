@@ -246,9 +246,10 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
           select: {
             mode: "dropdown",
             options: [
-              { value: "line", label: localize("editor.chart_type_line", this._language) },
-              { value: "bar", label: localize("editor.chart_type_bar", this._language) },
-              { value: "stacked-area", label: localize("editor.chart_type_stacked_area", this._language) },
+            { value: "line", label: localize("editor.chart_type_line", this._language) },
+            { value: "bar", label: localize("editor.chart_type_bar", this._language) },
+            { value: "stacked-area", label: localize("editor.chart_type_stacked_area", this._language) },
+            { value: "heat-calendar", label: localize("editor.chart_type_heat_calendar", this._language) },
             ],
           },
         },
@@ -281,6 +282,71 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
           number: {
             min: 2,
             max: 30,
+            mode: "box",
+          },
+        },
+      });
+    }
+
+    // Add heat calendar options
+    schema.push({
+      name: "show_heat_calendar",
+      selector: {
+        boolean: {},
+      },
+    });
+
+    if (this._config.show_heat_calendar) {
+      schema.push({
+        name: "heat_calendar_period",
+        selector: {
+          select: {
+            mode: "dropdown",
+            options: [
+              { value: "month", label: localize("editor.heat_calendar_period_month", this._language) },
+              { value: "year", label: localize("editor.heat_calendar_period_year", this._language) },
+            ],
+          },
+        },
+      });
+    }
+
+    // Add week comparison options
+    schema.push({
+      name: "show_week_comparison",
+      selector: {
+        boolean: {},
+      },
+    });
+
+    if (this._config.show_week_comparison) {
+      schema.push({
+        name: "week_comparison_count",
+        selector: {
+          number: {
+            min: 2,
+            max: 8,
+            mode: "box",
+          },
+        },
+      });
+    }
+
+    // Add cost trend options
+    schema.push({
+      name: "show_cost_trend",
+      selector: {
+        boolean: {},
+      },
+    });
+
+    if (this._config.show_cost_trend) {
+      schema.push({
+        name: "cost_moving_average_days",
+        selector: {
+          number: {
+            min: 2,
+            max: 90,
             mode: "box",
           },
         },
@@ -323,6 +389,13 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
           },
         });
       }
+
+      schema.push({
+        name: "show_tariff_chart",
+        selector: {
+          boolean: {},
+        },
+      });
     }
 
     // Optional sensor override

@@ -16,7 +16,7 @@ export interface OctopusConsumptionCardConfig {
   
   show_comparison?: boolean;
   default_period?: "day" | "week" | "month";
-  chart_type?: "line" | "bar" | "stacked-area";
+  chart_type?: "line" | "bar" | "stacked-area" | "heat-calendar";
   // Tariff comparison options
   show_tariff_comparison?: boolean;
   show_cost_on_chart?: boolean;
@@ -27,6 +27,17 @@ export interface OctopusConsumptionCardConfig {
   show_period_distribution?: boolean; // Show P1/P2/P3 breakdown on chart
   show_moving_average?: boolean; // Show moving average trend line
   moving_average_days?: number; // Days for moving average (default: 7)
+  // Heat calendar visualization
+  show_heat_calendar?: boolean; // Show heat calendar (heatmap) visualization
+  heat_calendar_period?: "month" | "year"; // Period for heat calendar
+  // Week comparison
+  show_week_comparison?: boolean; // Show week-over-week comparison
+  week_comparison_count?: number; // Number of weeks to compare (default: 2)
+  // Cost trend analysis
+  show_cost_trend?: boolean; // Show cost trend with moving average
+  cost_moving_average_days?: number; // Days for cost moving average (default: 30)
+  // Tariff comparison chart
+  show_tariff_chart?: boolean; // Show visual chart in tariff comparison section
 }
 
 export interface ConsumptionDataPoint {
@@ -115,4 +126,37 @@ export interface FetchConsumptionResult {
   error?: string;
   warning?: string;
   context?: Record<string, any>; // Additional context from service errors
+}
+
+export interface HeatCalendarDay {
+  date: string;
+  consumption: number;
+  cost: number;
+  dayOfWeek: number; // 0 = Sunday, 6 = Saturday
+  weekOfMonth?: number; // 0-based week index (for month view)
+  weekOfYear?: number; // 0-52, ISO week (for year view)
+  month?: number; // 0-11 (for year view grouping)
+  year?: number; // Full year (for filtering)
+  intensity: "low" | "medium" | "high";
+}
+
+export interface WeekComparisonData {
+  weeks: Array<{
+    weekStart: string;
+    weekEnd: string;
+    consumption: number;
+    cost: number;
+    periodBreakdown: {
+      p1_consumption: number;
+      p2_consumption: number;
+      p3_consumption: number;
+    };
+  }>;
+  comparisons: Array<{
+    weekIndex: number;
+    consumptionChange: number;
+    consumptionChangePercent: number;
+    costChange: number;
+    costChangePercent: number;
+  }>;
 }

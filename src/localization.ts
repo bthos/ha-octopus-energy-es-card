@@ -54,6 +54,7 @@ export const translations: Record<string, Translations> = {
     "editor.chart_type_line": "Line",
     "editor.chart_type_bar": "Bar",
     "editor.chart_type_stacked_area": "Stacked Area",
+    "editor.chart_type_heat_calendar": "Heat Calendar",
     
     // Advanced Visualization Options
     "editor.advanced_visualization": "Advanced Visualization",
@@ -68,6 +69,30 @@ export const translations: Record<string, Translations> = {
     "editor.period_day": "Day",
     "editor.period_week": "Week",
     "editor.period_month": "Month",
+    
+    // Heat Calendar Options
+    "editor.show_heat_calendar_label": "Show Heat Calendar",
+    "editor.show_heat_calendar_helper": "Display consumption heatmap calendar",
+    "editor.heat_calendar_period_label": "Heat Calendar Period",
+    "editor.heat_calendar_period_helper": "Time period for heat calendar display",
+    "editor.heat_calendar_period_month": "Month",
+    "editor.heat_calendar_period_year": "Year",
+    
+    // Week Comparison Options
+    "editor.show_week_comparison_label": "Show Week Comparison",
+    "editor.show_week_comparison_helper": "Compare consumption across consecutive weeks",
+    "editor.week_comparison_count_label": "Week Comparison Count",
+    "editor.week_comparison_count_helper": "Number of weeks to compare (default: 2)",
+    
+    // Cost Trend Options
+    "editor.show_cost_trend_label": "Show Cost Trend",
+    "editor.show_cost_trend_helper": "Display cost trend with moving average",
+    "editor.cost_moving_average_days_label": "Cost Moving Average Days",
+    "editor.cost_moving_average_days_helper": "Number of days for cost moving average (default: 30)",
+    
+    // Tariff Chart Options
+    "editor.show_tariff_chart_label": "Show Tariff Chart",
+    "editor.show_tariff_chart_helper": "Display visual chart in tariff comparison section",
     
     // Validation
     "editor.entity_required": "Entity is required",
@@ -118,6 +143,7 @@ export const translations: Record<string, Translations> = {
     "editor.chart_type_line": "Línea",
     "editor.chart_type_bar": "Barras",
     "editor.chart_type_stacked_area": "Área Apilada",
+    "editor.chart_type_heat_calendar": "Calendario de Calor",
     
     // Advanced Visualization Options
     "editor.advanced_visualization": "Visualización Avanzada",
@@ -132,6 +158,30 @@ export const translations: Record<string, Translations> = {
     "editor.period_day": "Día",
     "editor.period_week": "Semana",
     "editor.period_month": "Mes",
+    
+    // Heat Calendar Options
+    "editor.show_heat_calendar_label": "Mostrar Calendario de Calor",
+    "editor.show_heat_calendar_helper": "Mostrar mapa de calor de consumo",
+    "editor.heat_calendar_period_label": "Período del Calendario de Calor",
+    "editor.heat_calendar_period_helper": "Período de tiempo para el calendario de calor",
+    "editor.heat_calendar_period_month": "Mes",
+    "editor.heat_calendar_period_year": "Año",
+    
+    // Week Comparison Options
+    "editor.show_week_comparison_label": "Mostrar Comparación Semanal",
+    "editor.show_week_comparison_helper": "Comparar consumo entre semanas consecutivas",
+    "editor.week_comparison_count_label": "Número de Semanas a Comparar",
+    "editor.week_comparison_count_helper": "Número de semanas para comparar (predeterminado: 2)",
+    
+    // Cost Trend Options
+    "editor.show_cost_trend_label": "Mostrar Tendencia de Costes",
+    "editor.show_cost_trend_helper": "Mostrar tendencia de costes con media móvil",
+    "editor.cost_moving_average_days_label": "Días de Media Móvil de Costes",
+    "editor.cost_moving_average_days_helper": "Número de días para la media móvil de costes (predeterminado: 30)",
+    
+    // Tariff Chart Options
+    "editor.show_tariff_chart_label": "Mostrar Gráfico de Tarifas",
+    "editor.show_tariff_chart_helper": "Mostrar gráfico visual en la sección de comparación de tarifas",
     
     // Validation
     "editor.entity_required": "La entidad es requerida",
@@ -182,6 +232,7 @@ export const translations: Record<string, Translations> = {
     "editor.chart_type_line": "Лінія",
     "editor.chart_type_bar": "Слупкі",
     "editor.chart_type_stacked_area": "Стопачная дыяграма",
+    "editor.chart_type_heat_calendar": "Каляндар цяпла",
     
     // Advanced Visualization Options
     "editor.advanced_visualization": "Пашыраная візуалізацыя",
@@ -196,6 +247,30 @@ export const translations: Record<string, Translations> = {
     "editor.period_day": "Дзень",
     "editor.period_week": "Тыдзень",
     "editor.period_month": "Месяц",
+    
+    // Heat Calendar Options
+    "editor.show_heat_calendar_label": "Паказаць каляндар цяпла",
+    "editor.show_heat_calendar_helper": "Адлюстраваць карту цяпла спажывання",
+    "editor.heat_calendar_period_label": "Перыяд каляндара цяпла",
+    "editor.heat_calendar_period_helper": "Часавы перыяд для адлюстравання каляндара цяпла",
+    "editor.heat_calendar_period_month": "Месяц",
+    "editor.heat_calendar_period_year": "Год",
+    
+    // Week Comparison Options
+    "editor.show_week_comparison_label": "Паказаць параўнанне тыдняў",
+    "editor.show_week_comparison_helper": "Параўнаць спажыванне паміж паслядоўнымі тыднямі",
+    "editor.week_comparison_count_label": "Колькасць тыдняў для параўнання",
+    "editor.week_comparison_count_helper": "Колькасць тыдняў для параўнання (па змаўчанні: 2)",
+    
+    // Cost Trend Options
+    "editor.show_cost_trend_label": "Паказаць трэнд кошту",
+    "editor.show_cost_trend_helper": "Адлюстраваць трэнд кошту з рухомым сярэднім",
+    "editor.cost_moving_average_days_label": "Дні рухомага сярэдняга кошту",
+    "editor.cost_moving_average_days_helper": "Колькасць дзён для рухомага сярэдняга кошту (па змаўчанні: 30)",
+    
+    // Tariff Chart Options
+    "editor.show_tariff_chart_label": "Паказаць дыяграму тарыфаў",
+    "editor.show_tariff_chart_helper": "Адлюстраваць візуальную дыяграму ў раздзеле параўнання тарыфаў",
     
     // Validation
     "editor.entity_required": "Сутнасць абавязковая",

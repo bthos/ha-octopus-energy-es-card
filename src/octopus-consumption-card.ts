@@ -12,7 +12,7 @@ if (typeof LitElement !== 'undefined' && (LitElement as any).disableWarning) {
   (LitElement as any).disableWarning('change-in-update');
 }
 import { property, state } from "lit/decorators.js";
-import type { OctopusConsumptionCardConfig, ConsumptionDataPoint, ComparisonResult, FetchConsumptionResult, TariffComparisonResult, TariffCostBreakdown } from "./types";
+import type { OctopusConsumptionCardConfig, ConsumptionDataPoint, ComparisonResult, FetchConsumptionResult, TariffComparisonResult, TariffCostBreakdown, HeatCalendarDay, WeekComparisonData } from "./types";
 // Import editor to ensure it's included in the bundle and get the class
 import "./octopus-consumption-card-editor";
 import { OctopusConsumptionCardEditor } from "./octopus-consumption-card-editor";
@@ -49,6 +49,7 @@ export class OctopusConsumptionCard extends LitElement {
   @state() private _comparisonError: string | null = null;
   @state() private _currentPeriod: "day" | "week" | "month" = "week";
   @state() private _currentDate: Date = new Date();
+  @state() private _weekComparisonData: WeekComparisonData | null = null;
 
   // Constants
   private static readonly SERVICE_TIMEOUT = 10000;
@@ -99,7 +100,7 @@ export class OctopusConsumptionCard extends LitElement {
     }
 
     .chart-container {
-      margin-bottom: 24px;
+      margin: 0;
       min-height: 300px;
       position: relative;
       width: 100%;
@@ -183,6 +184,9 @@ export class OctopusConsumptionCard extends LitElement {
     .chart-text {
       fill: var(--secondary-text-color, #888);
       font-size: 12px;
+      font-family: var(--mdc-typography-body1-font-family, Roboto, sans-serif);
+      pointer-events: none;
+      user-select: none;
     }
 
     .chart-grid-line {
@@ -469,6 +473,271 @@ export class OctopusConsumptionCard extends LitElement {
     .summary-total .summary-value,
     .summary-total .summary-percentage {
       color: var(--text-primary-color);
+    }
+
+    .heat-calendar-container {
+      margin-top: 24px;
+    }
+
+    .heat-calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-top: 16px;
+    }
+
+    .heat-calendar-day {
+      aspect-ratio: 1;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      cursor: pointer;
+      position: relative;
+      border: 1px solid var(--divider-color);
+      transition: transform 0.2s ease;
+    }
+
+    .heat-calendar-day:hover {
+      transform: scale(1.1);
+      z-index: 10;
+    }
+
+    .heat-calendar-day.intensity-low {
+      background: var(--info-color, #2196f3);
+      opacity: 0.4;
+    }
+
+    .heat-calendar-day.intensity-medium {
+      background: var(--success-color, #4caf50);
+      opacity: 0.6;
+    }
+
+    .heat-calendar-day.intensity-high {
+      background: var(--error-color, #f44336);
+      opacity: 0.8;
+    }
+
+    .heat-calendar-day.empty {
+      background: var(--card-background-color);
+      opacity: 0.3;
+      cursor: default;
+    }
+
+    .heat-calendar-legend {
+      display: flex;
+      gap: 16px;
+      margin-top: 16px;
+      font-size: 12px;
+      align-items: center;
+    }
+
+    .heat-calendar-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .heat-calendar-legend-color {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      border: 1px solid var(--divider-color);
+    }
+
+    .heat-calendar-year-view {
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    .heat-calendar-year-view .heat-calendar-grid {
+      max-height: 550px;
+      overflow-y: auto;
+    }
+
+    .heat-calendar-grid-year .heat-calendar-day {
+      width: 12px;
+      height: 12px;
+      min-width: 12px;
+      min-height: 12px;
+      font-size: 9px;
+      padding: 0;
+    }
+
+    .heat-calendar-grid-year .heat-calendar-day.empty {
+      width: 12px;
+      height: 12px;
+      min-width: 12px;
+      min-height: 12px;
+    }
+
+    .heat-calendar-month-label {
+      grid-column: 1 / -1;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--secondary-text-color);
+      padding: 4px 0;
+      text-align: left;
+      border-bottom: 1px solid var(--divider-color);
+      margin-bottom: 2px;
+    }
+
+    .heat-calendar-summary {
+      display: flex;
+      gap: 16px;
+      margin-top: 8px;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: var(--secondary-text-color);
+      flex-wrap: wrap;
+    }
+
+    .heat-calendar-summary span {
+      padding: 4px 8px;
+      background: var(--secondary-background-color);
+      border-radius: 4px;
+    }
+
+    .week-comparison-section {
+      margin-top: 24px;
+    }
+
+    .week-comparison-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .week-card {
+      padding: 16px;
+      border: 1px solid var(--divider-color);
+      border-radius: 8px;
+      background: var(--card-background-color);
+    }
+
+    .week-card-header {
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: 12px;
+      color: var(--primary-text-color);
+    }
+
+    .week-card-metrics {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .week-metric {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .week-metric-label {
+      font-size: 14px;
+      color: var(--secondary-text-color);
+    }
+
+    .week-metric-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--primary-text-color);
+    }
+
+    .week-change {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      margin-left: 8px;
+    }
+
+    .week-change.positive {
+      background: var(--error-color);
+      color: var(--text-primary-color);
+    }
+
+    .week-change.negative {
+      background: var(--success-color);
+      color: var(--text-primary-color);
+    }
+
+    .tariff-chart-container {
+      margin-top: 16px;
+    }
+
+    .tariff-chart-bars {
+      display: flex;
+      gap: 8px;
+      height: 200px;
+      align-items: flex-end;
+      margin-top: 16px;
+    }
+
+    .tariff-chart-bar-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .tariff-chart-bar-label {
+      text-align: center;
+      font-size: 12px;
+      color: var(--secondary-text-color);
+      margin-bottom: 4px;
+    }
+
+    .tariff-chart-bar {
+      border-radius: 4px 4px 0 0;
+      min-height: 4px;
+      position: relative;
+      transition: opacity 0.2s ease;
+    }
+
+    .tariff-chart-bar:hover {
+      opacity: 0.8;
+    }
+
+    .tariff-chart-bar.consumption {
+      background: var(--primary-color, #03a9f4);
+    }
+
+    .tariff-chart-bar.cost {
+      background: var(--accent-color, #ff9800);
+    }
+
+    .tariff-chart-bar.p1 {
+      background: var(--error-color, #f44336);
+    }
+
+    .tariff-chart-bar.p2 {
+      background: var(--warning-color, #ff9800);
+    }
+
+    .tariff-chart-bar.p3 {
+      background: var(--success-color, #4caf50);
+    }
+
+    .tooltip {
+      position: absolute;
+      background: var(--card-background-color);
+      border: 1px solid var(--divider-color);
+      border-radius: 4px;
+      padding: 8px;
+      font-size: 12px;
+      pointer-events: none;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      display: none;
+    }
+
+    .tooltip.visible {
+      display: block;
     }
   `;
 
@@ -798,6 +1067,13 @@ export class OctopusConsumptionCard extends LitElement {
         await this._fetchTariffComparison(entryId, startDate, endDate);
       }
 
+      // Calculate week comparison if enabled
+      if (this.config.show_week_comparison) {
+        this._weekComparisonData = this._calculateWeekComparison();
+      } else {
+        this._weekComparisonData = null;
+      }
+
       Logger.groupEnd();
     } catch (error) {
       Logger.groupError("Error loading data");
@@ -832,7 +1108,12 @@ export class OctopusConsumptionCard extends LitElement {
     startDate: Date,
     endDate: Date
   ): Promise<FetchConsumptionResult> {
-    const granularity = this._currentPeriod === "day" ? "hourly" : this._currentPeriod === "week" ? "hourly" : "daily";
+    // Determine granularity based on period and chart type
+    const isHeatCalendarYear = this.config.chart_type === "heat-calendar" && 
+                               this.config.heat_calendar_period === "year";
+    const granularity = isHeatCalendarYear 
+      ? "daily" // Year view always needs daily data
+      : (this._currentPeriod === "day" ? "hourly" : this._currentPeriod === "week" ? "hourly" : "daily");
     
     let rawResponse: any;
     try {
@@ -943,6 +1224,28 @@ export class OctopusConsumptionCard extends LitElement {
   }
 
   private _getDateRange(): { startDate: Date; endDate: Date } {
+    // Check if heat calendar year view is requested
+    const isHeatCalendarYear = this.config.chart_type === "heat-calendar" && 
+                               this.config.heat_calendar_period === "year";
+    
+    if (isHeatCalendarYear) {
+      // For year view, fetch full year of data
+      const selectedYear = this._currentDate.getFullYear();
+      const now = new Date();
+      const isCurrentYear = selectedYear === now.getFullYear();
+      
+      const startDate = new Date(selectedYear, 0, 1); // January 1st
+      startDate.setHours(0, 0, 0, 0);
+      
+      const endDate = isCurrentYear 
+        ? new Date(now) // Today if current year
+        : new Date(selectedYear, 11, 31); // December 31st if past year
+      endDate.setHours(23, 59, 59, 999);
+      
+      return { startDate, endDate };
+    }
+    
+    // Standard period-based date range
     const endDate = new Date(this._currentDate);
     endDate.setHours(23, 59, 59, 999);
     
@@ -963,6 +1266,18 @@ export class OctopusConsumptionCard extends LitElement {
 
   private _navigatePeriod(direction: "prev" | "next"): void {
     const change = direction === "prev" ? -1 : 1;
+    
+    // Check if heat calendar year view navigation is needed
+    const isHeatCalendarYear = this.config.chart_type === "heat-calendar" && 
+                               this.config.heat_calendar_period === "year";
+    
+    if (isHeatCalendarYear) {
+      // Navigate by year for heat calendar year view
+      this._currentDate.setFullYear(this._currentDate.getFullYear() + change);
+      this._currentDate = new Date(this._currentDate);
+      this._loadData();
+      return;
+    }
     
     if (this._currentPeriod === "day") {
       this._currentDate.setDate(this._currentDate.getDate() + change);
@@ -1088,6 +1403,534 @@ export class OctopusConsumptionCard extends LitElement {
     return result;
   }
 
+  /**
+   * Calculate moving average for cost data
+   * @param costData - Array of cost values
+   * @param windowSize - Number of periods for moving average (default: 30)
+   * @returns Array of moving average values (same length as input, nulls for insufficient data)
+   */
+  private _calculateCostMovingAverage(costData: number[], windowSize: number = 30): (number | null)[] {
+    return this._calculateMovingAverage(costData, windowSize);
+  }
+
+  /**
+   * Render heat calendar (heatmap) visualization
+   */
+  private _renderHeatCalendar(): TemplateResult {
+    const calendarData = this._getHeatCalendarData();
+    const period = this.config.heat_calendar_period || "month";
+    const isYearView = period === "year";
+    
+    if (calendarData.length === 0) {
+      return html`
+        <div class="error-message">
+          <div class="error-title">Heat Calendar Unavailable</div>
+          <div class="error-details">
+            Daily breakdown data is not available. Please ensure tariff comparison is enabled or daily data is available from the service.
+          </div>
+        </div>
+      `;
+    }
+
+    // Group data by week and day
+    const calendarMap = new Map<number, Map<number, HeatCalendarDay>>();
+    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    
+    // Track month changes for year view
+    const monthChanges = new Map<number, number>(); // week -> month
+    
+    for (const day of calendarData) {
+      const weekIndex = isYearView ? (day.weekOfYear ?? 0) : (day.weekOfMonth ?? 0);
+      
+      if (!calendarMap.has(weekIndex)) {
+        calendarMap.set(weekIndex, new Map());
+      }
+      calendarMap.get(weekIndex)!.set(day.dayOfWeek, day);
+      
+      // Track month changes for year view
+      if (isYearView && day.month !== undefined) {
+        if (!monthChanges.has(weekIndex) || (monthChanges.get(weekIndex)! !== day.month)) {
+          monthChanges.set(weekIndex, day.month);
+        }
+      }
+    }
+
+    let maxWeek: number;
+    let minWeek: number;
+    
+    if (isYearView) {
+      // For year view, generate all 53 weeks (ISO weeks can go up to 53)
+      // ISO weeks can span year boundaries, so we need to normalize
+      // Find the actual range from data
+      const dataWeeks = Array.from(calendarMap.keys());
+      if (dataWeeks.length > 0) {
+        minWeek = Math.min(...dataWeeks);
+        maxWeek = Math.max(...dataWeeks);
+        // Ensure we cover at least 52 weeks for a full year
+        if (maxWeek - minWeek < 51) {
+          maxWeek = minWeek + 52;
+        }
+      } else {
+        minWeek = 0;
+        maxWeek = 52;
+      }
+    } else {
+      // For month view, use actual data range
+      maxWeek = Math.max(...Array.from(calendarMap.keys()), 0);
+      minWeek = Math.min(...Array.from(calendarMap.keys()), 0);
+    }
+    
+    const weeks: Array<Array<HeatCalendarDay | null>> = [];
+    
+    // Generate all weeks from min to max
+    for (let week = minWeek; week <= maxWeek; week++) {
+      const weekDays: Array<HeatCalendarDay | null> = [];
+      for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
+        const day = calendarMap.get(week)?.get(dayOfWeek) || null;
+        weekDays.push(day);
+      }
+      weeks.push(weekDays);
+    }
+
+    // Calculate year summary for year view
+    let yearSummary = null;
+    if (isYearView && calendarData.length > 0) {
+      const totalConsumption = calendarData.reduce((sum, day) => sum + day.consumption, 0);
+      const totalCost = calendarData.reduce((sum, day) => sum + day.cost, 0);
+      const avgDailyConsumption = totalConsumption / calendarData.length;
+      yearSummary = {
+        totalConsumption,
+        totalCost,
+        avgDailyConsumption,
+        year: calendarData[0]?.year || this._currentDate.getFullYear(),
+      };
+    }
+
+    return html`
+      <div class="heat-calendar-container ${isYearView ? 'heat-calendar-year-view' : ''}">
+        <div class="comparison-title">
+          Consumption Heat Calendar
+          ${isYearView && yearSummary ? html` - ${yearSummary.year}` : ''}
+        </div>
+        ${isYearView && yearSummary ? html`
+          <div class="heat-calendar-summary">
+            <span>Total: ${yearSummary.totalConsumption.toFixed(1)} kWh</span>
+            <span>Avg/Day: ${yearSummary.avgDailyConsumption.toFixed(2)} kWh</span>
+            <span>Cost: €${yearSummary.totalCost.toFixed(2)}</span>
+          </div>
+        ` : ''}
+        <div class="heat-calendar-grid ${isYearView ? 'heat-calendar-grid-year' : ''}">
+          ${dayNames.map(day => html`
+            <div class="heat-calendar-day empty" style="font-weight: 600;">${day}</div>
+          `)}
+          ${weeks.map((week, weekIndex) => {
+            const weekNum = minWeek + weekIndex;
+            const monthChange = monthChanges.get(weekNum);
+            const showMonthLabel = isYearView && monthChange !== undefined && 
+              (weekIndex === 0 || monthChanges.get(minWeek + weekIndex - 1) !== monthChange);
+            
+            return html`
+              ${showMonthLabel ? html`
+                <div class="heat-calendar-month-label" style="grid-column: 1 / -1;">
+                  ${monthNames[monthChange!]}
+                </div>
+              ` : ''}
+              ${week.map(day => {
+                if (!day) {
+                  return html`<div class="heat-calendar-day empty"></div>`;
+                }
+                const date = new Date(day.date);
+                const dayNum = date.getDate();
+                const monthName = monthNames[date.getMonth()];
+                const tooltip = isYearView 
+                  ? `${monthName} ${dayNum}, ${day.year}: ${day.consumption.toFixed(2)} kWh, €${day.cost.toFixed(2)}`
+                  : `${day.date}: ${day.consumption.toFixed(2)} kWh, €${day.cost.toFixed(2)}`;
+                
+                return html`
+                  <div 
+                    class="heat-calendar-day intensity-${day.intensity}"
+                    title="${tooltip}"
+                  >
+                    ${isYearView ? '' : dayNum}
+                  </div>
+                `;
+              })}
+            `;
+          })}
+        </div>
+        <div class="heat-calendar-legend">
+          <div class="heat-calendar-legend-item">
+            <div class="heat-calendar-legend-color intensity-low"></div>
+            <span>Low</span>
+          </div>
+          <div class="heat-calendar-legend-item">
+            <div class="heat-calendar-legend-color intensity-medium"></div>
+            <span>Medium</span>
+          </div>
+          <div class="heat-calendar-legend-item">
+            <div class="heat-calendar-legend-color intensity-high"></div>
+            <span>High</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Render week-over-week comparison
+   */
+  private _renderWeekComparison(): TemplateResult {
+    if (!this._weekComparisonData || this._weekComparisonData.weeks.length === 0) {
+      return html`<div class="loading">No week comparison data available</div>`;
+    }
+
+    const { weeks, comparisons } = this._weekComparisonData;
+
+    return html`
+      <div class="week-comparison-section">
+        <div class="comparison-title">Week-over-Week Comparison</div>
+        <div class="week-comparison-grid">
+          ${weeks.map((week, index) => {
+            const comparison = comparisons.find(c => c.weekIndex === index);
+            return html`
+              <div class="week-card">
+                <div class="week-card-header">
+                  Week ${weeks.length - index}
+                  ${comparison ? html`
+                    <span class="week-change ${comparison.consumptionChangePercent >= 0 ? 'positive' : 'negative'}">
+                      ${comparison.consumptionChangePercent >= 0 ? '↑' : '↓'} ${Math.abs(comparison.consumptionChangePercent).toFixed(1)}%
+                    </span>
+                  ` : ''}
+                </div>
+                <div class="week-card-metrics">
+                  <div class="week-metric">
+                    <span class="week-metric-label">Consumption:</span>
+                    <span class="week-metric-value">${week.consumption.toFixed(1)} kWh</span>
+                  </div>
+                  <div class="week-metric">
+                    <span class="week-metric-label">Cost:</span>
+                    <span class="week-metric-value">€${week.cost.toFixed(2)}</span>
+                  </div>
+                  <div class="week-metric">
+                    <span class="week-metric-label">Period:</span>
+                    <span class="week-metric-value">${week.weekStart} - ${week.weekEnd}</span>
+                  </div>
+                </div>
+              </div>
+            `;
+          })}
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Render tariff comparison chart with grouped bars
+   */
+  private _renderTariffComparisonChart(): TemplateResult {
+    if (!this._comparisonResult || !this._comparisonResult.tariffs || this._comparisonResult.tariffs.length === 0) {
+      return html``;
+    }
+
+    const tariffs = this._comparisonResult.tariffs;
+    
+    // Find max values for scaling
+    let maxConsumption = 0;
+    let maxCost = 0;
+    
+    for (const tariff of tariffs) {
+      const breakdown = tariff.period_breakdown;
+      maxConsumption = Math.max(maxConsumption, breakdown.p1_consumption, breakdown.p2_consumption, breakdown.p3_consumption);
+      
+      // Calculate cost per period
+      const p1Cost = breakdown.p1_consumption > 0 ? 
+        (tariff.hourly_breakdown?.filter(h => h.period === 'P1').reduce((sum, h) => sum + h.cost, 0) || 0) : 0;
+      const p2Cost = breakdown.p2_consumption > 0 ? 
+        (tariff.hourly_breakdown?.filter(h => h.period === 'P2').reduce((sum, h) => sum + h.cost, 0) || 0) : 0;
+      const p3Cost = breakdown.p3_consumption > 0 ? 
+        (tariff.hourly_breakdown?.filter(h => h.period === 'P3').reduce((sum, h) => sum + h.cost, 0) || 0) : 0;
+      
+      maxCost = Math.max(maxCost, p1Cost, p2Cost, p3Cost);
+    }
+
+    return html`
+      <div class="tariff-chart-container">
+        <div class="period-breakdown-title">Consumption & Cost by Period</div>
+        ${tariffs.map(tariff => {
+          const breakdown = tariff.period_breakdown;
+          
+          // Calculate costs per period
+          const p1Cost = breakdown.p1_consumption > 0 ? 
+            (tariff.hourly_breakdown?.filter(h => h.period === 'P1').reduce((sum, h) => sum + h.cost, 0) || 0) : 0;
+          const p2Cost = breakdown.p2_consumption > 0 ? 
+            (tariff.hourly_breakdown?.filter(h => h.period === 'P2').reduce((sum, h) => sum + h.cost, 0) || 0) : 0;
+          const p3Cost = breakdown.p3_consumption > 0 ? 
+            (tariff.hourly_breakdown?.filter(h => h.period === 'P3').reduce((sum, h) => sum + h.cost, 0) || 0) : 0;
+          
+          const p1CostPerKwh = breakdown.p1_consumption > 0 ? p1Cost / breakdown.p1_consumption : 0;
+          const p2CostPerKwh = breakdown.p2_consumption > 0 ? p2Cost / breakdown.p2_consumption : 0;
+          const p3CostPerKwh = breakdown.p3_consumption > 0 ? p3Cost / breakdown.p3_consumption : 0;
+
+          return html`
+            <div style="margin-top: 16px;">
+              <div class="tariff-name" style="margin-bottom: 8px;">${tariff.name}</div>
+              <div class="tariff-chart-bars">
+                <div class="tariff-chart-bar-group">
+                  <div class="tariff-chart-bar-label">P1</div>
+                  <div 
+                    class="tariff-chart-bar p1" 
+                    style="height: ${maxConsumption > 0 ? (breakdown.p1_consumption / maxConsumption) * 100 : 0}%"
+                    title="P1: ${breakdown.p1_consumption.toFixed(2)} kWh, €${p1Cost.toFixed(2)} (€${p1CostPerKwh.toFixed(3)}/kWh)"
+                  ></div>
+                </div>
+                <div class="tariff-chart-bar-group">
+                  <div class="tariff-chart-bar-label">P2</div>
+                  <div 
+                    class="tariff-chart-bar p2" 
+                    style="height: ${maxConsumption > 0 ? (breakdown.p2_consumption / maxConsumption) * 100 : 0}%"
+                    title="P2: ${breakdown.p2_consumption.toFixed(2)} kWh, €${p2Cost.toFixed(2)} (€${p2CostPerKwh.toFixed(3)}/kWh)"
+                  ></div>
+                </div>
+                <div class="tariff-chart-bar-group">
+                  <div class="tariff-chart-bar-label">P3</div>
+                  <div 
+                    class="tariff-chart-bar p3" 
+                    style="height: ${maxConsumption > 0 ? (breakdown.p3_consumption / maxConsumption) * 100 : 0}%"
+                    title="P3: ${breakdown.p3_consumption.toFixed(2)} kWh, €${p3Cost.toFixed(2)} (€${p3CostPerKwh.toFixed(3)}/kWh)"
+                  ></div>
+                </div>
+              </div>
+            </div>
+          `;
+        })}
+      </div>
+    `;
+  }
+
+  /**
+   * Calculate ISO week number (week 1 contains January 4th)
+   * Returns week number 0-52 (0-based for easier array indexing)
+   */
+  private _getISOWeekOfYear(date: Date): number {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7; // Convert Sunday (0) to 7
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum); // Get to Monday of the week
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    const weekNum = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+    return weekNum - 1; // Return 0-based for array indexing
+  }
+
+  private _getHeatCalendarData(): HeatCalendarDay[] {
+    if (!this._tariffCosts || !this.config.source_entry_id) {
+      return [];
+    }
+
+    const tariffCost = this._tariffCosts[this.config.source_entry_id];
+    if (!tariffCost || !tariffCost.daily_breakdown || tariffCost.daily_breakdown.length === 0) {
+      return [];
+    }
+
+    const period = this.config.heat_calendar_period || "month";
+    let dailyBreakdown = tariffCost.daily_breakdown;
+    
+    // Filter by year if year view is selected
+    if (period === "year") {
+      const selectedYear = this._currentDate.getFullYear();
+      dailyBreakdown = dailyBreakdown.filter(day => {
+        const dayDate = new Date(day.date);
+        return dayDate.getFullYear() === selectedYear;
+      });
+    } else {
+      // For month view, filter by current month
+      const selectedYear = this._currentDate.getFullYear();
+      const selectedMonth = this._currentDate.getMonth();
+      dailyBreakdown = dailyBreakdown.filter(day => {
+        const dayDate = new Date(day.date);
+        return dayDate.getFullYear() === selectedYear && dayDate.getMonth() === selectedMonth;
+      });
+    }
+    
+    if (dailyBreakdown.length === 0) {
+      return [];
+    }
+    
+    // Calculate intensity thresholds based on filtered consumption values
+    const consumptions = dailyBreakdown.map(d => d.consumption).filter(c => c > 0);
+    if (consumptions.length === 0) {
+      return [];
+    }
+
+    const sortedConsumptions = [...consumptions].sort((a, b) => a - b);
+    const lowThreshold = sortedConsumptions[Math.floor(sortedConsumptions.length * 0.33)];
+    const highThreshold = sortedConsumptions[Math.floor(sortedConsumptions.length * 0.67)];
+
+    const result: HeatCalendarDay[] = [];
+    
+    for (const day of dailyBreakdown) {
+      const date = new Date(day.date);
+      const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
+      const year = date.getFullYear();
+      const month = date.getMonth(); // 0-11
+      
+      let weekOfMonth: number | undefined;
+      let weekOfYear: number | undefined;
+      
+      if (period === "year") {
+        // Calculate week of year (ISO standard, 0-based)
+        weekOfYear = this._getISOWeekOfYear(date);
+      } else {
+        // Calculate week of month (0-based)
+        const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+        const firstDayOfWeek = firstDay.getDay();
+        const dayOfMonth = date.getDate();
+        weekOfMonth = Math.floor((dayOfMonth + firstDayOfWeek - 1) / 7);
+      }
+
+      // Determine intensity
+      let intensity: "low" | "medium" | "high" = "medium";
+      if (day.consumption <= lowThreshold) {
+        intensity = "low";
+      } else if (day.consumption >= highThreshold) {
+        intensity = "high";
+      }
+
+      result.push({
+        date: day.date,
+        consumption: day.consumption,
+        cost: day.cost,
+        dayOfWeek,
+        weekOfMonth,
+        weekOfYear,
+        month,
+        year,
+        intensity,
+      });
+    }
+
+    return result;
+  }
+
+  /**
+   * Calculate week comparison data
+   * @returns WeekComparisonData with week comparisons
+   */
+  private _calculateWeekComparison(): WeekComparisonData | null {
+    if (!this._tariffCosts || !this.config.source_entry_id) {
+      return null;
+    }
+
+    const tariffCost = this._tariffCosts[this.config.source_entry_id];
+    if (!tariffCost || !tariffCost.daily_breakdown || tariffCost.daily_breakdown.length === 0) {
+      return null;
+    }
+
+    const comparisonCount = this.config.week_comparison_count || 2;
+    const dailyBreakdown = tariffCost.daily_breakdown;
+
+    // Group days by week (Monday to Sunday)
+    const weeks: Array<{
+      weekStart: string;
+      weekEnd: string;
+      consumption: number;
+      cost: number;
+      periodBreakdown: {
+        p1_consumption: number;
+        p2_consumption: number;
+        p3_consumption: number;
+      };
+    }> = [];
+
+    // Group days into weeks
+    const weekMap = new Map<string, typeof weeks[0]>();
+    
+    for (const day of dailyBreakdown) {
+      const date = new Date(day.date);
+      // Get Monday of the week
+      const dayOfWeek = date.getDay();
+      const diff = date.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Adjust to Monday
+      const monday = new Date(date.setDate(diff));
+      monday.setHours(0, 0, 0, 0);
+      
+      const weekKey = monday.toISOString().split("T")[0];
+      
+      if (!weekMap.has(weekKey)) {
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        weekMap.set(weekKey, {
+          weekStart: weekKey,
+          weekEnd: sunday.toISOString().split("T")[0],
+          consumption: 0,
+          cost: 0,
+          periodBreakdown: {
+            p1_consumption: 0,
+            p2_consumption: 0,
+            p3_consumption: 0,
+          },
+        });
+      }
+
+      const week = weekMap.get(weekKey)!;
+      week.consumption += day.consumption;
+      week.cost += day.cost;
+      
+      // Estimate period breakdown from percentages if available
+      if (tariffCost.period_breakdown) {
+        const p1Pct = tariffCost.period_breakdown.p1_percentage / 100;
+        const p2Pct = tariffCost.period_breakdown.p2_percentage / 100;
+        const p3Pct = tariffCost.period_breakdown.p3_percentage / 100;
+        week.periodBreakdown.p1_consumption += day.consumption * p1Pct;
+        week.periodBreakdown.p2_consumption += day.consumption * p2Pct;
+        week.periodBreakdown.p3_consumption += day.consumption * p3Pct;
+      }
+    }
+
+    // Sort weeks by start date (most recent first)
+    const sortedWeeks = Array.from(weekMap.values()).sort((a, b) => 
+      new Date(b.weekStart).getTime() - new Date(a.weekStart).getTime()
+    );
+
+    // Take only the requested number of weeks
+    const weeksToCompare = sortedWeeks.slice(0, comparisonCount);
+
+    // Calculate comparisons
+    const comparisons: Array<{
+      weekIndex: number;
+      consumptionChange: number;
+      consumptionChangePercent: number;
+      costChange: number;
+      costChangePercent: number;
+    }> = [];
+
+    for (let i = 0; i < weeksToCompare.length - 1; i++) {
+      const currentWeek = weeksToCompare[i];
+      const previousWeek = weeksToCompare[i + 1];
+      
+      const consumptionChange = currentWeek.consumption - previousWeek.consumption;
+      const consumptionChangePercent = previousWeek.consumption > 0
+        ? (consumptionChange / previousWeek.consumption) * 100
+        : 0;
+      
+      const costChange = currentWeek.cost - previousWeek.cost;
+      const costChangePercent = previousWeek.cost > 0
+        ? (costChange / previousWeek.cost) * 100
+        : 0;
+
+      comparisons.push({
+        weekIndex: i,
+        consumptionChange,
+        consumptionChangePercent,
+        costChange,
+        costChangePercent,
+      });
+    }
+
+    return {
+      weeks: weeksToCompare,
+      comparisons,
+    };
+  }
+
   protected render(): TemplateResult {
     if (this._loading) {
       return html`
@@ -1136,10 +1979,10 @@ export class OctopusConsumptionCard extends LitElement {
 
         <div class="navigation-controls">
           <button class="nav-button" @click=${() => this._navigatePeriod("prev")}>
-            ← Previous
+            ${this.config.chart_type === "heat-calendar" && this.config.heat_calendar_period === "year" ? "← Previous Year" : "← Previous"}
           </button>
           <button class="nav-button" @click=${() => this._navigatePeriod("next")}>
-            Next →
+            ${this.config.chart_type === "heat-calendar" && this.config.heat_calendar_period === "year" ? "Next Year →" : "Next →"}
           </button>
         </div>
       ` : ""}
@@ -1147,6 +1990,8 @@ export class OctopusConsumptionCard extends LitElement {
       <div class="chart-container">
         ${this._renderChart()}
       </div>
+
+      ${this.config.show_week_comparison ? this._renderWeekComparison() : ""}
 
       ${this.config.show_tariff_comparison ? html`
         <div class="comparison-section">
@@ -1156,7 +2001,10 @@ export class OctopusConsumptionCard extends LitElement {
               <ha-icon icon="mdi:alert"></ha-icon>
               ${this._comparisonError}
             </div>
-          ` : this._comparisonResult ? this._renderComparison() : html`
+          ` : this._comparisonResult ? html`
+            ${this._renderComparison()}
+            ${this.config.show_tariff_chart !== false ? this._renderTariffComparisonChart() : ""}
+          ` : html`
             <div class="loading">Loading tariff comparison...</div>
           `}
         </div>
@@ -1170,6 +2018,11 @@ export class OctopusConsumptionCard extends LitElement {
     }
 
     const chartType = this.config.chart_type || "line";
+    
+    // Handle heat calendar chart type
+    if (chartType === "heat-calendar") {
+      return this._renderHeatCalendar();
+    }
     const data = this._consumptionData.map(d => d.consumption || d.value || 0);
     const maxValue = Math.max(...data, 1);
     const minValue = Math.min(...data, 0);
@@ -1249,10 +2102,14 @@ export class OctopusConsumptionCard extends LitElement {
     // Generate Y-axis labels for consumption (left axis)
     const yAxisSteps = 5;
     const yAxisLabels: Array<{ value: number; y: number }> = [];
-    for (let i = 0; i <= yAxisSteps; i++) {
-      const value = minValue + (range * i / yAxisSteps);
-      const y = padding.top + chartHeight - (i / yAxisSteps) * chartHeight;
-      yAxisLabels.push({ value, y });
+    if (chartHeight > 0 && !isNaN(range) && range > 0) {
+      for (let i = 0; i <= yAxisSteps; i++) {
+        const value = minValue + (range * i / yAxisSteps);
+        const y = padding.top + chartHeight - (i / yAxisSteps) * chartHeight;
+        yAxisLabels.push({ value, y });
+      }
+    } else {
+      Logger.warn(`Cannot generate Y-axis labels: chartHeight=${chartHeight}, range=${range}`);
     }
 
     // Generate cost points and Y-axis labels for cost (right axis) if enabled
@@ -1284,7 +2141,7 @@ export class OctopusConsumptionCard extends LitElement {
 
     // Generate X-axis labels (show first, middle, last)
     const xAxisLabels: Array<{ label: string; x: number }> = [];
-    if (points.length > 0) {
+    if (points.length > 0 && this._consumptionData.length > 0) {
       const firstPoint = this._consumptionData[0];
       const lastPoint = this._consumptionData[this._consumptionData.length - 1];
       const midIndex = Math.floor(this._consumptionData.length / 2);
@@ -1299,15 +2156,17 @@ export class OctopusConsumptionCard extends LitElement {
         }
       };
 
-      if (firstPoint.start_time || firstPoint.date) {
+      if (firstPoint && (firstPoint.start_time || firstPoint.date)) {
         xAxisLabels.push({ label: formatDate(firstPoint.start_time || firstPoint.date || ''), x: points[0].x });
       }
-      if (midPoint && midPoint.start_time || midPoint.date) {
+      if (midPoint && (midPoint.start_time || midPoint.date)) {
         xAxisLabels.push({ label: formatDate(midPoint.start_time || midPoint.date || ''), x: points[midIndex]?.x || points[0].x });
       }
-      if (lastPoint.start_time || lastPoint.date) {
+      if (lastPoint && (lastPoint.start_time || lastPoint.date)) {
         xAxisLabels.push({ label: formatDate(lastPoint.start_time || lastPoint.date || ''), x: points[points.length - 1].x });
       }
+    } else {
+      Logger.warn(`Cannot generate X-axis labels: points.length=${points.length}, consumptionData.length=${this._consumptionData.length}`);
     }
 
     if (chartType === "bar") {
@@ -1498,7 +2357,7 @@ export class OctopusConsumptionCard extends LitElement {
           
           <!-- Y-axis labels -->
           ${stackedYAxisLabels.map(label => html`
-            <text class="chart-text" x="${padding.left - 10}" y="${label.y + 4}" text-anchor="end">
+            <text class="chart-text" x="${padding.left}" y="${label.y + 4}" text-anchor="start">
               ${label.value.toFixed(1)} kWh
             </text>
           `)}
@@ -1546,6 +2405,26 @@ export class OctopusConsumptionCard extends LitElement {
       
       if (movingAvgPoints.length > 0) {
         movingAvgPath = `M ${movingAvgPoints[0].x} ${movingAvgPoints[0].y} ${movingAvgPoints.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ')}`;
+      }
+    }
+
+    // Calculate cost trend moving average if enabled
+    let costTrendAvgPath = '';
+    if (this.config.show_cost_trend && showCost && costData.length > 0) {
+      const windowSize = this.config.cost_moving_average_days || 30;
+      const costTrendAvg = this._calculateCostMovingAverage(costData, windowSize);
+      
+      const costTrendAvgPoints = costTrendAvg
+        .map((value, index) => {
+          if (value === null) return null;
+          const x = padding.left + index * xStep;
+          const y = padding.top + chartHeight - ((value - minCost) / costRange) * chartHeight;
+          return { x, y, value };
+        })
+        .filter((p): p is { x: number; y: number; value: number } => p !== null);
+      
+      if (costTrendAvgPoints.length > 0) {
+        costTrendAvgPath = `M ${costTrendAvgPoints[0].x} ${costTrendAvgPoints[0].y} ${costTrendAvgPoints.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ')}`;
       }
     }
 
@@ -1599,10 +2478,10 @@ export class OctopusConsumptionCard extends LitElement {
         
         <!-- Cost Y-axis labels (right) -->
         ${showCost ? costYAxisLabels.map(label => html`
-          <text class="chart-text" x="${width - padding.right + 10}" y="${label.y + 4}" text-anchor="start" fill="var(--accent-color, #ff9800)">
-            €${label.value.toFixed(2)}
-          </text>
-        `) : ''}
+            <text class="chart-text" x="${width - padding.right + 10}" y="${label.y + 4}" text-anchor="start" fill="var(--accent-color, #ff9800)">
+              €${label.value.toFixed(2)}
+            </text>
+          `) : ''}
         
         <!-- Cost Y-axis (right) -->
         ${showCost ? html`
@@ -1620,7 +2499,7 @@ export class OctopusConsumptionCard extends LitElement {
         `)}
         
         <!-- Legend -->
-        ${showCost || this.config.show_moving_average ? html`
+        ${showCost || this.config.show_moving_average || this.config.show_cost_trend ? html`
           <g>
             ${showCost ? html`
               <rect x="${width - padding.right - 120}" y="${padding.top + 5}" width="15" height="10" 
@@ -1635,6 +2514,13 @@ export class OctopusConsumptionCard extends LitElement {
                 stroke="var(--info-color, #2196f3)" stroke-width="2" stroke-dasharray="3,3" opacity="0.8"/>
               <text x="${padding.left + 30}" y="${padding.top + 14}" class="chart-text" font-size="11px" fill="var(--info-color, #2196f3)">
                 ${this.config.moving_average_days || 7}-day avg
+              </text>
+            ` : ''}
+            ${this.config.show_cost_trend && costTrendAvgPath ? html`
+              <line x1="${padding.left + 10}" y1="${padding.top + 30}" x2="${padding.left + 25}" y2="${padding.top + 30}" 
+                stroke="var(--accent-color, #ff9800)" stroke-width="2" stroke-dasharray="3,3" opacity="0.7"/>
+              <text x="${padding.left + 30}" y="${padding.top + 34}" class="chart-text" font-size="11px" fill="var(--accent-color, #ff9800)">
+                ${this.config.cost_moving_average_days || 30}-day cost avg
               </text>
             ` : ''}
           </g>
@@ -1829,6 +2715,13 @@ export class OctopusConsumptionCard extends LitElement {
       show_period_distribution: false,
       show_moving_average: false,
       moving_average_days: 7,
+      show_heat_calendar: false,
+      heat_calendar_period: "month",
+      show_week_comparison: false,
+      week_comparison_count: 2,
+      show_cost_trend: false,
+      cost_moving_average_days: 30,
+      show_tariff_chart: true,
     };
   }
 

@@ -50,6 +50,14 @@ export const translations: Record<string, Translations> = {
     "editor.migration_warning": "Configuration migration required. Please edit the card and select your tariff.",
     "editor.select_tariff": "Select a tariff to get started",
     
+    // View Selection
+    "editor.view_label": "View",
+    "editor.view_helper": "Select which view to display",
+    "editor.view_consumption": "Consumption Overview",
+    "editor.view_heat_calendar": "Heat Calendar",
+    "editor.view_week_analysis": "Week Analysis",
+    "editor.view_tariff_comparison": "Tariff Comparison",
+    
     // Chart Type Options
     "editor.chart_type_line": "Line",
     "editor.chart_type_bar": "Bar",
@@ -139,6 +147,14 @@ export const translations: Record<string, Translations> = {
     "editor.migration_warning": "Se requiere migración de configuración. Por favor, edita la tarjeta y selecciona tu tarifa.",
     "editor.select_tariff": "Selecciona una tarifa para comenzar",
     
+    // View Selection
+    "editor.view_label": "Vista",
+    "editor.view_helper": "Selecciona qué vista mostrar",
+    "editor.view_consumption": "Resumen de Consumo",
+    "editor.view_heat_calendar": "Calendario de Calor",
+    "editor.view_week_analysis": "Análisis Semanal",
+    "editor.view_tariff_comparison": "Comparación de Tarifas",
+    
     // Chart Type Options
     "editor.chart_type_line": "Línea",
     "editor.chart_type_bar": "Barras",
@@ -227,6 +243,14 @@ export const translations: Record<string, Translations> = {
     // Migration messages
     "editor.migration_warning": "Патрабуецца міграцыя канфігурацыі. Калі ласка, адрэдагуйце картку і выберыце свой тарыф.",
     "editor.select_tariff": "Выберыце тарыф для пачатку",
+    
+    // View Selection
+    "editor.view_label": "Выгляд",
+    "editor.view_helper": "Выберыце, які выгляд адлюстраваць",
+    "editor.view_consumption": "Агляд спажывання",
+    "editor.view_heat_calendar": "Каляндар цяпла",
+    "editor.view_week_analysis": "Тыднёвы аналіз",
+    "editor.view_tariff_comparison": "Параўнанне тарыфаў",
     
     // Chart Type Options
     "editor.chart_type_line": "Лінія",

@@ -1063,12 +1063,19 @@ export class OctopusConsumptionCard extends LitElement {
         this._tariffCosts = null;
       }
 
-      if (this.config.show_tariff_comparison && this.config.tariff_entry_ids?.length) {
+      // Optimize data loading based on active view
+      const view = this.config.view || "consumption";
+
+      // Only fetch tariff comparison if tariff-comparison view is active
+      if (view === "tariff-comparison" && this.config.show_tariff_comparison && this.config.tariff_entry_ids?.length) {
         await this._fetchTariffComparison(entryId, startDate, endDate);
+      } else {
+        // Clear comparison result if not needed
+        this._comparisonResult = null;
       }
 
-      // Calculate week comparison if enabled
-      if (this.config.show_week_comparison) {
+      // Only calculate week comparison if week-analysis view is active
+      if (view === "week-analysis" && this.config.show_week_comparison) {
         this._weekComparisonData = this._calculateWeekComparison();
       } else {
         this._weekComparisonData = null;
@@ -1954,6 +1961,20 @@ export class OctopusConsumptionCard extends LitElement {
       `;
     }
 
+    const view = this.config.view || "consumption";
+
+    return html`
+      ${view === "consumption" ? this._renderConsumptionView() : ""}
+      ${view === "heat-calendar" ? this._renderHeatCalendarView() : ""}
+      ${view === "week-analysis" ? this._renderWeekAnalysisView() : ""}
+      ${view === "tariff-comparison" ? this._renderTariffComparisonView() : ""}
+    `;
+  }
+
+  /**
+   * Render consumption view (time-series charts)
+   */
+  private _renderConsumptionView(): TemplateResult {
     return html`
       ${this.config.show_navigation !== false ? html`
         <div class="period-selector">
@@ -1979,10 +2000,10 @@ export class OctopusConsumptionCard extends LitElement {
 
         <div class="navigation-controls">
           <button class="nav-button" @click=${() => this._navigatePeriod("prev")}>
-            ${this.config.chart_type === "heat-calendar" && this.config.heat_calendar_period === "year" ? "← Previous Year" : "← Previous"}
+            ← Previous
           </button>
           <button class="nav-button" @click=${() => this._navigatePeriod("next")}>
-            ${this.config.chart_type === "heat-calendar" && this.config.heat_calendar_period === "year" ? "Next Year →" : "Next →"}
+            Next →
           </button>
         </div>
       ` : ""}
@@ -1990,25 +2011,91 @@ export class OctopusConsumptionCard extends LitElement {
       <div class="chart-container">
         ${this._renderChart()}
       </div>
+    `;
+  }
 
-      ${this.config.show_week_comparison ? this._renderWeekComparison() : ""}
-
-      ${this.config.show_tariff_comparison ? html`
-        <div class="comparison-section">
-          <h3 class="comparison-title">Tariff Comparison</h3>
-          ${this._comparisonError ? html`
-            <div class="comparison-error">
-              <ha-icon icon="mdi:alert"></ha-icon>
-              ${this._comparisonError}
-            </div>
-          ` : this._comparisonResult ? html`
-            ${this._renderComparison()}
-            ${this.config.show_tariff_chart !== false ? this._renderTariffComparisonChart() : ""}
-          ` : html`
-            <div class="loading">Loading tariff comparison...</div>
-          `}
+  /**
+   * Render heat calendar view
+   */
+  private _renderHeatCalendarView(): TemplateResult {
+    return html`
+      ${this.config.show_navigation !== false ? html`
+        <div class="navigation-controls">
+          <button class="nav-button" @click=${() => this._navigatePeriod("prev")}>
+            ${this.config.heat_calendar_period === "year" ? "← Previous Year" : "← Previous Month"}
+          </button>
+          <button class="nav-button" @click=${() => this._navigatePeriod("next")}>
+            ${this.config.heat_calendar_period === "year" ? "Next Year →" : "Next Month →"}
+          </button>
         </div>
       ` : ""}
+
+      <div class="chart-container">
+        ${this._renderHeatCalendar()}
+      </div>
+    `;
+  }
+
+  /**
+   * Render week analysis view
+   */
+  private _renderWeekAnalysisView(): TemplateResult {
+    return html`
+      ${this.config.show_navigation !== false ? html`
+        <div class="period-selector">
+          <button
+            class="period-button ${this._currentPeriod === "day" ? "active" : ""}"
+            @click=${() => this._setPeriod("day")}
+          >
+            Day
+          </button>
+          <button
+            class="period-button ${this._currentPeriod === "week" ? "active" : ""}"
+            @click=${() => this._setPeriod("week")}
+          >
+            Week
+          </button>
+          <button
+            class="period-button ${this._currentPeriod === "month" ? "active" : ""}"
+            @click=${() => this._setPeriod("month")}
+          >
+            Month
+          </button>
+        </div>
+
+        <div class="navigation-controls">
+          <button class="nav-button" @click=${() => this._navigatePeriod("prev")}>
+            ← Previous
+          </button>
+          <button class="nav-button" @click=${() => this._navigatePeriod("next")}>
+            Next →
+          </button>
+        </div>
+      ` : ""}
+
+      ${this._renderWeekComparison()}
+    `;
+  }
+
+  /**
+   * Render tariff comparison view
+   */
+  private _renderTariffComparisonView(): TemplateResult {
+    return html`
+      <div class="comparison-section">
+        <h3 class="comparison-title">Tariff Comparison</h3>
+        ${this._comparisonError ? html`
+          <div class="comparison-error">
+            <ha-icon icon="mdi:alert"></ha-icon>
+            ${this._comparisonError}
+          </div>
+        ` : this._comparisonResult ? html`
+          ${this._renderComparison()}
+          ${this.config.show_tariff_chart !== false ? this._renderTariffComparisonChart() : ""}
+        ` : html`
+          <div class="loading">Loading tariff comparison...</div>
+        `}
+      </div>
     `;
   }
 
@@ -2019,7 +2106,8 @@ export class OctopusConsumptionCard extends LitElement {
 
     const chartType = this.config.chart_type || "line";
     
-    // Handle heat calendar chart type
+    // Heat calendar should not be rendered here (handled by heat-calendar view)
+    // But keep check for backward compatibility
     if (chartType === "heat-calendar") {
       return this._renderHeatCalendar();
     }
@@ -2705,6 +2793,7 @@ export class OctopusConsumptionCard extends LitElement {
     return {
       type: "custom:octopus-consumption-card",
       source_entry_id: "",
+      view: "consumption",
       show_comparison: true,
       default_period: "week",
       chart_type: "line",

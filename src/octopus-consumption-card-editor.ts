@@ -38,6 +38,7 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
   @state() private _config: OctopusConsumptionCardConfig = {
     type: "custom:octopus-consumption-card",
     source_entry_id: "",
+    view: "consumption",
     show_comparison: true,
     default_period: "week",
     chart_type: "line",
@@ -211,7 +212,22 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
 
 
   private _buildSchema(): any[] {
+    const view = this._config.view || "consumption";
     const schema: any[] = [
+      {
+        name: "view",
+        selector: {
+          select: {
+            mode: "dropdown",
+            options: [
+              { value: "consumption", label: localize("editor.view_consumption", this._language) },
+              { value: "heat-calendar", label: localize("editor.view_heat_calendar", this._language) },
+              { value: "week-analysis", label: localize("editor.view_week_analysis", this._language) },
+              { value: "tariff-comparison", label: localize("editor.view_tariff_comparison", this._language) },
+            ],
+          },
+        },
+      },
       {
         name: "source_entry_id",
         required: true,
@@ -221,163 +237,85 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
           },
         },
       },
-      {
-        name: "show_comparison",
-        selector: {
-          boolean: {},
-        },
-      },
-      {
-        name: "default_period",
-        selector: {
-          select: {
-            mode: "dropdown",
-            options: [
-              { value: "day", label: localize("editor.period_day", this._language) },
-              { value: "week", label: localize("editor.period_week", this._language) },
-              { value: "month", label: localize("editor.period_month", this._language) },
-            ],
-          },
-        },
-      },
-      {
-        name: "chart_type",
-        selector: {
-          select: {
-            mode: "dropdown",
-            options: [
-            { value: "line", label: localize("editor.chart_type_line", this._language) },
-            { value: "bar", label: localize("editor.chart_type_bar", this._language) },
-            { value: "stacked-area", label: localize("editor.chart_type_stacked_area", this._language) },
-            { value: "heat-calendar", label: localize("editor.chart_type_heat_calendar", this._language) },
-            ],
-          },
-        },
-      },
-      {
-        name: "show_navigation",
-        selector: {
-          boolean: {},
-        },
-      },
-      {
-        name: "show_period_distribution",
-        selector: {
-          boolean: {},
-        },
-      },
-      {
-        name: "show_moving_average",
-        selector: {
-          boolean: {},
-        },
-      },
     ];
 
-    // Add moving average days if enabled
-    if (this._config.show_moving_average) {
-      schema.push({
-        name: "moving_average_days",
-        selector: {
-          number: {
-            min: 2,
-            max: 30,
-            mode: "box",
+    // Add view-specific options
+    if (view === "consumption") {
+      schema.push(
+        {
+          name: "show_comparison",
+          selector: {
+            boolean: {},
           },
         },
-      });
-    }
-
-    // Add heat calendar options
-    schema.push({
-      name: "show_heat_calendar",
-      selector: {
-        boolean: {},
-      },
-    });
-
-    if (this._config.show_heat_calendar) {
-      schema.push({
-        name: "heat_calendar_period",
-        selector: {
-          select: {
-            mode: "dropdown",
-            options: [
-              { value: "month", label: localize("editor.heat_calendar_period_month", this._language) },
-              { value: "year", label: localize("editor.heat_calendar_period_year", this._language) },
-            ],
+        {
+          name: "default_period",
+          selector: {
+            select: {
+              mode: "dropdown",
+              options: [
+                { value: "day", label: localize("editor.period_day", this._language) },
+                { value: "week", label: localize("editor.period_week", this._language) },
+                { value: "month", label: localize("editor.period_month", this._language) },
+              ],
+            },
           },
         },
-      });
-    }
-
-    // Add week comparison options
-    schema.push({
-      name: "show_week_comparison",
-      selector: {
-        boolean: {},
-      },
-    });
-
-    if (this._config.show_week_comparison) {
-      schema.push({
-        name: "week_comparison_count",
-        selector: {
-          number: {
-            min: 2,
-            max: 8,
-            mode: "box",
+        {
+          name: "chart_type",
+          selector: {
+            select: {
+              mode: "dropdown",
+              options: [
+                { value: "line", label: localize("editor.chart_type_line", this._language) },
+                { value: "bar", label: localize("editor.chart_type_bar", this._language) },
+                { value: "stacked-area", label: localize("editor.chart_type_stacked_area", this._language) },
+              ],
+            },
           },
         },
-      });
-    }
-
-    // Add cost trend options
-    schema.push({
-      name: "show_cost_trend",
-      selector: {
-        boolean: {},
-      },
-    });
-
-    if (this._config.show_cost_trend) {
-      schema.push({
-        name: "cost_moving_average_days",
-        selector: {
-          number: {
-            min: 2,
-            max: 90,
-            mode: "box",
+        {
+          name: "show_navigation",
+          selector: {
+            boolean: {},
           },
         },
-      });
-    }
-
-    schema.push({
-      name: "show_tariff_comparison",
-      selector: {
-        boolean: {},
-      },
-    });
-
-    // Add tariff comparison section if enabled
-    if (this._config.show_tariff_comparison) {
-      schema.push({
-        name: "tariff_entry_ids",
-        selector: {
-          config_entry: {
-            integration: "octopus_energy_es",
-            multiple: true,
+        {
+          name: "show_period_distribution",
+          selector: {
+            boolean: {},
           },
         },
-      });
+        {
+          name: "show_moving_average",
+          selector: {
+            boolean: {},
+          },
+        }
+      );
 
-      schema.push({
-        name: "show_cost_on_chart",
-        selector: {
-          boolean: {},
-        },
-      });
+      // Add moving average days if enabled
+      if (this._config.show_moving_average) {
+        schema.push({
+          name: "moving_average_days",
+          selector: {
+            number: {
+              min: 2,
+              max: 30,
+              mode: "box",
+            },
+          },
+        });
+      }
+
+      schema.push(
+        {
+          name: "show_cost_on_chart",
+          selector: {
+            boolean: {},
+          },
+        }
+      );
 
       if (this._config.show_cost_on_chart) {
         schema.push({
@@ -390,15 +328,103 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
         });
       }
 
+      // Add cost trend options
       schema.push({
-        name: "show_tariff_chart",
+        name: "show_cost_trend",
         selector: {
           boolean: {},
         },
       });
+
+      if (this._config.show_cost_trend) {
+        schema.push({
+          name: "cost_moving_average_days",
+          selector: {
+            number: {
+              min: 2,
+              max: 90,
+              mode: "box",
+            },
+          },
+        });
+      }
+    } else if (view === "heat-calendar") {
+      schema.push(
+        {
+          name: "heat_calendar_period",
+          selector: {
+            select: {
+              mode: "dropdown",
+              options: [
+                { value: "month", label: localize("editor.heat_calendar_period_month", this._language) },
+                { value: "year", label: localize("editor.heat_calendar_period_year", this._language) },
+              ],
+            },
+          },
+        },
+        {
+          name: "show_navigation",
+          selector: {
+            boolean: {},
+          },
+        }
+      );
+    } else if (view === "week-analysis") {
+      schema.push(
+        {
+          name: "show_week_comparison",
+          selector: {
+            boolean: {},
+          },
+        },
+        {
+          name: "show_navigation",
+          selector: {
+            boolean: {},
+          },
+        }
+      );
+
+      if (this._config.show_week_comparison) {
+        schema.push({
+          name: "week_comparison_count",
+          selector: {
+            number: {
+              min: 2,
+              max: 8,
+              mode: "box",
+            },
+          },
+        });
+      }
+    } else if (view === "tariff-comparison") {
+      schema.push({
+        name: "show_tariff_comparison",
+        selector: {
+          boolean: {},
+        },
+      });
+
+      if (this._config.show_tariff_comparison) {
+        schema.push({
+          name: "tariff_entry_ids",
+          selector: {
+            object: {},
+          },
+        });
+
+        schema.push({
+          name: "show_tariff_chart",
+          selector: {
+            boolean: {},
+          },
+        });
+      }
     }
 
-    // Optional sensor override
+    // Old conditional logic removed - now handled in view-specific sections above
+
+    // Optional sensor override (available for all views)
     schema.push({
       name: "consumption_sensor",
       selector: {

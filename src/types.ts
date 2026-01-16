@@ -38,6 +38,8 @@ export interface OctopusConsumptionCardConfig {
   cost_moving_average_days?: number; // Days for cost moving average (default: 30)
   // Tariff comparison chart
   show_tariff_chart?: boolean; // Show visual chart in tariff comparison section
+  // View selection
+  view?: "consumption" | "heat-calendar" | "week-analysis" | "tariff-comparison"; // Select which view to display
 }
 
 export interface ConsumptionDataPoint {

@@ -689,3 +689,109 @@ export const cardStyles = css`
     display: block;
   }
 `;
+
+/**
+ * Styles for Octopus Energy España Consumption Card Editor
+ */
+export const editorStyles = css`
+  .card-config {
+    padding: 16px;
+  }
+
+  .section {
+    margin-bottom: 24px;
+  }
+
+  .section-title {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 12px;
+    color: var(--primary-text-color);
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--primary-text-color);
+  }
+
+  .form-group ha-textfield,
+  .form-group ha-select,
+  .form-group ha-entity-picker {
+    width: 100%;
+  }
+
+  .form-group ha-switch {
+    margin-right: 8px;
+  }
+
+  .switch-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .switch-row label {
+    flex: 1;
+    margin-bottom: 0;
+  }
+
+  .tariff-entry-list {
+    margin-top: 8px;
+  }
+
+  .tariff-entry-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 8px;
+    background: var(--card-background-color);
+    border-radius: 4px;
+  }
+
+  .tariff-entry-item ha-textfield {
+    flex: 1;
+    margin-right: 8px;
+  }
+
+  .add-tariff-entry {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .add-tariff-entry ha-textfield {
+    flex: 1;
+  }
+
+  .tariff-dropdown-list {
+    margin-top: 8px;
+  }
+
+  .tariff-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .tariff-dropdown-item ha-selector {
+    flex: 1;
+  }
+
+  .tariff-dropdown-item ha-icon-button {
+    --mdc-icon-button-size: 40px;
+    --mdc-icon-size: 20px;
+  }
+
+  .error {
+    color: var(--error-color);
+    font-size: 12px;
+    margin-top: 4px;
+  }
+`;

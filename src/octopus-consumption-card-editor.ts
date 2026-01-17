@@ -4,7 +4,7 @@
  * Visual editor component for configuring the consumption card
  */
 
-import { LitElement, html, css, PropertyValues, TemplateResult } from "lit";
+import { LitElement, html, PropertyValues, TemplateResult } from "lit";
 
 // Disable Lit dev mode warnings (only available in dev builds)
 // This will be tree-shaken out in production builds
@@ -14,6 +14,7 @@ if (typeof LitElement !== 'undefined' && (LitElement as any).disableWarning) {
 import { property, state } from "lit/decorators.js";
 import type { OctopusConsumptionCardConfig } from "./types";
 import { localize, computeLabel, computeHelper } from "./localization";
+import { editorStyles } from "./styles";
 
 // Home Assistant types
 interface HomeAssistant {
@@ -53,88 +54,7 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
 
   private _language: string = "en";
 
-  static styles = css`
-    .card-config {
-      padding: 16px;
-    }
-
-    .section {
-      margin-bottom: 24px;
-    }
-
-    .section-title {
-      font-size: 16px;
-      font-weight: 500;
-      margin-bottom: 12px;
-      color: var(--primary-text-color);
-    }
-
-    .form-group {
-      margin-bottom: 16px;
-    }
-
-    .form-group label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 500;
-      color: var(--primary-text-color);
-    }
-
-    .form-group ha-textfield,
-    .form-group ha-select,
-    .form-group ha-entity-picker {
-      width: 100%;
-    }
-
-    .form-group ha-switch {
-      margin-right: 8px;
-    }
-
-    .switch-row {
-      display: flex;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-
-    .switch-row label {
-      flex: 1;
-      margin-bottom: 0;
-    }
-
-    .tariff-entry-list {
-      margin-top: 8px;
-    }
-
-    .tariff-entry-item {
-      display: flex;
-      align-items: center;
-      margin-bottom: 8px;
-      padding: 8px;
-      background: var(--card-background-color);
-      border-radius: 4px;
-    }
-
-    .tariff-entry-item ha-textfield {
-      flex: 1;
-      margin-right: 8px;
-    }
-
-    .add-tariff-entry {
-      display: flex;
-      gap: 8px;
-      margin-top: 8px;
-    }
-
-    .add-tariff-entry ha-textfield {
-      flex: 1;
-    }
-
-    .error {
-      color: var(--error-color);
-      font-size: 12px;
-      margin-top: 4px;
-    }
-  `;
+  static styles = editorStyles;
 
   setConfig(config: OctopusConsumptionCardConfig): void {
     // Ensure view is set (default to "consumption" if not specified)
@@ -436,13 +356,7 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
       });
 
       if (this._config.show_tariff_comparison) {
-        schema.push({
-          name: "tariff_entry_ids",
-          selector: {
-            object: {},
-          },
-        });
-
+        // tariff_entry_ids is handled by custom UI, not in schema
         schema.push({
           name: "show_tariff_chart",
           selector: {
@@ -475,12 +389,107 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
     return computeHelper(schema, this._language);
   };
 
+  private _handleTariffSelection(index: number, ev: CustomEvent): void {
+    const selectedEntryId = ev.detail.value;
+    if (!this._config.tariff_entry_ids) {
+      this._config.tariff_entry_ids = [];
+    }
+    
+    // Update the array at the specific index
+    const newTariffIds = [...this._config.tariff_entry_ids];
+    
+    // Ensure array is long enough
+    while (newTariffIds.length <= index) {
+      newTariffIds.push("");
+    }
+    
+    if (selectedEntryId) {
+      // Check if this entry ID is already used in another position
+      const existingIndex = newTariffIds.findIndex((id, i) => i !== index && id === selectedEntryId);
+      if (existingIndex !== -1) {
+        // Clear the existing position
+        newTariffIds[existingIndex] = "";
+      }
+      
+      newTariffIds[index] = selectedEntryId;
+      // Remove empty entries and duplicates, but keep order
+      this._config.tariff_entry_ids = newTariffIds.filter((id, i, arr) => {
+        return id && arr.indexOf(id) === i;
+      });
+    } else {
+      // Remove the entry at this index
+      newTariffIds.splice(index, 1);
+      this._config.tariff_entry_ids = newTariffIds.filter(id => id);
+    }
+    
+    this.requestUpdate();
+    this._fireConfigChanged();
+  }
+
+  private _removeTariff(index: number): void {
+    if (!this._config.tariff_entry_ids || index >= this._config.tariff_entry_ids.length) {
+      return;
+    }
+    
+    const newTariffIds = [...this._config.tariff_entry_ids];
+    newTariffIds.splice(index, 1);
+    this._config.tariff_entry_ids = newTariffIds.filter(id => id);
+    
+    this.requestUpdate();
+    this._fireConfigChanged();
+  }
+
+  private _renderTariffDropdowns(): TemplateResult {
+    if (!this._config.show_tariff_comparison) {
+      return html``;
+    }
+
+    const tariffIds = this._config.tariff_entry_ids || [];
+    // Always show at least one empty dropdown
+    // If there are selected tariffs, show one more empty dropdown for adding another
+    const dropdownCount = tariffIds.length > 0 ? tariffIds.length + 1 : 1;
+
+    return html`
+      <div class="form-group">
+        <label>${localize("editor.tariff_entry_ids_label", this._language)}</label>
+        <div class="tariff-dropdown-list">
+          ${Array.from({ length: dropdownCount }, (_, index) => {
+            const currentValue = tariffIds[index] || "";
+            
+            return html`
+              <div class="tariff-dropdown-item">
+                <ha-selector
+                  .hass=${this.hass}
+                  .selector=${{ config_entry: { integration: "octopus_energy_es" } }}
+                  .value=${currentValue}
+                  .label=${index === 0 
+                    ? localize("editor.tariff_entry_ids_helper", this._language)
+                    : ""}
+                  @value-changed=${(ev: CustomEvent) => this._handleTariffSelection(index, ev)}
+                ></ha-selector>
+                ${currentValue ? html`
+                  <ha-icon-button
+                    .label=${"Remove"}
+                    @click=${() => this._removeTariff(index)}
+                  >
+                    <ha-icon icon="mdi:delete"></ha-icon>
+                  </ha-icon-button>
+                ` : ""}
+              </div>
+            `;
+          })}
+        </div>
+      </div>
+    `;
+  }
+
   protected render(): TemplateResult {
     if (!this.hass) {
       return html`<div class="card-config">Loading...</div>`;
     }
 
     const schema = this._buildSchema();
+    const view = this._config.view || "consumption";
 
     return html`
       <div class="card-config">
@@ -493,6 +502,9 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
           .computeHelper=${this._computeHelper}
           @value-changed=${this._valueChanged}
         ></ha-form>
+        
+        <!-- Custom Tariff Selection UI for tariff-comparison view -->
+        ${view === "tariff-comparison" && this._config.show_tariff_comparison ? this._renderTariffDropdowns() : ""}
       </div>
     `;
   }

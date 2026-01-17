@@ -6,7 +6,7 @@
 import { css } from "lit";
 
 export const cardStyles = css`
-  :host {
+  .octopus-consumption-card {
     display: block;
     padding: 16px;
   }

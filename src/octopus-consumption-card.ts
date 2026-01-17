@@ -61,6 +61,33 @@ export class OctopusConsumptionCard extends LitElement {
   static styles = cardStyles;
 
   /**
+   * Use Light DOM instead of Shadow DOM to allow CSS variables to work directly
+   * This solves the issue with SVG fill attributes not working with CSS variables in Shadow DOM
+   */
+  protected createRenderRoot(): Element | ShadowRoot {
+    return this; // Render to Light DOM instead of Shadow DOM
+  }
+
+  /**
+   * Get computed color value from CSS variable
+   * Optional helper for cases where direct CSS variable usage might not work
+   * With Light DOM, CSS variables should work directly, but this provides a fallback
+   */
+  private _getComputedColor(cssVar: string, fallback: string): string {
+    if (typeof window !== 'undefined') {
+      try {
+        const root = document.documentElement;
+        const style = getComputedStyle(root);
+        const value = style.getPropertyValue(cssVar).trim();
+        return value || fallback;
+      } catch {
+        return fallback;
+      }
+    }
+    return fallback;
+  }
+
+  /**
    * Set the card configuration (required by Home Assistant)
    */
   public setConfig(config: OctopusConsumptionCardConfig): void {
@@ -1286,9 +1313,11 @@ export class OctopusConsumptionCard extends LitElement {
   protected render(): TemplateResult {
     if (this._loading) {
       return html`
-        <div class="loading">
-          <ha-circular-progress indeterminate></ha-circular-progress>
-          <p>Loading consumption data...</p>
+        <div class="octopus-consumption-card">
+          <div class="loading">
+            <ha-circular-progress indeterminate></ha-circular-progress>
+            <p>Loading consumption data...</p>
+          </div>
         </div>
       `;
     }
@@ -1297,19 +1326,21 @@ export class OctopusConsumptionCard extends LitElement {
       const isConfigError = this._error.includes("Configuration incomplete") || this._error.includes("configuration is required");
       
       return html`
-        <div class="error-message">
-          <ha-icon icon="${isConfigError ? "mdi:cog-outline" : "mdi:alert-circle"}" class="error-icon"></ha-icon>
-          <div class="error-title">${isConfigError ? "Configuration Required" : "Unable to Load Data"}</div>
-          <div class="error-details">${this._error}</div>
-          ${isConfigError ? html`
-            <div class="error-details" style="margin-top: 12px; font-size: 13px;">
-              Click the <strong>⋮</strong> menu in the top-right corner of this card and select <strong>Edit</strong> to configure it.
-            </div>
-          ` : html`
-            <button class="retry-button" @click=${this._loadData}>
-              Retry
-            </button>
-          `}
+        <div class="octopus-consumption-card">
+          <div class="error-message">
+            <ha-icon icon="${isConfigError ? "mdi:cog-outline" : "mdi:alert-circle"}" class="error-icon"></ha-icon>
+            <div class="error-title">${isConfigError ? "Configuration Required" : "Unable to Load Data"}</div>
+            <div class="error-details">${this._error}</div>
+            ${isConfigError ? html`
+              <div class="error-details" style="margin-top: 12px; font-size: 13px;">
+                Click the <strong>⋮</strong> menu in the top-right corner of this card and select <strong>Edit</strong> to configure it.
+              </div>
+            ` : html`
+              <button class="retry-button" @click=${this._loadData}>
+                Retry
+              </button>
+            `}
+          </div>
         </div>
       `;
     }
@@ -1317,10 +1348,12 @@ export class OctopusConsumptionCard extends LitElement {
     const view = this.config.view || "consumption";
 
     return html`
-      ${view === "consumption" ? this._renderConsumptionView() : ""}
-      ${view === "heat-calendar" ? this._renderHeatCalendarView() : ""}
-      ${view === "week-analysis" ? this._renderWeekAnalysisView() : ""}
-      ${view === "tariff-comparison" ? this._renderTariffComparisonView() : ""}
+      <div class="octopus-consumption-card">
+        ${view === "consumption" ? this._renderConsumptionView() : ""}
+        ${view === "heat-calendar" ? this._renderHeatCalendarView() : ""}
+        ${view === "week-analysis" ? this._renderWeekAnalysisView() : ""}
+        ${view === "tariff-comparison" ? this._renderTariffComparisonView() : ""}
+      </div>
     `;
   }
 

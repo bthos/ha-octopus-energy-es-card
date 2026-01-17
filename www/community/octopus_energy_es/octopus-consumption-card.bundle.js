@@ -14,12 +14,12 @@ var OctopusConsumptionCard=function(e){"use strict";
      * Copyright 2017 Google LLC
      * SPDX-License-Identifier: BSD-3-Clause
      */
-const $=globalThis,k=e=>e,C=$.trustedTypes,S=C?C.createPolicy("lit-html",{createHTML:e=>e}):void 0,E="$lit$",P=`lit$${Math.random().toFixed(9).slice(2)}$`,A="?"+P,D=`<${A}>`,M=document,T=()=>M.createComment(""),O=e=>null===e||"object"!=typeof e&&"function"!=typeof e,R=Array.isArray,F="[ \t\n\f\r]",z=/<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g,N=/-->/g,W=/>/g,U=RegExp(`>|${F}(?:([^\\s"'>=/]+)(${F}*=${F}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`,"g"),L=/'/g,H=/"/g,I=/^(?:script|style|textarea|title)$/i,V=(e=>(t,...r)=>({_$litType$:e,strings:t,values:r}))(1),Y=Symbol.for("lit-noChange"),j=Symbol.for("lit-nothing"),B=new WeakMap,q=M.createTreeWalker(M,129);function J(e,t){if(!R(e)||!e.hasOwnProperty("raw"))throw Error("invalid template strings array");return void 0!==S?S.createHTML(t):t}const X=(e,t)=>{const r=e.length-1,o=[];let i,a=2===t?"<svg>":3===t?"<math>":"",s=z;for(let t=0;t<r;t++){const r=e[t];let n,c,l=-1,d=0;for(;d<r.length&&(s.lastIndex=d,c=s.exec(r),null!==c);)d=s.lastIndex,s===z?"!--"===c[1]?s=N:void 0!==c[1]?s=W:void 0!==c[2]?(I.test(c[2])&&(i=RegExp("</"+c[2],"g")),s=U):void 0!==c[3]&&(s=U):s===U?">"===c[0]?(s=i??z,l=-1):void 0===c[1]?l=-2:(l=s.lastIndex-c[2].length,n=c[1],s=void 0===c[3]?U:'"'===c[3]?H:L):s===H||s===L?s=U:s===N||s===W?s=z:(s=U,i=void 0);const p=s===U&&e[t+1].startsWith("/>")?" ":"";a+=s===z?r+D:l>=0?(o.push(n),r.slice(0,l)+E+r.slice(l)+P+p):r+P+(-2===l?t:p)}return[J(e,a+(e[r]||"<?>")+(2===t?"</svg>":3===t?"</math>":"")),o]};class G{constructor({strings:e,_$litType$:t},r){let o;this.parts=[];let i=0,a=0;const s=e.length-1,n=this.parts,[c,l]=X(e,t);if(this.el=G.createElement(c,r),q.currentNode=this.el.content,2===t||3===t){const e=this.el.content.firstChild;e.replaceWith(...e.childNodes)}for(;null!==(o=q.nextNode())&&n.length<s;){if(1===o.nodeType){if(o.hasAttributes())for(const e of o.getAttributeNames())if(e.endsWith(E)){const t=l[a++],r=o.getAttribute(e).split(P),s=/([.?@])?(.*)/.exec(t);n.push({type:1,index:i,name:s[2],strings:r,ctor:"."===s[1]?te:"?"===s[1]?re:"@"===s[1]?oe:ee}),o.removeAttribute(e)}else e.startsWith(P)&&(n.push({type:6,index:i}),o.removeAttribute(e));if(I.test(o.tagName)){const e=o.textContent.split(P),t=e.length-1;if(t>0){o.textContent=C?C.emptyScript:"";for(let r=0;r<t;r++)o.append(e[r],T()),q.nextNode(),n.push({type:2,index:++i});o.append(e[t],T())}}}else if(8===o.nodeType)if(o.data===A)n.push({type:2,index:i});else{let e=-1;for(;-1!==(e=o.data.indexOf(P,e+1));)n.push({type:7,index:i}),e+=P.length-1}i++}}static createElement(e,t){const r=M.createElement("template");return r.innerHTML=e,r}}function Z(e,t,r=e,o){if(t===Y)return t;let i=void 0!==o?r._$Co?.[o]:r._$Cl;const a=O(t)?void 0:t._$litDirective$;return i?.constructor!==a&&(i?._$AO?.(!1),void 0===a?i=void 0:(i=new a(e),i._$AT(e,r,o)),void 0!==o?(r._$Co??=[])[o]=i:r._$Cl=i),void 0!==i&&(t=Z(e,i._$AS(e,t.values),i,o)),t}class K{constructor(e,t){this._$AV=[],this._$AN=void 0,this._$AD=e,this._$AM=t}get parentNode(){return this._$AM.parentNode}get _$AU(){return this._$AM._$AU}u(e){const{el:{content:t},parts:r}=this._$AD,o=(e?.creationScope??M).importNode(t,!0);q.currentNode=o;let i=q.nextNode(),a=0,s=0,n=r[0];for(;void 0!==n;){if(a===n.index){let t;2===n.type?t=new Q(i,i.nextSibling,this,e):1===n.type?t=new n.ctor(i,n.name,n.strings,this,e):6===n.type&&(t=new ie(i,this,e)),this._$AV.push(t),n=r[++s]}a!==n?.index&&(i=q.nextNode(),a++)}return q.currentNode=M,o}p(e){let t=0;for(const r of this._$AV)void 0!==r&&(void 0!==r.strings?(r._$AI(e,r,t),t+=r.strings.length-2):r._$AI(e[t])),t++}}class Q{get _$AU(){return this._$AM?._$AU??this._$Cv}constructor(e,t,r,o){this.type=2,this._$AH=j,this._$AN=void 0,this._$AA=e,this._$AB=t,this._$AM=r,this.options=o,this._$Cv=o?.isConnected??!0}get parentNode(){let e=this._$AA.parentNode;const t=this._$AM;return void 0!==t&&11===e?.nodeType&&(e=t.parentNode),e}get startNode(){return this._$AA}get endNode(){return this._$AB}_$AI(e,t=this){e=Z(this,e,t),O(e)?e===j||null==e||""===e?(this._$AH!==j&&this._$AR(),this._$AH=j):e!==this._$AH&&e!==Y&&this._(e):void 0!==e._$litType$?this.$(e):void 0!==e.nodeType?this.T(e):(e=>R(e)||"function"==typeof e?.[Symbol.iterator])(e)?this.k(e):this._(e)}O(e){return this._$AA.parentNode.insertBefore(e,this._$AB)}T(e){this._$AH!==e&&(this._$AR(),this._$AH=this.O(e))}_(e){this._$AH!==j&&O(this._$AH)?this._$AA.nextSibling.data=e:this.T(M.createTextNode(e)),this._$AH=e}$(e){const{values:t,_$litType$:r}=e,o="number"==typeof r?this._$AC(e):(void 0===r.el&&(r.el=G.createElement(J(r.h,r.h[0]),this.options)),r);if(this._$AH?._$AD===o)this._$AH.p(t);else{const e=new K(o,this),r=e.u(this.options);e.p(t),this.T(r),this._$AH=e}}_$AC(e){let t=B.get(e.strings);return void 0===t&&B.set(e.strings,t=new G(e)),t}k(e){R(this._$AH)||(this._$AH=[],this._$AR());const t=this._$AH;let r,o=0;for(const i of e)o===t.length?t.push(r=new Q(this.O(T()),this.O(T()),this,this.options)):r=t[o],r._$AI(i),o++;o<t.length&&(this._$AR(r&&r._$AB.nextSibling,o),t.length=o)}_$AR(e=this._$AA.nextSibling,t){for(this._$AP?.(!1,!0,t);e!==this._$AB;){const t=k(e).nextSibling;k(e).remove(),e=t}}setConnected(e){void 0===this._$AM&&(this._$Cv=e,this._$AP?.(e))}}class ee{get tagName(){return this.element.tagName}get _$AU(){return this._$AM._$AU}constructor(e,t,r,o,i){this.type=1,this._$AH=j,this._$AN=void 0,this.element=e,this.name=t,this._$AM=o,this.options=i,r.length>2||""!==r[0]||""!==r[1]?(this._$AH=Array(r.length-1).fill(new String),this.strings=r):this._$AH=j}_$AI(e,t=this,r,o){const i=this.strings;let a=!1;if(void 0===i)e=Z(this,e,t,0),a=!O(e)||e!==this._$AH&&e!==Y,a&&(this._$AH=e);else{const o=e;let s,n;for(e=i[0],s=0;s<i.length-1;s++)n=Z(this,o[r+s],t,s),n===Y&&(n=this._$AH[s]),a||=!O(n)||n!==this._$AH[s],n===j?e=j:e!==j&&(e+=(n??"")+i[s+1]),this._$AH[s]=n}a&&!o&&this.j(e)}j(e){e===j?this.element.removeAttribute(this.name):this.element.setAttribute(this.name,e??"")}}class te extends ee{constructor(){super(...arguments),this.type=3}j(e){this.element[this.name]=e===j?void 0:e}}class re extends ee{constructor(){super(...arguments),this.type=4}j(e){this.element.toggleAttribute(this.name,!!e&&e!==j)}}class oe extends ee{constructor(e,t,r,o,i){super(e,t,r,o,i),this.type=5}_$AI(e,t=this){if((e=Z(this,e,t,0)??j)===Y)return;const r=this._$AH,o=e===j&&r!==j||e.capture!==r.capture||e.once!==r.once||e.passive!==r.passive,i=e!==j&&(r===j||o);o&&this.element.removeEventListener(this.name,this,r),i&&this.element.addEventListener(this.name,this,e),this._$AH=e}handleEvent(e){"function"==typeof this._$AH?this._$AH.call(this.options?.host??this.element,e):this._$AH.handleEvent(e)}}class ie{constructor(e,t,r){this.element=e,this.type=6,this._$AN=void 0,this._$AM=t,this.options=r}get _$AU(){return this._$AM._$AU}_$AI(e){Z(this,e)}}const ae=$.litHtmlPolyfillSupport;ae?.(G,Q),($.litHtmlVersions??=[]).push("3.3.2");const se=globalThis;
+const $=globalThis,k=e=>e,C=$.trustedTypes,S=C?C.createPolicy("lit-html",{createHTML:e=>e}):void 0,E="$lit$",P=`lit$${Math.random().toFixed(9).slice(2)}$`,A="?"+P,D=`<${A}>`,T=document,M=()=>T.createComment(""),O=e=>null===e||"object"!=typeof e&&"function"!=typeof e,R=Array.isArray,F="[ \t\n\f\r]",z=/<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g,W=/-->/g,N=/>/g,U=RegExp(`>|${F}(?:([^\\s"'>=/]+)(${F}*=${F}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`,"g"),L=/'/g,H=/"/g,I=/^(?:script|style|textarea|title)$/i,V=(e=>(t,...r)=>({_$litType$:e,strings:t,values:r}))(1),Y=Symbol.for("lit-noChange"),j=Symbol.for("lit-nothing"),B=new WeakMap,q=T.createTreeWalker(T,129);function J(e,t){if(!R(e)||!e.hasOwnProperty("raw"))throw Error("invalid template strings array");return void 0!==S?S.createHTML(t):t}const X=(e,t)=>{const r=e.length-1,o=[];let i,a=2===t?"<svg>":3===t?"<math>":"",s=z;for(let t=0;t<r;t++){const r=e[t];let n,c,l=-1,d=0;for(;d<r.length&&(s.lastIndex=d,c=s.exec(r),null!==c);)d=s.lastIndex,s===z?"!--"===c[1]?s=W:void 0!==c[1]?s=N:void 0!==c[2]?(I.test(c[2])&&(i=RegExp("</"+c[2],"g")),s=U):void 0!==c[3]&&(s=U):s===U?">"===c[0]?(s=i??z,l=-1):void 0===c[1]?l=-2:(l=s.lastIndex-c[2].length,n=c[1],s=void 0===c[3]?U:'"'===c[3]?H:L):s===H||s===L?s=U:s===W||s===N?s=z:(s=U,i=void 0);const p=s===U&&e[t+1].startsWith("/>")?" ":"";a+=s===z?r+D:l>=0?(o.push(n),r.slice(0,l)+E+r.slice(l)+P+p):r+P+(-2===l?t:p)}return[J(e,a+(e[r]||"<?>")+(2===t?"</svg>":3===t?"</math>":"")),o]};class G{constructor({strings:e,_$litType$:t},r){let o;this.parts=[];let i=0,a=0;const s=e.length-1,n=this.parts,[c,l]=X(e,t);if(this.el=G.createElement(c,r),q.currentNode=this.el.content,2===t||3===t){const e=this.el.content.firstChild;e.replaceWith(...e.childNodes)}for(;null!==(o=q.nextNode())&&n.length<s;){if(1===o.nodeType){if(o.hasAttributes())for(const e of o.getAttributeNames())if(e.endsWith(E)){const t=l[a++],r=o.getAttribute(e).split(P),s=/([.?@])?(.*)/.exec(t);n.push({type:1,index:i,name:s[2],strings:r,ctor:"."===s[1]?te:"?"===s[1]?re:"@"===s[1]?oe:ee}),o.removeAttribute(e)}else e.startsWith(P)&&(n.push({type:6,index:i}),o.removeAttribute(e));if(I.test(o.tagName)){const e=o.textContent.split(P),t=e.length-1;if(t>0){o.textContent=C?C.emptyScript:"";for(let r=0;r<t;r++)o.append(e[r],M()),q.nextNode(),n.push({type:2,index:++i});o.append(e[t],M())}}}else if(8===o.nodeType)if(o.data===A)n.push({type:2,index:i});else{let e=-1;for(;-1!==(e=o.data.indexOf(P,e+1));)n.push({type:7,index:i}),e+=P.length-1}i++}}static createElement(e,t){const r=T.createElement("template");return r.innerHTML=e,r}}function Z(e,t,r=e,o){if(t===Y)return t;let i=void 0!==o?r._$Co?.[o]:r._$Cl;const a=O(t)?void 0:t._$litDirective$;return i?.constructor!==a&&(i?._$AO?.(!1),void 0===a?i=void 0:(i=new a(e),i._$AT(e,r,o)),void 0!==o?(r._$Co??=[])[o]=i:r._$Cl=i),void 0!==i&&(t=Z(e,i._$AS(e,t.values),i,o)),t}class K{constructor(e,t){this._$AV=[],this._$AN=void 0,this._$AD=e,this._$AM=t}get parentNode(){return this._$AM.parentNode}get _$AU(){return this._$AM._$AU}u(e){const{el:{content:t},parts:r}=this._$AD,o=(e?.creationScope??T).importNode(t,!0);q.currentNode=o;let i=q.nextNode(),a=0,s=0,n=r[0];for(;void 0!==n;){if(a===n.index){let t;2===n.type?t=new Q(i,i.nextSibling,this,e):1===n.type?t=new n.ctor(i,n.name,n.strings,this,e):6===n.type&&(t=new ie(i,this,e)),this._$AV.push(t),n=r[++s]}a!==n?.index&&(i=q.nextNode(),a++)}return q.currentNode=T,o}p(e){let t=0;for(const r of this._$AV)void 0!==r&&(void 0!==r.strings?(r._$AI(e,r,t),t+=r.strings.length-2):r._$AI(e[t])),t++}}class Q{get _$AU(){return this._$AM?._$AU??this._$Cv}constructor(e,t,r,o){this.type=2,this._$AH=j,this._$AN=void 0,this._$AA=e,this._$AB=t,this._$AM=r,this.options=o,this._$Cv=o?.isConnected??!0}get parentNode(){let e=this._$AA.parentNode;const t=this._$AM;return void 0!==t&&11===e?.nodeType&&(e=t.parentNode),e}get startNode(){return this._$AA}get endNode(){return this._$AB}_$AI(e,t=this){e=Z(this,e,t),O(e)?e===j||null==e||""===e?(this._$AH!==j&&this._$AR(),this._$AH=j):e!==this._$AH&&e!==Y&&this._(e):void 0!==e._$litType$?this.$(e):void 0!==e.nodeType?this.T(e):(e=>R(e)||"function"==typeof e?.[Symbol.iterator])(e)?this.k(e):this._(e)}O(e){return this._$AA.parentNode.insertBefore(e,this._$AB)}T(e){this._$AH!==e&&(this._$AR(),this._$AH=this.O(e))}_(e){this._$AH!==j&&O(this._$AH)?this._$AA.nextSibling.data=e:this.T(T.createTextNode(e)),this._$AH=e}$(e){const{values:t,_$litType$:r}=e,o="number"==typeof r?this._$AC(e):(void 0===r.el&&(r.el=G.createElement(J(r.h,r.h[0]),this.options)),r);if(this._$AH?._$AD===o)this._$AH.p(t);else{const e=new K(o,this),r=e.u(this.options);e.p(t),this.T(r),this._$AH=e}}_$AC(e){let t=B.get(e.strings);return void 0===t&&B.set(e.strings,t=new G(e)),t}k(e){R(this._$AH)||(this._$AH=[],this._$AR());const t=this._$AH;let r,o=0;for(const i of e)o===t.length?t.push(r=new Q(this.O(M()),this.O(M()),this,this.options)):r=t[o],r._$AI(i),o++;o<t.length&&(this._$AR(r&&r._$AB.nextSibling,o),t.length=o)}_$AR(e=this._$AA.nextSibling,t){for(this._$AP?.(!1,!0,t);e!==this._$AB;){const t=k(e).nextSibling;k(e).remove(),e=t}}setConnected(e){void 0===this._$AM&&(this._$Cv=e,this._$AP?.(e))}}class ee{get tagName(){return this.element.tagName}get _$AU(){return this._$AM._$AU}constructor(e,t,r,o,i){this.type=1,this._$AH=j,this._$AN=void 0,this.element=e,this.name=t,this._$AM=o,this.options=i,r.length>2||""!==r[0]||""!==r[1]?(this._$AH=Array(r.length-1).fill(new String),this.strings=r):this._$AH=j}_$AI(e,t=this,r,o){const i=this.strings;let a=!1;if(void 0===i)e=Z(this,e,t,0),a=!O(e)||e!==this._$AH&&e!==Y,a&&(this._$AH=e);else{const o=e;let s,n;for(e=i[0],s=0;s<i.length-1;s++)n=Z(this,o[r+s],t,s),n===Y&&(n=this._$AH[s]),a||=!O(n)||n!==this._$AH[s],n===j?e=j:e!==j&&(e+=(n??"")+i[s+1]),this._$AH[s]=n}a&&!o&&this.j(e)}j(e){e===j?this.element.removeAttribute(this.name):this.element.setAttribute(this.name,e??"")}}class te extends ee{constructor(){super(...arguments),this.type=3}j(e){this.element[this.name]=e===j?void 0:e}}class re extends ee{constructor(){super(...arguments),this.type=4}j(e){this.element.toggleAttribute(this.name,!!e&&e!==j)}}class oe extends ee{constructor(e,t,r,o,i){super(e,t,r,o,i),this.type=5}_$AI(e,t=this){if((e=Z(this,e,t,0)??j)===Y)return;const r=this._$AH,o=e===j&&r!==j||e.capture!==r.capture||e.once!==r.once||e.passive!==r.passive,i=e!==j&&(r===j||o);o&&this.element.removeEventListener(this.name,this,r),i&&this.element.addEventListener(this.name,this,e),this._$AH=e}handleEvent(e){"function"==typeof this._$AH?this._$AH.call(this.options?.host??this.element,e):this._$AH.handleEvent(e)}}class ie{constructor(e,t,r){this.element=e,this.type=6,this._$AN=void 0,this._$AM=t,this.options=r}get _$AU(){return this._$AM._$AU}_$AI(e){Z(this,e)}}const ae=$.litHtmlPolyfillSupport;ae?.(G,Q),($.litHtmlVersions??=[]).push("3.3.2");const se=globalThis;
 /**
      * @license
      * Copyright 2017 Google LLC
      * SPDX-License-Identifier: BSD-3-Clause
-     */class ne extends x{constructor(){super(...arguments),this.renderOptions={host:this},this._$Do=void 0}createRenderRoot(){const e=super.createRenderRoot();return this.renderOptions.renderBefore??=e.firstChild,e}update(e){const t=this.render();this.hasUpdated||(this.renderOptions.isConnected=this.isConnected),super.update(e),this._$Do=((e,t,r)=>{const o=r?.renderBefore??t;let i=o._$litPart$;if(void 0===i){const e=r?.renderBefore??null;o._$litPart$=i=new Q(t.insertBefore(T(),e),e,void 0,r??{})}return i._$AI(e),i})(t,this.renderRoot,this.renderOptions)}connectedCallback(){super.connectedCallback(),this._$Do?.setConnected(!0)}disconnectedCallback(){super.disconnectedCallback(),this._$Do?.setConnected(!1)}render(){return Y}}ne._$litElement$=!0,ne.finalized=!0,se.litElementHydrateSupport?.({LitElement:ne});const ce=se.litElementPolyfillSupport;ce?.({LitElement:ne}),(se.litElementVersions??=[]).push("4.2.2");
+     */class ne extends x{constructor(){super(...arguments),this.renderOptions={host:this},this._$Do=void 0}createRenderRoot(){const e=super.createRenderRoot();return this.renderOptions.renderBefore??=e.firstChild,e}update(e){const t=this.render();this.hasUpdated||(this.renderOptions.isConnected=this.isConnected),super.update(e),this._$Do=((e,t,r)=>{const o=r?.renderBefore??t;let i=o._$litPart$;if(void 0===i){const e=r?.renderBefore??null;o._$litPart$=i=new Q(t.insertBefore(M(),e),e,void 0,r??{})}return i._$AI(e),i})(t,this.renderRoot,this.renderOptions)}connectedCallback(){super.connectedCallback(),this._$Do?.setConnected(!0)}disconnectedCallback(){super.disconnectedCallback(),this._$Do?.setConnected(!1)}render(){return Y}}ne._$litElement$=!0,ne.finalized=!0,se.litElementHydrateSupport?.({LitElement:ne});const ce=se.litElementPolyfillSupport;ce?.({LitElement:ne}),(se.litElementVersions??=[]).push("4.2.2");
 /**
      * @license
      * Copyright 2017 Google LLC
@@ -30,7 +30,7 @@ const le={attribute:!0,type:String,converter:y,reflect:!1,hasChanged:w},de=(e=le
      * @license
      * Copyright 2017 Google LLC
      * SPDX-License-Identifier: BSD-3-Clause
-     */function he(e){return pe({...e,state:!0,attribute:!1})}const _e={en:{"editor.basic_settings":"Basic Settings","editor.source_entry_id_label":"Primary Tariff","editor.source_entry_id_helper":"Select the Octopus Energy tariff to display consumption data for","editor.entity_label":"Entity","editor.entity_helper":"Select the Octopus Energy España consumption sensor (deprecated)","editor.display_options":"Display Options","editor.show_comparison_label":"Show Comparison","editor.show_comparison_helper":"Compare current period with previous period","editor.default_period_label":"Default Period","editor.default_period_helper":"Initial time period to display","editor.chart_type_label":"Chart Type","editor.chart_type_helper":"Type of chart to display","editor.show_navigation_label":"Show Navigation","editor.show_navigation_helper":"Show period navigation buttons","editor.tariff_comparison":"Tariff Comparison","editor.show_tariff_comparison_label":"Show Tariff Comparison","editor.show_tariff_comparison_helper":"Compare consumption costs across different tariffs","editor.tariff_entry_ids_label":"Comparison Tariffs","editor.tariff_entry_ids_helper":"Optional: Select additional tariffs to compare costs","editor.cost_display":"Cost Display","editor.show_cost_on_chart_label":"Show Cost on Chart","editor.show_cost_on_chart_helper":"Display cost information on the chart","editor.selected_tariff_for_cost_label":"Selected Tariff for Cost","editor.selected_tariff_for_cost_helper":"Tariff entry ID to use for cost calculation","editor.consumption_sensor_label":"Consumption Sensor Override","editor.consumption_sensor_helper":"Optional: Manually specify a consumption sensor instead of using integration data","editor.migration_warning":"Configuration migration required. Please edit the card and select your tariff.","editor.select_tariff":"Select a tariff to get started","editor.view_label":"View","editor.view_helper":"Select which view to display","editor.view_consumption":"Consumption Overview","editor.view_heat_calendar":"Heat Calendar","editor.view_week_analysis":"Week Analysis","editor.view_tariff_comparison":"Tariff Comparison","editor.chart_type_line":"Line","editor.chart_type_bar":"Bar","editor.chart_type_stacked_area":"Stacked Area","editor.chart_type_heat_calendar":"Heat Calendar","editor.advanced_visualization":"Advanced Visualization","editor.show_period_distribution_label":"Show Period Distribution","editor.show_period_distribution_helper":"Show P1/P2/P3 consumption breakdown on chart","editor.show_moving_average_label":"Show Moving Average","editor.show_moving_average_helper":"Display trend line with moving average","editor.moving_average_days_label":"Moving Average Days","editor.moving_average_days_helper":"Number of days for moving average calculation (default: 7)","editor.period_day":"Day","editor.period_week":"Week","editor.period_month":"Month","editor.show_heat_calendar_label":"Show Heat Calendar","editor.show_heat_calendar_helper":"Display consumption heatmap calendar","editor.heat_calendar_period_label":"Heat Calendar Period","editor.heat_calendar_period_helper":"Time period for heat calendar display","editor.heat_calendar_period_month":"Month","editor.heat_calendar_period_year":"Year","editor.show_week_comparison_label":"Show Week Comparison","editor.show_week_comparison_helper":"Compare consumption across consecutive weeks","editor.week_comparison_count_label":"Week Comparison Count","editor.week_comparison_count_helper":"Number of weeks to compare (default: 2)","editor.show_cost_trend_label":"Show Cost Trend","editor.show_cost_trend_helper":"Display cost trend with moving average","editor.cost_moving_average_days_label":"Cost Moving Average Days","editor.cost_moving_average_days_helper":"Number of days for cost moving average (default: 30)","editor.show_tariff_chart_label":"Show Tariff Chart","editor.show_tariff_chart_helper":"Display visual chart in tariff comparison section","editor.entity_required":"Entity is required","editor.entity_invalid":"Entity must be an Octopus Energy España sensor (sensor.octopus_energy_es_*)"},es:{"editor.basic_settings":"Configuración Básica","editor.source_entry_id_label":"Tarifa Principal","editor.source_entry_id_helper":"Selecciona la tarifa de Octopus Energy para mostrar datos de consumo","editor.entity_label":"Entidad","editor.entity_helper":"Seleccione el sensor de consumo de Octopus Energy España (obsoleto)","editor.display_options":"Opciones de Visualización","editor.show_comparison_label":"Mostrar Comparación","editor.show_comparison_helper":"Comparar período actual con período anterior","editor.default_period_label":"Período Predeterminado","editor.default_period_helper":"Período de tiempo inicial a mostrar","editor.chart_type_label":"Tipo de Gráfico","editor.chart_type_helper":"Tipo de gráfico a mostrar","editor.show_navigation_label":"Mostrar Navegación","editor.show_navigation_helper":"Mostrar botones de navegación de período","editor.tariff_comparison":"Comparación de Tarifas","editor.show_tariff_comparison_label":"Mostrar Comparación de Tarifas","editor.show_tariff_comparison_helper":"Comparar costes de consumo entre diferentes tarifas","editor.tariff_entry_ids_label":"Tarifas de Comparación","editor.tariff_entry_ids_helper":"Opcional: Selecciona tarifas adicionales para comparar costes","editor.cost_display":"Visualización de Costes","editor.show_cost_on_chart_label":"Mostrar Coste en Gráfico","editor.show_cost_on_chart_helper":"Mostrar información de costes en el gráfico","editor.selected_tariff_for_cost_label":"Tarifa Seleccionada para Coste","editor.selected_tariff_for_cost_helper":"ID de entrada de tarifa a usar para cálculo de costes","editor.consumption_sensor_label":"Sensor de Consumo Manual","editor.consumption_sensor_helper":"Opcional: Especifica manualmente un sensor de consumo en lugar de usar datos de integración","editor.migration_warning":"Se requiere migración de configuración. Por favor, edita la tarjeta y selecciona tu tarifa.","editor.select_tariff":"Selecciona una tarifa para comenzar","editor.view_label":"Vista","editor.view_helper":"Selecciona qué vista mostrar","editor.view_consumption":"Resumen de Consumo","editor.view_heat_calendar":"Calendario de Calor","editor.view_week_analysis":"Análisis Semanal","editor.view_tariff_comparison":"Comparación de Tarifas","editor.chart_type_line":"Línea","editor.chart_type_bar":"Barras","editor.chart_type_stacked_area":"Área Apilada","editor.chart_type_heat_calendar":"Calendario de Calor","editor.advanced_visualization":"Visualización Avanzada","editor.show_period_distribution_label":"Mostrar Distribución por Períodos","editor.show_period_distribution_helper":"Mostrar desglose de consumo P1/P2/P3 en el gráfico","editor.show_moving_average_label":"Mostrar Media Móvil","editor.show_moving_average_helper":"Mostrar línea de tendencia con media móvil","editor.moving_average_days_label":"Días de Media Móvil","editor.moving_average_days_helper":"Número de días para el cálculo de la media móvil (predeterminado: 7)","editor.period_day":"Día","editor.period_week":"Semana","editor.period_month":"Mes","editor.show_heat_calendar_label":"Mostrar Calendario de Calor","editor.show_heat_calendar_helper":"Mostrar mapa de calor de consumo","editor.heat_calendar_period_label":"Período del Calendario de Calor","editor.heat_calendar_period_helper":"Período de tiempo para el calendario de calor","editor.heat_calendar_period_month":"Mes","editor.heat_calendar_period_year":"Año","editor.show_week_comparison_label":"Mostrar Comparación Semanal","editor.show_week_comparison_helper":"Comparar consumo entre semanas consecutivas","editor.week_comparison_count_label":"Número de Semanas a Comparar","editor.week_comparison_count_helper":"Número de semanas para comparar (predeterminado: 2)","editor.show_cost_trend_label":"Mostrar Tendencia de Costes","editor.show_cost_trend_helper":"Mostrar tendencia de costes con media móvil","editor.cost_moving_average_days_label":"Días de Media Móvil de Costes","editor.cost_moving_average_days_helper":"Número de días para la media móvil de costes (predeterminado: 30)","editor.show_tariff_chart_label":"Mostrar Gráfico de Tarifas","editor.show_tariff_chart_helper":"Mostrar gráfico visual en la sección de comparación de tarifas","editor.entity_required":"La entidad es requerida","editor.entity_invalid":"La entidad debe ser un sensor de Octopus Energy España (sensor.octopus_energy_es_*)"},be:{"editor.basic_settings":"Асноўныя налады","editor.source_entry_id_label":"Асноўны тарыф","editor.source_entry_id_helper":"Выберыце тарыф Octopus Energy для адлюстравання даных спажывання","editor.entity_label":"Сутнасць","editor.entity_helper":"Выберыце сэнсар спажывання Octopus Energy España (састарэлы)","editor.display_options":"Параметры адлюстравання","editor.show_comparison_label":"Паказаць параўнанне","editor.show_comparison_helper":"Параўнаць бягучы перыяд з папярэднім перыядам","editor.default_period_label":"Перыяд па змаўчанні","editor.default_period_helper":"Пачатковы часовы перыяд для адлюстравання","editor.chart_type_label":"Тып дыяграмы","editor.chart_type_helper":"Тып дыяграмы для адлюстравання","editor.show_navigation_label":"Паказаць навігацыю","editor.show_navigation_helper":"Паказаць кнопкі навігацыі па перыядах","editor.tariff_comparison":"Параўнанне тарыфаў","editor.show_tariff_comparison_label":"Паказаць параўнанне тарыфаў","editor.show_tariff_comparison_helper":"Параўнаць выдаткі на спажыванне паміж рознымі тарыфамі","editor.tariff_entry_ids_label":"Тарыфы для параўнання","editor.tariff_entry_ids_helper":"Неабавязкова: Выберыце дадатковыя тарыфы для параўнання кошту","editor.cost_display":"Адлюстраванне кошту","editor.show_cost_on_chart_label":"Паказаць кошт на дыяграме","editor.show_cost_on_chart_helper":"Адлюстраваць інфармацыю аб кошце на дыяграме","editor.selected_tariff_for_cost_label":"Выбраны тарыф для кошту","editor.selected_tariff_for_cost_helper":"ID запісу тарыфу для разліку кошту","editor.consumption_sensor_label":"Ручны сенсар спажывання","editor.consumption_sensor_helper":"Неабавязкова: Укажыце сенсар спажывання ўручную замест выкарыстання даных інтэграцыі","editor.migration_warning":"Патрабуецца міграцыя канфігурацыі. Калі ласка, адрэдагуйце картку і выберыце свой тарыф.","editor.select_tariff":"Выберыце тарыф для пачатку","editor.view_label":"Выгляд","editor.view_helper":"Выберыце, які выгляд адлюстраваць","editor.view_consumption":"Агляд спажывання","editor.view_heat_calendar":"Каляндар цяпла","editor.view_week_analysis":"Тыднёвы аналіз","editor.view_tariff_comparison":"Параўнанне тарыфаў","editor.chart_type_line":"Лінія","editor.chart_type_bar":"Слупкі","editor.chart_type_stacked_area":"Стопачная дыяграма","editor.chart_type_heat_calendar":"Каляндар цяпла","editor.advanced_visualization":"Пашыраная візуалізацыя","editor.show_period_distribution_label":"Паказаць размеркаванне па перыядах","editor.show_period_distribution_helper":"Паказаць разбіўку спажывання P1/P2/P3 на дыяграме","editor.show_moving_average_label":"Паказаць рухомае сярэдняе","editor.show_moving_average_helper":"Паказаць лінію трэнду з рухомым сярэднім","editor.moving_average_days_label":"Дні рухомага сярэдняга","editor.moving_average_days_helper":"Колькасць дзён для разліку рухомага сярэдняга (па змаўчанні: 7)","editor.period_day":"Дзень","editor.period_week":"Тыдзень","editor.period_month":"Месяц","editor.show_heat_calendar_label":"Паказаць каляндар цяпла","editor.show_heat_calendar_helper":"Адлюстраваць карту цяпла спажывання","editor.heat_calendar_period_label":"Перыяд каляндара цяпла","editor.heat_calendar_period_helper":"Часавы перыяд для адлюстравання каляндара цяпла","editor.heat_calendar_period_month":"Месяц","editor.heat_calendar_period_year":"Год","editor.show_week_comparison_label":"Паказаць параўнанне тыдняў","editor.show_week_comparison_helper":"Параўнаць спажыванне паміж паслядоўнымі тыднямі","editor.week_comparison_count_label":"Колькасць тыдняў для параўнання","editor.week_comparison_count_helper":"Колькасць тыдняў для параўнання (па змаўчанні: 2)","editor.show_cost_trend_label":"Паказаць трэнд кошту","editor.show_cost_trend_helper":"Адлюстраваць трэнд кошту з рухомым сярэднім","editor.cost_moving_average_days_label":"Дні рухомага сярэдняга кошту","editor.cost_moving_average_days_helper":"Колькасць дзён для рухомага сярэдняга кошту (па змаўчанні: 30)","editor.show_tariff_chart_label":"Паказаць дыяграму тарыфаў","editor.show_tariff_chart_helper":"Адлюстраваць візуальную дыяграму ў раздзеле параўнання тарыфаў","editor.entity_required":"Сутнасць абавязковая","editor.entity_invalid":"Сутнасць павінна быць сэнсарам Octopus Energy España (sensor.octopus_energy_es_*)"}};function ue(e,t="en"){const r=t.toLowerCase(),o=_e[r]?.[e]||_e.en?.[e];return o||e.replace("editor.","").replace(/_/g," ")}var fe=function(e,t,r,o){var i,a=arguments.length,s=a<3?t:null===o?o=Object.getOwnPropertyDescriptor(t,r):o;if("object"==typeof Reflect&&"function"==typeof Reflect.decorate)s=Reflect.decorate(e,t,r,o);else for(var n=e.length-1;n>=0;n--)(i=e[n])&&(s=(a<3?i(s):a>3?i(t,r,s):i(t,r))||s);return a>3&&s&&Object.defineProperty(t,r,s),s};void 0!==ne&&ne.disableWarning&&ne.disableWarning("change-in-update");class me extends ne{constructor(){super(...arguments),this._config={type:"custom:octopus-consumption-card",source_entry_id:"",view:"consumption",show_comparison:!0,default_period:"week",chart_type:"line",show_tariff_comparison:!1,tariff_entry_ids:[],show_cost_on_chart:!1,show_navigation:!0,show_period_distribution:!1,show_moving_average:!1,moving_average_days:7},this._language="en",this._computeLabel=e=>function(e,t="en"){return ue(`editor.${e.name}_label`,t)}(e,this._language),this._computeHelper=e=>function(e,t="en"){return ue(`editor.${e.name}_helper`,t)}(e,this._language)}setConfig(e){JSON.stringify(this._config)!==JSON.stringify(e)&&(this._config={...e})}willUpdate(e){if(e.has("config")&&this.config){JSON.stringify(this._config)!==JSON.stringify(this.config)&&(this._config={...this.config})}if(e.has("hass")&&this.hass){const e=this.hass.language||"en";this._language!==e&&(this._language=e)}}firstUpdated(){if(this.config){JSON.stringify(this._config)!==JSON.stringify(this.config)&&(this._config={...this.config})}this.hass&&(this._language=this.hass.language||"en")}_valueChanged(e){if(!this._config||!this.hass)return;const t=e.detail.value;!1===t.show_tariff_comparison&&(t.show_cost_on_chart=!1,t.selected_tariff_for_cost=void 0,t.tariff_entry_ids=void 0),!1===t.show_cost_on_chart&&(t.selected_tariff_for_cost=void 0),this._config=t,this._fireConfigChanged()}_fireConfigChanged(){const e=new CustomEvent("config-changed",{detail:{config:this._config},bubbles:!0,composed:!0});this.dispatchEvent(e)}_buildSchema(){const e=this._config.view||"consumption",t=[{name:"view",selector:{select:{mode:"dropdown",options:[{value:"consumption",label:ue("editor.view_consumption",this._language)},{value:"heat-calendar",label:ue("editor.view_heat_calendar",this._language)},{value:"week-analysis",label:ue("editor.view_week_analysis",this._language)},{value:"tariff-comparison",label:ue("editor.view_tariff_comparison",this._language)}]}}},{name:"source_entry_id",required:!0,selector:{config_entry:{integration:"octopus_energy_es"}}}];return"consumption"===e?(t.push({name:"show_comparison",selector:{boolean:{}}},{name:"default_period",selector:{select:{mode:"dropdown",options:[{value:"day",label:ue("editor.period_day",this._language)},{value:"week",label:ue("editor.period_week",this._language)},{value:"month",label:ue("editor.period_month",this._language)}]}}},{name:"chart_type",selector:{select:{mode:"dropdown",options:[{value:"line",label:ue("editor.chart_type_line",this._language)},{value:"bar",label:ue("editor.chart_type_bar",this._language)},{value:"stacked-area",label:ue("editor.chart_type_stacked_area",this._language)}]}}},{name:"show_navigation",selector:{boolean:{}}},{name:"show_period_distribution",selector:{boolean:{}}},{name:"show_moving_average",selector:{boolean:{}}}),this._config.show_moving_average&&t.push({name:"moving_average_days",selector:{number:{min:2,max:30,mode:"box"}}}),t.push({name:"show_cost_on_chart",selector:{boolean:{}}}),this._config.show_cost_on_chart&&t.push({name:"selected_tariff_for_cost",selector:{config_entry:{integration:"octopus_energy_es"}}}),t.push({name:"show_cost_trend",selector:{boolean:{}}}),this._config.show_cost_trend&&t.push({name:"cost_moving_average_days",selector:{number:{min:2,max:90,mode:"box"}}})):"heat-calendar"===e?t.push({name:"heat_calendar_period",selector:{select:{mode:"dropdown",options:[{value:"month",label:ue("editor.heat_calendar_period_month",this._language)},{value:"year",label:ue("editor.heat_calendar_period_year",this._language)}]}}},{name:"show_navigation",selector:{boolean:{}}}):"week-analysis"===e?(t.push({name:"show_week_comparison",selector:{boolean:{}}},{name:"show_navigation",selector:{boolean:{}}}),this._config.show_week_comparison&&t.push({name:"week_comparison_count",selector:{number:{min:2,max:8,mode:"box"}}})):"tariff-comparison"===e&&(t.push({name:"show_tariff_comparison",selector:{boolean:{}}}),this._config.show_tariff_comparison&&(t.push({name:"tariff_entry_ids",selector:{object:{}}}),t.push({name:"show_tariff_chart",selector:{boolean:{}}}))),t.push({name:"consumption_sensor",selector:{entity:{domain:"sensor"}}}),t}render(){if(!this.hass)return V`<div class="card-config">Loading...</div>`;const e=this._buildSchema();return V`
+     */function he(e){return pe({...e,state:!0,attribute:!1})}const _e={en:{"editor.basic_settings":"Basic Settings","editor.source_entry_id_label":"Primary Tariff","editor.source_entry_id_helper":"Select the Octopus Energy tariff to display consumption data for","editor.entity_label":"Entity","editor.entity_helper":"Select the Octopus Energy España consumption sensor (deprecated)","editor.display_options":"Display Options","editor.show_comparison_label":"Show Comparison","editor.show_comparison_helper":"Compare current period with previous period","editor.default_period_label":"Default Period","editor.default_period_helper":"Initial time period to display","editor.chart_type_label":"Chart Type","editor.chart_type_helper":"Type of chart to display","editor.show_navigation_label":"Show Navigation","editor.show_navigation_helper":"Show period navigation buttons","editor.tariff_comparison":"Tariff Comparison","editor.show_tariff_comparison_label":"Show Tariff Comparison","editor.show_tariff_comparison_helper":"Compare consumption costs across different tariffs","editor.tariff_entry_ids_label":"Comparison Tariffs","editor.tariff_entry_ids_helper":"Optional: Select additional tariffs to compare costs","editor.cost_display":"Cost Display","editor.show_cost_on_chart_label":"Show Cost on Chart","editor.show_cost_on_chart_helper":"Display cost information on the chart","editor.selected_tariff_for_cost_label":"Selected Tariff for Cost","editor.selected_tariff_for_cost_helper":"Tariff entry ID to use for cost calculation","editor.consumption_sensor_label":"Consumption Sensor Override","editor.consumption_sensor_helper":"Optional: Manually specify a consumption sensor instead of using integration data","editor.migration_warning":"Configuration migration required. Please edit the card and select your tariff.","editor.select_tariff":"Select a tariff to get started","editor.view_label":"View","editor.view_helper":"Select which view to display","editor.view_consumption":"Consumption Overview","editor.view_heat_calendar":"Heat Calendar","editor.view_week_analysis":"Week Analysis","editor.view_tariff_comparison":"Tariff Comparison","editor.chart_type_line":"Line","editor.chart_type_bar":"Bar","editor.chart_type_stacked_area":"Stacked Area","editor.chart_type_heat_calendar":"Heat Calendar","editor.advanced_visualization":"Advanced Visualization","editor.show_period_distribution_label":"Show Period Distribution","editor.show_period_distribution_helper":"Show P1/P2/P3 consumption breakdown on chart","editor.show_moving_average_label":"Show Moving Average","editor.show_moving_average_helper":"Display trend line with moving average","editor.moving_average_days_label":"Moving Average Days","editor.moving_average_days_helper":"Number of days for moving average calculation (default: 7)","editor.period_day":"Day","editor.period_week":"Week","editor.period_month":"Month","editor.show_heat_calendar_label":"Show Heat Calendar","editor.show_heat_calendar_helper":"Display consumption heatmap calendar","editor.heat_calendar_period_label":"Heat Calendar Period","editor.heat_calendar_period_helper":"Time period for heat calendar display","editor.heat_calendar_period_month":"Month","editor.heat_calendar_period_year":"Year","editor.show_week_comparison_label":"Show Week Comparison","editor.show_week_comparison_helper":"Compare consumption across consecutive weeks","editor.week_comparison_count_label":"Week Comparison Count","editor.week_comparison_count_helper":"Number of weeks to compare (default: 2)","editor.show_cost_trend_label":"Show Cost Trend","editor.show_cost_trend_helper":"Display cost trend with moving average","editor.cost_moving_average_days_label":"Cost Moving Average Days","editor.cost_moving_average_days_helper":"Number of days for cost moving average (default: 30)","editor.show_tariff_chart_label":"Show Tariff Chart","editor.show_tariff_chart_helper":"Display visual chart in tariff comparison section","editor.entity_required":"Entity is required","editor.entity_invalid":"Entity must be an Octopus Energy España sensor (sensor.octopus_energy_es_*)"},es:{"editor.basic_settings":"Configuración Básica","editor.source_entry_id_label":"Tarifa Principal","editor.source_entry_id_helper":"Selecciona la tarifa de Octopus Energy para mostrar datos de consumo","editor.entity_label":"Entidad","editor.entity_helper":"Seleccione el sensor de consumo de Octopus Energy España (obsoleto)","editor.display_options":"Opciones de Visualización","editor.show_comparison_label":"Mostrar Comparación","editor.show_comparison_helper":"Comparar período actual con período anterior","editor.default_period_label":"Período Predeterminado","editor.default_period_helper":"Período de tiempo inicial a mostrar","editor.chart_type_label":"Tipo de Gráfico","editor.chart_type_helper":"Tipo de gráfico a mostrar","editor.show_navigation_label":"Mostrar Navegación","editor.show_navigation_helper":"Mostrar botones de navegación de período","editor.tariff_comparison":"Comparación de Tarifas","editor.show_tariff_comparison_label":"Mostrar Comparación de Tarifas","editor.show_tariff_comparison_helper":"Comparar costes de consumo entre diferentes tarifas","editor.tariff_entry_ids_label":"Tarifas de Comparación","editor.tariff_entry_ids_helper":"Opcional: Selecciona tarifas adicionales para comparar costes","editor.cost_display":"Visualización de Costes","editor.show_cost_on_chart_label":"Mostrar Coste en Gráfico","editor.show_cost_on_chart_helper":"Mostrar información de costes en el gráfico","editor.selected_tariff_for_cost_label":"Tarifa Seleccionada para Coste","editor.selected_tariff_for_cost_helper":"ID de entrada de tarifa a usar para cálculo de costes","editor.consumption_sensor_label":"Sensor de Consumo Manual","editor.consumption_sensor_helper":"Opcional: Especifica manualmente un sensor de consumo en lugar de usar datos de integración","editor.migration_warning":"Se requiere migración de configuración. Por favor, edita la tarjeta y selecciona tu tarifa.","editor.select_tariff":"Selecciona una tarifa para comenzar","editor.view_label":"Vista","editor.view_helper":"Selecciona qué vista mostrar","editor.view_consumption":"Resumen de Consumo","editor.view_heat_calendar":"Calendario de Calor","editor.view_week_analysis":"Análisis Semanal","editor.view_tariff_comparison":"Comparación de Tarifas","editor.chart_type_line":"Línea","editor.chart_type_bar":"Barras","editor.chart_type_stacked_area":"Área Apilada","editor.chart_type_heat_calendar":"Calendario de Calor","editor.advanced_visualization":"Visualización Avanzada","editor.show_period_distribution_label":"Mostrar Distribución por Períodos","editor.show_period_distribution_helper":"Mostrar desglose de consumo P1/P2/P3 en el gráfico","editor.show_moving_average_label":"Mostrar Media Móvil","editor.show_moving_average_helper":"Mostrar línea de tendencia con media móvil","editor.moving_average_days_label":"Días de Media Móvil","editor.moving_average_days_helper":"Número de días para el cálculo de la media móvil (predeterminado: 7)","editor.period_day":"Día","editor.period_week":"Semana","editor.period_month":"Mes","editor.show_heat_calendar_label":"Mostrar Calendario de Calor","editor.show_heat_calendar_helper":"Mostrar mapa de calor de consumo","editor.heat_calendar_period_label":"Período del Calendario de Calor","editor.heat_calendar_period_helper":"Período de tiempo para el calendario de calor","editor.heat_calendar_period_month":"Mes","editor.heat_calendar_period_year":"Año","editor.show_week_comparison_label":"Mostrar Comparación Semanal","editor.show_week_comparison_helper":"Comparar consumo entre semanas consecutivas","editor.week_comparison_count_label":"Número de Semanas a Comparar","editor.week_comparison_count_helper":"Número de semanas para comparar (predeterminado: 2)","editor.show_cost_trend_label":"Mostrar Tendencia de Costes","editor.show_cost_trend_helper":"Mostrar tendencia de costes con media móvil","editor.cost_moving_average_days_label":"Días de Media Móvil de Costes","editor.cost_moving_average_days_helper":"Número de días para la media móvil de costes (predeterminado: 30)","editor.show_tariff_chart_label":"Mostrar Gráfico de Tarifas","editor.show_tariff_chart_helper":"Mostrar gráfico visual en la sección de comparación de tarifas","editor.entity_required":"La entidad es requerida","editor.entity_invalid":"La entidad debe ser un sensor de Octopus Energy España (sensor.octopus_energy_es_*)"},be:{"editor.basic_settings":"Асноўныя налады","editor.source_entry_id_label":"Асноўны тарыф","editor.source_entry_id_helper":"Выберыце тарыф Octopus Energy для адлюстравання даных спажывання","editor.entity_label":"Сутнасць","editor.entity_helper":"Выберыце сэнсар спажывання Octopus Energy España (састарэлы)","editor.display_options":"Параметры адлюстравання","editor.show_comparison_label":"Паказаць параўнанне","editor.show_comparison_helper":"Параўнаць бягучы перыяд з папярэднім перыядам","editor.default_period_label":"Перыяд па змаўчанні","editor.default_period_helper":"Пачатковы часовы перыяд для адлюстравання","editor.chart_type_label":"Тып дыяграмы","editor.chart_type_helper":"Тып дыяграмы для адлюстравання","editor.show_navigation_label":"Паказаць навігацыю","editor.show_navigation_helper":"Паказаць кнопкі навігацыі па перыядах","editor.tariff_comparison":"Параўнанне тарыфаў","editor.show_tariff_comparison_label":"Паказаць параўнанне тарыфаў","editor.show_tariff_comparison_helper":"Параўнаць выдаткі на спажыванне паміж рознымі тарыфамі","editor.tariff_entry_ids_label":"Тарыфы для параўнання","editor.tariff_entry_ids_helper":"Неабавязкова: Выберыце дадатковыя тарыфы для параўнання кошту","editor.cost_display":"Адлюстраванне кошту","editor.show_cost_on_chart_label":"Паказаць кошт на дыяграме","editor.show_cost_on_chart_helper":"Адлюстраваць інфармацыю аб кошце на дыяграме","editor.selected_tariff_for_cost_label":"Выбраны тарыф для кошту","editor.selected_tariff_for_cost_helper":"ID запісу тарыфу для разліку кошту","editor.consumption_sensor_label":"Ручны сенсар спажывання","editor.consumption_sensor_helper":"Неабавязкова: Укажыце сенсар спажывання ўручную замест выкарыстання даных інтэграцыі","editor.migration_warning":"Патрабуецца міграцыя канфігурацыі. Калі ласка, адрэдагуйце картку і выберыце свой тарыф.","editor.select_tariff":"Выберыце тарыф для пачатку","editor.view_label":"Выгляд","editor.view_helper":"Выберыце, які выгляд адлюстраваць","editor.view_consumption":"Агляд спажывання","editor.view_heat_calendar":"Каляндар цяпла","editor.view_week_analysis":"Тыднёвы аналіз","editor.view_tariff_comparison":"Параўнанне тарыфаў","editor.chart_type_line":"Лінія","editor.chart_type_bar":"Слупкі","editor.chart_type_stacked_area":"Стопачная дыяграма","editor.chart_type_heat_calendar":"Каляндар цяпла","editor.advanced_visualization":"Пашыраная візуалізацыя","editor.show_period_distribution_label":"Паказаць размеркаванне па перыядах","editor.show_period_distribution_helper":"Паказаць разбіўку спажывання P1/P2/P3 на дыяграме","editor.show_moving_average_label":"Паказаць рухомае сярэдняе","editor.show_moving_average_helper":"Паказаць лінію трэнду з рухомым сярэднім","editor.moving_average_days_label":"Дні рухомага сярэдняга","editor.moving_average_days_helper":"Колькасць дзён для разліку рухомага сярэдняга (па змаўчанні: 7)","editor.period_day":"Дзень","editor.period_week":"Тыдзень","editor.period_month":"Месяц","editor.show_heat_calendar_label":"Паказаць каляндар цяпла","editor.show_heat_calendar_helper":"Адлюстраваць карту цяпла спажывання","editor.heat_calendar_period_label":"Перыяд каляндара цяпла","editor.heat_calendar_period_helper":"Часавы перыяд для адлюстравання каляндара цяпла","editor.heat_calendar_period_month":"Месяц","editor.heat_calendar_period_year":"Год","editor.show_week_comparison_label":"Паказаць параўнанне тыдняў","editor.show_week_comparison_helper":"Параўнаць спажыванне паміж паслядоўнымі тыднямі","editor.week_comparison_count_label":"Колькасць тыдняў для параўнання","editor.week_comparison_count_helper":"Колькасць тыдняў для параўнання (па змаўчанні: 2)","editor.show_cost_trend_label":"Паказаць трэнд кошту","editor.show_cost_trend_helper":"Адлюстраваць трэнд кошту з рухомым сярэднім","editor.cost_moving_average_days_label":"Дні рухомага сярэдняга кошту","editor.cost_moving_average_days_helper":"Колькасць дзён для рухомага сярэдняга кошту (па змаўчанні: 30)","editor.show_tariff_chart_label":"Паказаць дыяграму тарыфаў","editor.show_tariff_chart_helper":"Адлюстраваць візуальную дыяграму ў раздзеле параўнання тарыфаў","editor.entity_required":"Сутнасць абавязковая","editor.entity_invalid":"Сутнасць павінна быць сэнсарам Octopus Energy España (sensor.octopus_energy_es_*)"}};function ue(e,t="en"){const r=t.toLowerCase(),o=_e[r]?.[e]||_e.en?.[e];return o||e.replace("editor.","").replace(/_/g," ")}var fe=function(e,t,r,o){var i,a=arguments.length,s=a<3?t:null===o?o=Object.getOwnPropertyDescriptor(t,r):o;if("object"==typeof Reflect&&"function"==typeof Reflect.decorate)s=Reflect.decorate(e,t,r,o);else for(var n=e.length-1;n>=0;n--)(i=e[n])&&(s=(a<3?i(s):a>3?i(t,r,s):i(t,r))||s);return a>3&&s&&Object.defineProperty(t,r,s),s};void 0!==ne&&ne.disableWarning&&ne.disableWarning("change-in-update");class me extends ne{constructor(){super(...arguments),this._config={type:"custom:octopus-consumption-card",source_entry_id:"",view:"consumption",show_comparison:!0,default_period:"week",chart_type:"line",show_tariff_comparison:!1,tariff_entry_ids:[],show_cost_on_chart:!1,show_navigation:!0,show_period_distribution:!1,show_moving_average:!1,moving_average_days:7},this._language="en",this._computeLabel=e=>function(e,t="en"){return ue(`editor.${e.name}_label`,t)}(e,this._language),this._computeHelper=e=>function(e,t="en"){return ue(`editor.${e.name}_helper`,t)}(e,this._language)}setConfig(e){const t={...e,view:e.view||"consumption"};JSON.stringify(this._config)!==JSON.stringify(t)&&(this._config=t)}willUpdate(e){if(e.has("config")&&this.config){const e={...this.config,view:this.config.view||"consumption"};JSON.stringify(this._config)!==JSON.stringify(e)&&(this._config=e)}if(e.has("hass")&&this.hass){const e=this.hass.language||"en";this._language!==e&&(this._language=e)}}firstUpdated(){if(this.config){const e={...this.config,view:this.config.view||"consumption"};JSON.stringify(this._config)!==JSON.stringify(e)&&(this._config=e)}this.hass&&(this._language=this.hass.language||"en")}_valueChanged(e){if(!this._config||!this.hass)return;const t=e.detail.value;t.view||(t.view="consumption");const r=this._config.view!==t.view;!1===t.show_tariff_comparison&&(t.show_cost_on_chart=!1,t.selected_tariff_for_cost=void 0,t.tariff_entry_ids=void 0),!1===t.show_cost_on_chart&&(t.selected_tariff_for_cost=void 0),this._config=t,r&&this.requestUpdate(),this._fireConfigChanged()}_fireConfigChanged(){const e=new CustomEvent("config-changed",{detail:{config:this._config},bubbles:!0,composed:!0});this.dispatchEvent(e)}_buildSchema(){const e=this._config.view||"consumption",t=[{name:"view",selector:{select:{mode:"dropdown",options:[{value:"consumption",label:ue("editor.view_consumption",this._language)},{value:"heat-calendar",label:ue("editor.view_heat_calendar",this._language)},{value:"week-analysis",label:ue("editor.view_week_analysis",this._language)},{value:"tariff-comparison",label:ue("editor.view_tariff_comparison",this._language)}]}}},{name:"source_entry_id",required:!0,selector:{config_entry:{integration:"octopus_energy_es"}}}];return"consumption"===e?(t.push({name:"show_comparison",selector:{boolean:{}}},{name:"default_period",selector:{select:{mode:"dropdown",options:[{value:"day",label:ue("editor.period_day",this._language)},{value:"week",label:ue("editor.period_week",this._language)},{value:"month",label:ue("editor.period_month",this._language)}]}}},{name:"chart_type",selector:{select:{mode:"dropdown",options:[{value:"line",label:ue("editor.chart_type_line",this._language)},{value:"bar",label:ue("editor.chart_type_bar",this._language)},{value:"stacked-area",label:ue("editor.chart_type_stacked_area",this._language)}]}}},{name:"show_navigation",selector:{boolean:{}}},{name:"show_period_distribution",selector:{boolean:{}}},{name:"show_moving_average",selector:{boolean:{}}}),this._config.show_moving_average&&t.push({name:"moving_average_days",selector:{number:{min:2,max:30,mode:"box"}}}),t.push({name:"show_cost_on_chart",selector:{boolean:{}}}),this._config.show_cost_on_chart&&t.push({name:"selected_tariff_for_cost",selector:{config_entry:{integration:"octopus_energy_es"}}}),t.push({name:"show_cost_trend",selector:{boolean:{}}}),this._config.show_cost_trend&&t.push({name:"cost_moving_average_days",selector:{number:{min:2,max:90,mode:"box"}}})):"heat-calendar"===e?t.push({name:"heat_calendar_period",selector:{select:{mode:"dropdown",options:[{value:"month",label:ue("editor.heat_calendar_period_month",this._language)},{value:"year",label:ue("editor.heat_calendar_period_year",this._language)}]}}},{name:"show_navigation",selector:{boolean:{}}}):"week-analysis"===e?(t.push({name:"show_week_comparison",selector:{boolean:{}}},{name:"show_navigation",selector:{boolean:{}}}),this._config.show_week_comparison&&t.push({name:"week_comparison_count",selector:{number:{min:2,max:8,mode:"box"}}})):"tariff-comparison"===e&&(t.push({name:"show_tariff_comparison",selector:{boolean:{}}}),this._config.show_tariff_comparison&&(t.push({name:"tariff_entry_ids",selector:{object:{}}}),t.push({name:"show_tariff_chart",selector:{boolean:{}}}))),t.push({name:"consumption_sensor",selector:{entity:{domain:"sensor"}}}),t}render(){if(!this.hass)return V`<div class="card-config">Loading...</div>`;const e=this._buildSchema();return V`
       <div class="card-config">
         <!-- Main Configuration Form -->
         <ha-form
@@ -123,7 +123,689 @@ const le={attribute:!0,type:String,converter:y,reflect:!1,hasChanged:w},de=(e=le
       font-size: 12px;
       margin-top: 4px;
     }
-  `,fe([pe({attribute:!1})],me.prototype,"hass",void 0),fe([pe({attribute:!1})],me.prototype,"config",void 0),fe([he()],me.prototype,"_config",void 0),"undefined"!=typeof window&&"undefined"!=typeof customElements&&(customElements.get("octopus-consumption-card-editor")||customElements.define("octopus-consumption-card-editor",me));class ge{static info(e,...t){const r=[e,this.STYLES.info];t.forEach((e,t)=>{r.push(e,t%2==0?this.STYLES.infoValue:this.STYLES.info)}),console.log(...r)}static error(e,t){t?console.error(`%c${e}%c${t}`,this.STYLES.error,this.STYLES.errorValue):console.error(`%c${e}`,this.STYLES.error)}static warn(e,t){t?console.warn(`%c${e}%c${t}`,this.STYLES.warning,this.STYLES.warningValue):console.warn(`%c${e}`,this.STYLES.warning)}static success(e){console.log(`%c${e}`,this.STYLES.success)}static data(e,t){console.log(`%c  ${e}: %c${JSON.stringify(t,null,2)}`,this.STYLES.info,this.STYLES.infoValue)}static serviceCall(e,t,r=!1){this.info("  Calling service: ",`${e}.${t}${r?" (with return_response)":""}`)}static serviceData(e){this.data("Service data",e)}static serviceResponse(e){this.data("Raw Service Response",e)}static serviceError(e){console.error("%c  Service Error Details: %c"+JSON.stringify(e,Object.getOwnPropertyNames(e),2),this.STYLES.info,this.STYLES.errorValue)}static groupServiceCall(e,t){console.groupCollapsed(`%c🔧 Service Call: %c${e}.${t}`,this.STYLES.info,this.STYLES.infoValue)}static groupEnd(){console.groupEnd()}static groupDataLoad(e,t,r){console.groupCollapsed(`%c📊 Loading Data: %cEntry: ${e} | Period: ${t} | ${r}`,this.STYLES.info,this.STYLES.infoValue)}static groupError(e){console.groupCollapsed(`%c❌ ${e}`,this.STYLES.error)}}ge.STYLES={info:"color: #666; font-size: 11px;",infoValue:"color: #999; font-size: 11px; font-family: monospace;",error:"color: #f00; font-size: 11px; font-weight: bold;",errorValue:"color: #f00; font-size: 11px;",warning:"color: #ff9800; font-size: 11px;",warningValue:"color: #ff9800; font-size: 11px;",success:"color: #4caf50; font-size: 11px;"};var ve=function(e,t,r,o){var i,a=arguments.length,s=a<3?t:null===o?o=Object.getOwnPropertyDescriptor(t,r):o;if("object"==typeof Reflect&&"function"==typeof Reflect.decorate)s=Reflect.decorate(e,t,r,o);else for(var n=e.length-1;n>=0;n--)(i=e[n])&&(s=(a<3?i(s):a>3?i(t,r,s):i(t,r))||s);return a>3&&s&&Object.defineProperty(t,r,s),s};void 0!==ne&&ne.disableWarning&&ne.disableWarning("change-in-update");class ye extends ne{constructor(){super(...arguments),this._consumptionData=[],this._comparisonResult=null,this._tariffCosts=null,this._loading=!1,this._error=null,this._comparisonError=null,this._currentPeriod="week",this._currentDate=new Date,this._weekComparisonData=null}setConfig(e){if(!e)throw new Error("Invalid configuration");this.config=e}getCardSize(){let e=1;return this.config&&!1!==this.config.show_navigation&&(e+=1),this.config&&this.config.show_tariff_comparison&&(e+=1),e}connectedCallback(){super.connectedCallback(),this._validateConfig(),this._currentPeriod=this.config.default_period||"week",this._loadData()}updated(e){super.updated(e),e.has("config")&&(this._validateConfig(),void 0!==e.get("config")&&this._loadData())}_validateConfig(){return this.config?this.config.source_entry_id?(!this.config.show_tariff_comparison||this.config.tariff_entry_ids&&0!==this.config.tariff_entry_ids.length||ge.warn("show_tariff_comparison is enabled but no tariff_entry_ids provided. Comparison will be disabled."),void(this.config.show_cost_on_chart&&!this.config.selected_tariff_for_cost&&ge.warn("show_cost_on_chart is enabled but selected_tariff_for_cost is not set. Cost display will be disabled."))):(this._error="source_entry_id is required. Please select your tariff from the card editor.",void(this._loading=!1)):(this._error="Card configuration is required",void(this._loading=!1))}_createTimeoutPromise(e){return new Promise((t,r)=>{setTimeout(()=>r(new Error("Request timeout. The service call took too long to respond.")),e)})}async _callServiceWithTimeout(e,t,r,o=!0){ge.groupServiceCall(e,t);try{let i;if(ge.serviceCall(e,t,o),r&&ge.serviceData(r),o&&this.hass.callWS)try{i=await this._callServiceViaWebSocket(e,t,r)}catch(o){const a=o instanceof Error?o.message:String(o);ge.warn("⚠ WebSocket call failed, falling back to callService: ",a),i=await this._callServiceViaStandard(e,t,r)}else i=await this._callServiceViaStandard(e,t,r);return ge.serviceResponse(i),ge.groupEnd(),i}catch(r){throw ge.serviceError(r),ge.groupEnd(),this._handleServiceError(r,e,t)}}_handleServiceError(e,t,r){if(e instanceof Error)return e.message.includes("timeout")?new Error(`Service call timeout: ${t}.${r} took longer than ${ye.SERVICE_TIMEOUT}ms`):e.message.includes("Service not found")||e.message.includes("not available")?new Error(`Service ${t}.${r} is not available. Please ensure the Octopus Energy España integration is installed and configured.`):"service_validation_error"===e.code?this._handleValidationError(e):new Error(`Service call failed: ${t}.${r} - ${e.message}`);if(e&&"object"==typeof e){const o=e;if("service_validation_error"===o.code)return this._handleValidationError(o);const i=o.message||o.translation_key||"Unknown service error";return new Error(`Service call failed: ${t}.${r} - ${i}`)}return e instanceof Error?e:new Error(String(e))}_handleValidationError(e){const t=(Error,e);let r=t.message||t.translation_key||"Service validation error";return r.includes("return_response")&&(r="The service integration may not support response data yet. Please ensure you're using the latest version of the Octopus Energy España integration and that it has been reloaded after updating."),new Error(`Service validation error: ${r}`)}_validateConsumptionResponse(e){if(!e||"object"!=typeof e)throw ge.groupError("Invalid service response"),ge.error("✗ Invalid service response: ","expected object with success field"),ge.groupEnd(),new Error("Invalid response from service: expected object with success field");if(!("success"in e))throw ge.groupError("Invalid service response format"),ge.error("✗ Invalid service response format: ","response does not contain success field"),ge.data("Received response",e),ge.groupEnd(),new Error("Service returned unexpected response format. The service may not be returning data correctly. Please check the integration configuration and ensure the service supports returning response data.")}_extractErrorMessage(e){return e instanceof Error?e.message:e&&"object"==typeof e?e.message||e.translation_key||JSON.stringify(e):String(e)}_createUserFriendlyError(e){if(e instanceof Error)return e;if(e&&"object"==typeof e){const t=e;let r=t.message||t.translation_key||JSON.stringify(e);return"service_validation_error"===t.code&&(r=r.includes("return_response")?"The service integration may not support response data yet. Please ensure you're using the latest version of the Octopus Energy España integration and that it has been reloaded after updating.":r||"Service validation error. Please check your configuration."),new Error(r)}return new Error(String(e))}_extractWebSocketResponse(e){return e&&"object"==typeof e?"service_response"in e?e.service_response:"response"in e?e.response:e:e}async _callServiceViaWebSocket(e,t,r){if(!this.hass.callWS)throw new Error("callWS is not available");const o=this.hass.callWS({type:"call_service",domain:e,service:t,service_data:r,return_response:!0}),i=this._createTimeoutPromise(ye.SERVICE_TIMEOUT),a=await Promise.race([o,i]);return this._extractWebSocketResponse(a)}async _callServiceViaStandard(e,t,r){const o=this.hass.callService(e,t,r),i=this._createTimeoutPromise(ye.SERVICE_TIMEOUT);return await Promise.race([o,i])}async _loadData(){if(!this.hass||!this.config)return;const e=this.config.source_entry_id;if(!e)return this._error="source_entry_id is required. Please select your tariff from the card editor.",void(this._loading=!1);this._loading=!0,this._error=null,this._comparisonError=null;try{const{startDate:t,endDate:r}=this._getDateRange();this._validateDateRange(t,r);const o=`${t.toISOString().split("T")[0]} → ${r.toISOString().split("T")[0]}`;ge.groupDataLoad(e,this._currentPeriod,o);const i=await this._fetchConsumptionData(e,t,r);this._consumptionData=i.consumption_data||[],i.tariff_costs?this._tariffCosts=i.tariff_costs:this._tariffCosts=null;const a=this.config.view||"consumption";"tariff-comparison"===a&&this.config.show_tariff_comparison&&this.config.tariff_entry_ids?.length?await this._fetchTariffComparison(e,t,r):this._comparisonResult=null,"week-analysis"===a&&this.config.show_week_comparison?this._weekComparisonData=this._calculateWeekComparison():this._weekComparisonData=null,ge.groupEnd()}catch(e){ge.groupError("Error loading data"),this._error=e instanceof Error?e.message:String(e),ge.error("Error loading data: ",this._extractErrorMessage(e)),ge.data("Error details",e),ge.groupEnd()}finally{this._loading=!1}}_validateDateRange(e,t){if(e>new Date)throw new Error(`Invalid date range: start date (${e.toISOString().split("T")[0]}) is in the future. Please navigate to a past period.`);if(e>t)throw new Error("Invalid date range: start date is after end date.")}async _fetchConsumptionData(e,t,r){const o="heat-calendar"===this.config.chart_type&&"year"===this.config.heat_calendar_period?"daily":"day"===this._currentPeriod||"week"===this._currentPeriod?"hourly":"daily";let i;try{i=await this._callServiceWithTimeout(ye.SERVICE_DOMAIN,ye.SERVICE_FETCH_CONSUMPTION,{entry_id:e,start_date:t.toISOString().split("T")[0],end_date:r.toISOString().split("T")[0],granularity:o}),ge.data("Raw Service Response (before processing)",i);const a=i;return this._validateConsumptionResponse(a),a.success||this._handleConsumptionError(a,e),a}catch(e){throw ge.groupError("Service call failed"),ge.error("✗ Service call failed: ",this._extractErrorMessage(e)),ge.data("Full Error Object",e),ge.groupEnd(),this._createUserFriendlyError(e)}}_handleConsumptionError(e,t){const r=e.error||"Failed to fetch consumption data";let o=r;throw e.warning&&(o+=`. ${e.warning}`,ge.warn("⚠ Service Warning: ",e.warning)),ge.groupError("Service returned error"),ge.error("✗ Service returned error: ",r),ge.data("Requested Entry ID",t),e.context&&(ge.data("Service Context",e.context),e.context.id&&e.context.id!==t&&ge.warn("⚠ Note: Service context shows different entry ID (",e.context.id+"). This may be informational.")),ge.groupEnd(),ge.data("Full Response",{success:e.success,error:e.error,warning:e.warning,context:e.context}),new Error(o)}async _fetchTariffComparison(e,t,r){try{const o="day"===this._currentPeriod?"daily":"week"===this._currentPeriod?"weekly":"monthly",i=await this._callServiceWithTimeout(ye.SERVICE_DOMAIN,ye.SERVICE_COMPARE_TARIFFS,{tariff_entry_ids:this.config.tariff_entry_ids,source_entry_id:e,period:o,start_date:t.toISOString().split("T")[0],end_date:r.toISOString().split("T")[0]});if(i.success&&i.result)this._comparisonResult=i.result;else{const e=i.error||"Failed to compare tariffs";this._comparisonError=e,ge.groupError("Tariff comparison failed"),ge.warn("⚠ Tariff comparison failed: ",e),ge.groupEnd()}}catch(e){const t=e instanceof Error?e.message:String(e);this._comparisonError=`Tariff comparison error: ${t}`,ge.groupError("Tariff comparison error"),ge.warn("⚠ Tariff comparison error: ",t),ge.groupEnd()}}_getDateRange(){if("heat-calendar"===this.config.chart_type&&"year"===this.config.heat_calendar_period){const e=this._currentDate.getFullYear(),t=new Date,r=e===t.getFullYear(),o=new Date(e,0,1);o.setHours(0,0,0,0);const i=r?new Date(t):new Date(e,11,31);return i.setHours(23,59,59,999),{startDate:o,endDate:i}}const e=new Date(this._currentDate);e.setHours(23,59,59,999);const t=new Date(e);return"day"===this._currentPeriod?t.setHours(0,0,0,0):"week"===this._currentPeriod?(t.setDate(t.getDate()-6),t.setHours(0,0,0,0)):"month"===this._currentPeriod&&(t.setDate(t.getDate()-29),t.setHours(0,0,0,0)),{startDate:t,endDate:e}}_navigatePeriod(e){const t="prev"===e?-1:1;if("heat-calendar"===this.config.chart_type&&"year"===this.config.heat_calendar_period)return this._currentDate.setFullYear(this._currentDate.getFullYear()+t),this._currentDate=new Date(this._currentDate),void this._loadData();"day"===this._currentPeriod?this._currentDate.setDate(this._currentDate.getDate()+t):"week"===this._currentPeriod?this._currentDate.setDate(this._currentDate.getDate()+7*t):"month"===this._currentPeriod&&this._currentDate.setMonth(this._currentDate.getMonth()+t),this._currentDate=new Date(this._currentDate),this._loadData()}_setPeriod(e){this._currentPeriod=e,this._loadData()}_extractPeriodData(){if(this._tariffCosts&&this.config.source_entry_id){const e=this._tariffCosts[this.config.source_entry_id];if(e&&e.hourly_breakdown){const t=new Map;for(const r of e.hourly_breakdown){const e=r.hour||"",o=r.consumption||0,i=r.period;t.has(e)||t.set(e,{p1:0,p2:0,p3:0});const a=t.get(e);"P1"===i?a.p1+=o:"P2"===i?a.p2+=o:"P3"===i&&(a.p3+=o)}const r=Array.from(t.entries()).map(([e,t])=>({timestamp:e,...t}));if(r.length>0)return r}if(e&&e.daily_breakdown&&"month"===this._currentPeriod&&e.period_breakdown){const t=e.period_breakdown.p1_percentage/100,r=e.period_breakdown.p2_percentage/100,o=e.period_breakdown.p3_percentage/100;return e.daily_breakdown.map(e=>({timestamp:e.date,p1:e.consumption*t,p2:e.consumption*r,p3:e.consumption*o}))}}if(this._consumptionData.length>0){const e=this._consumptionData[0];if(void 0!==e.p1_consumption||e.period)return this._consumptionData.map(e=>({timestamp:e.start_time||e.date||"",p1:e.p1_consumption||("P1"===e.period?e.consumption:0),p2:e.p2_consumption||("P2"===e.period?e.consumption:0),p3:e.p3_consumption||("P3"===e.period?e.consumption:0)}))}return null}_calculateMovingAverage(e,t){if(t<2||0===e.length)return e.map(()=>null);const r=[];for(let o=0;o<e.length;o++)if(o<t-1)r.push(null);else{let i=0;for(let r=0;r<t;r++)i+=e[o-r];r.push(i/t)}return r}_calculateCostMovingAverage(e,t=30){return this._calculateMovingAverage(e,t)}_renderHeatCalendar(){const e=this._getHeatCalendarData(),t="year"===(this.config.heat_calendar_period||"month");if(0===e.length)return V`
+  `,fe([pe({attribute:!1})],me.prototype,"hass",void 0),fe([pe({attribute:!1})],me.prototype,"config",void 0),fe([he()],me.prototype,"_config",void 0),"undefined"!=typeof window&&"undefined"!=typeof customElements&&(customElements.get("octopus-consumption-card-editor")||customElements.define("octopus-consumption-card-editor",me));class ge{static info(e,...t){const r=[e,this.STYLES.info];t.forEach((e,t)=>{r.push(e,t%2==0?this.STYLES.infoValue:this.STYLES.info)}),console.log(...r)}static error(e,t){t?console.error(`%c${e}%c${t}`,this.STYLES.error,this.STYLES.errorValue):console.error(`%c${e}`,this.STYLES.error)}static warn(e,t){t?console.warn(`%c${e}%c${t}`,this.STYLES.warning,this.STYLES.warningValue):console.warn(`%c${e}`,this.STYLES.warning)}static success(e){console.log(`%c${e}`,this.STYLES.success)}static data(e,t){console.log(`%c  ${e}: %c${JSON.stringify(t,null,2)}`,this.STYLES.info,this.STYLES.infoValue)}static serviceCall(e,t,r=!1){this.info("  Calling service: ",`${e}.${t}${r?" (with return_response)":""}`)}static serviceData(e){this.data("Service data",e)}static serviceResponse(e){this.data("Raw Service Response",e)}static serviceError(e){console.error("%c  Service Error Details: %c"+JSON.stringify(e,Object.getOwnPropertyNames(e),2),this.STYLES.info,this.STYLES.errorValue)}static groupServiceCall(e,t){console.groupCollapsed(`%c🔧 Service Call: %c${e}.${t}`,this.STYLES.info,this.STYLES.infoValue)}static groupEnd(){console.groupEnd()}static groupDataLoad(e,t,r){console.groupCollapsed(`%c📊 Loading Data: %cEntry: ${e} | Period: ${t} | ${r}`,this.STYLES.info,this.STYLES.infoValue)}static groupError(e){console.groupCollapsed(`%c❌ ${e}`,this.STYLES.error)}}ge.STYLES={info:"color: #666; font-size: 11px;",infoValue:"color: #999; font-size: 11px; font-family: monospace;",error:"color: #f00; font-size: 11px; font-weight: bold;",errorValue:"color: #f00; font-size: 11px;",warning:"color: #ff9800; font-size: 11px;",warningValue:"color: #ff9800; font-size: 11px;",success:"color: #4caf50; font-size: 11px;"};const ve=s`
+  :host {
+    display: block;
+    padding: 16px;
+  }
+
+  .period-selector {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .period-button {
+    padding: 8px 16px;
+    border: 1px solid var(--divider-color);
+    background: var(--card-background-color);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  .period-button.active {
+    background: var(--primary-color);
+    color: var(--text-primary-color);
+    border-color: var(--primary-color);
+  }
+
+  .navigation-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .nav-button {
+    padding: 8px 16px;
+    border: 1px solid var(--divider-color);
+    background: var(--card-background-color);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  .chart-container {
+    margin: 0;
+    min-height: 300px;
+    position: relative;
+    width: 100%;
+  }
+
+  .chart-svg {
+    width: 100%;
+    height: 300px;
+    display: block;
+  }
+
+  .chart-line {
+    fill: none;
+    stroke: var(--primary-color, #03a9f4);
+    stroke-width: 2;
+  }
+
+  .chart-line-cost {
+    fill: none;
+    stroke: var(--accent-color, #ff9800);
+    stroke-width: 2;
+    stroke-dasharray: 5, 5;
+  }
+
+  .chart-line-moving-avg {
+    fill: none;
+    stroke: var(--info-color, #2196f3);
+    stroke-width: 2;
+    stroke-dasharray: 3, 3;
+    opacity: 0.8;
+  }
+
+  .chart-area {
+    fill: var(--primary-color, #03a9f4);
+    opacity: 0.2;
+  }
+
+  .chart-area-p1 {
+    fill: var(--error-color, #f44336);
+    opacity: 0.6;
+  }
+
+  .chart-area-p2 {
+    fill: var(--warning-color, #ff9800);
+    opacity: 0.6;
+  }
+
+  .chart-area-p3 {
+    fill: var(--success-color, #4caf50);
+    opacity: 0.6;
+  }
+
+  .chart-line-p1 {
+    stroke: var(--error-color, #f44336);
+    stroke-width: 1;
+    fill: none;
+  }
+
+  .chart-line-p2 {
+    stroke: var(--warning-color, #ff9800);
+    stroke-width: 1;
+    fill: none;
+  }
+
+  .chart-line-p3 {
+    stroke: var(--success-color, #4caf50);
+    stroke-width: 1;
+    fill: none;
+  }
+
+  .chart-bar {
+    fill: var(--primary-color, #03a9f4);
+    opacity: 0.7;
+  }
+
+  .chart-axis {
+    stroke: var(--divider-color, #e0e0e0);
+    stroke-width: 1;
+  }
+
+  .chart-text {
+    fill: var(--secondary-text-color, #888);
+    font-size: 12px;
+    font-family: var(--mdc-typography-body1-font-family, Roboto, sans-serif);
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .chart-grid-line {
+    stroke: var(--divider-color, #e0e0e0);
+    stroke-width: 1;
+    stroke-dasharray: 2, 2;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 40px;
+    color: var(--secondary-text-color);
+  }
+
+  .error {
+    padding: 16px;
+    background: var(--error-color);
+    color: var(--text-primary-color);
+    border-radius: 4px;
+    margin-bottom: 16px;
+  }
+
+  .error-message {
+    padding: 24px;
+    text-align: center;
+    background: var(--card-background-color);
+    border-radius: 8px;
+    border: 2px solid var(--error-color);
+  }
+
+  .error-icon {
+    color: var(--error-color);
+    margin-bottom: 12px;
+  }
+
+  .error-title {
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: var(--error-color);
+  }
+
+  .error-details {
+    font-size: 14px;
+    color: var(--secondary-text-color);
+    margin-bottom: 16px;
+  }
+
+  .retry-button {
+    padding: 10px 20px;
+    background: var(--primary-color);
+    color: var(--text-primary-color);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    margin-top: 8px;
+  }
+
+  .retry-button:hover {
+    opacity: 0.9;
+  }
+
+  .comparison-error {
+    padding: 12px;
+    background: var(--warning-color);
+    color: var(--text-primary-color);
+    border-radius: 4px;
+    margin-top: 16px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .comparison-error ha-icon {
+    flex-shrink: 0;
+  }
+
+  .comparison-section {
+    margin-top: 24px;
+  }
+
+  .comparison-title {
+    font-size: 20px;
+    font-weight: 500;
+    margin-bottom: 16px;
+  }
+
+  .tariff-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .tariff-item {
+    padding: 16px;
+    border: 1px solid var(--divider-color);
+    border-radius: 4px;
+    background: var(--card-background-color);
+  }
+
+  .tariff-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .tariff-name {
+    font-size: 18px;
+    font-weight: 500;
+  }
+
+  .tariff-cost {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--primary-color);
+  }
+
+  .tariff-breakdown {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+    font-size: 14px;
+  }
+
+  .breakdown-item {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .breakdown-label {
+    color: var(--secondary-text-color);
+    font-size: 12px;
+  }
+
+  .breakdown-value {
+    font-weight: 500;
+    margin-top: 4px;
+  }
+
+  .period-breakdown {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--divider-color);
+  }
+
+  .period-breakdown-title {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 12px;
+  }
+
+  .period-bars {
+    display: flex;
+    gap: 8px;
+    height: 40px;
+    margin-bottom: 8px;
+  }
+
+  .period-bar {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    flex: 1;
+    min-width: 60px;
+  }
+
+  .period-bar-fill {
+    width: 100%;
+    border-radius: 4px 4px 0 0;
+    transition: height 0.3s ease;
+  }
+
+  .period-bar-fill.p1 {
+    background: var(--error-color);
+  }
+
+  .period-bar-fill.p2 {
+    background: var(--warning-color);
+  }
+
+  .period-bar-fill.p3 {
+    background: var(--success-color);
+  }
+
+  .period-bar-label {
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--secondary-text-color);
+    text-align: center;
+  }
+
+  .cost-per-kwh {
+    color: var(--primary-color);
+    font-weight: 500;
+    font-size: 11px;
+  }
+
+  .best-tariff-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    background: var(--success-color);
+    color: var(--text-primary-color);
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    margin-left: 8px;
+  }
+
+  .savings-info {
+    margin-top: 16px;
+    padding: 12px;
+    background: var(--info-color);
+    border-radius: 4px;
+    font-size: 14px;
+  }
+
+  .consumption-summary {
+    margin-bottom: 24px;
+    padding: 16px;
+    background: var(--card-background-color);
+    border: 1px solid var(--divider-color);
+    border-radius: 8px;
+  }
+
+  .summary-title {
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 16px;
+    color: var(--primary-text-color);
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+  }
+
+  .summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background: var(--secondary-background-color);
+    border-radius: 6px;
+  }
+
+  .summary-item.summary-total {
+    background: var(--primary-color);
+    color: var(--text-primary-color);
+  }
+
+  .summary-period {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+  }
+
+  .period-icon {
+    font-size: 18px;
+  }
+
+  .period-name {
+    font-weight: 500;
+  }
+
+  .summary-value {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--primary-text-color);
+  }
+
+  .summary-percentage {
+    font-size: 14px;
+    color: var(--secondary-text-color);
+  }
+
+  .summary-total .summary-value,
+  .summary-total .summary-percentage {
+    color: var(--text-primary-color);
+  }
+
+  .heat-calendar-container {
+    margin-top: 24px;
+  }
+
+  .heat-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-top: 16px;
+  }
+
+  .heat-calendar-day {
+    aspect-ratio: 1;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    cursor: pointer;
+    position: relative;
+    border: 1px solid var(--divider-color);
+    transition: transform 0.2s ease;
+  }
+
+  .heat-calendar-day:hover {
+    transform: scale(1.1);
+    z-index: 10;
+  }
+
+  .heat-calendar-day.intensity-low {
+    background: var(--info-color, #2196f3);
+    opacity: 0.4;
+  }
+
+  .heat-calendar-day.intensity-medium {
+    background: var(--success-color, #4caf50);
+    opacity: 0.6;
+  }
+
+  .heat-calendar-day.intensity-high {
+    background: var(--error-color, #f44336);
+    opacity: 0.8;
+  }
+
+  .heat-calendar-day.empty {
+    background: var(--card-background-color);
+    opacity: 0.3;
+    cursor: default;
+  }
+
+  .heat-calendar-legend {
+    display: flex;
+    gap: 16px;
+    margin-top: 16px;
+    font-size: 12px;
+    align-items: center;
+  }
+
+  .heat-calendar-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .heat-calendar-legend-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    border: 1px solid var(--divider-color);
+  }
+
+  .heat-calendar-year-view {
+    max-height: 600px;
+    overflow-y: auto;
+  }
+
+  .heat-calendar-year-view .heat-calendar-grid {
+    max-height: 550px;
+    overflow-y: auto;
+  }
+
+  .heat-calendar-grid-year .heat-calendar-day {
+    width: 12px;
+    height: 12px;
+    min-width: 12px;
+    min-height: 12px;
+    font-size: 9px;
+    padding: 0;
+  }
+
+  .heat-calendar-grid-year .heat-calendar-day.empty {
+    width: 12px;
+    height: 12px;
+    min-width: 12px;
+    min-height: 12px;
+  }
+
+  .heat-calendar-month-label {
+    grid-column: 1 / -1;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--secondary-text-color);
+    padding: 4px 0;
+    text-align: left;
+    border-bottom: 1px solid var(--divider-color);
+    margin-bottom: 2px;
+  }
+
+  .heat-calendar-summary {
+    display: flex;
+    gap: 16px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: var(--secondary-text-color);
+    flex-wrap: wrap;
+  }
+
+  .heat-calendar-summary span {
+    padding: 4px 8px;
+    background: var(--secondary-background-color);
+    border-radius: 4px;
+  }
+
+  .week-comparison-section {
+    margin-top: 24px;
+  }
+
+  .week-comparison-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+  }
+
+  .week-card {
+    padding: 16px;
+    border: 1px solid var(--divider-color);
+    border-radius: 8px;
+    background: var(--card-background-color);
+  }
+
+  .week-card-header {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 12px;
+    color: var(--primary-text-color);
+  }
+
+  .week-card-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .week-metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .week-metric-label {
+    font-size: 14px;
+    color: var(--secondary-text-color);
+  }
+
+  .week-metric-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--primary-text-color);
+  }
+
+  .week-change {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    margin-left: 8px;
+  }
+
+  .week-change.positive {
+    background: var(--error-color);
+    color: var(--text-primary-color);
+  }
+
+  .week-change.negative {
+    background: var(--success-color);
+    color: var(--text-primary-color);
+  }
+
+  .tariff-chart-container {
+    margin-top: 16px;
+  }
+
+  .tariff-chart-bars {
+    display: flex;
+    gap: 8px;
+    height: 200px;
+    align-items: flex-end;
+    margin-top: 16px;
+  }
+
+  .tariff-chart-bar-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .tariff-chart-bar-label {
+    text-align: center;
+    font-size: 12px;
+    color: var(--secondary-text-color);
+    margin-bottom: 4px;
+  }
+
+  .tariff-chart-bar {
+    border-radius: 4px 4px 0 0;
+    min-height: 4px;
+    position: relative;
+    transition: opacity 0.2s ease;
+  }
+
+  .tariff-chart-bar:hover {
+    opacity: 0.8;
+  }
+
+  .tariff-chart-bar.consumption {
+    background: var(--primary-color, #03a9f4);
+  }
+
+  .tariff-chart-bar.cost {
+    background: var(--accent-color, #ff9800);
+  }
+
+  .tariff-chart-bar.p1 {
+    background: var(--error-color, #f44336);
+  }
+
+  .tariff-chart-bar.p2 {
+    background: var(--warning-color, #ff9800);
+  }
+
+  .tariff-chart-bar.p3 {
+    background: var(--success-color, #4caf50);
+  }
+
+  .tooltip {
+    position: absolute;
+    background: var(--card-background-color);
+    border: 1px solid var(--divider-color);
+    border-radius: 4px;
+    padding: 8px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    display: none;
+  }
+
+  .tooltip.visible {
+    display: block;
+  }
+`;var ye=function(e,t,r,o){var i,a=arguments.length,s=a<3?t:null===o?o=Object.getOwnPropertyDescriptor(t,r):o;if("object"==typeof Reflect&&"function"==typeof Reflect.decorate)s=Reflect.decorate(e,t,r,o);else for(var n=e.length-1;n>=0;n--)(i=e[n])&&(s=(a<3?i(s):a>3?i(t,r,s):i(t,r))||s);return a>3&&s&&Object.defineProperty(t,r,s),s};void 0!==ne&&ne.disableWarning&&ne.disableWarning("change-in-update");class we extends ne{constructor(){super(...arguments),this._consumptionData=[],this._comparisonResult=null,this._tariffCosts=null,this._loading=!1,this._error=null,this._comparisonError=null,this._currentPeriod="week",this._currentDate=new Date,this._weekComparisonData=null}setConfig(e){if(!e)throw new Error("Invalid configuration");const t={...e,view:e.view||"consumption"};this.config=t,t.default_period&&(this._currentPeriod=t.default_period)}getCardSize(){let e=1;return this.config&&!1!==this.config.show_navigation&&(e+=1),this.config&&this.config.show_tariff_comparison&&(e+=1),e}connectedCallback(){super.connectedCallback(),this._validateConfig(),this._currentPeriod=this.config.default_period||"week",this._loadData()}updated(e){super.updated(e),e.has("config")&&(this._validateConfig(),this.config.default_period&&this._currentPeriod!==this.config.default_period&&(this._currentPeriod=this.config.default_period),void 0!==e.get("config")&&this._loadData())}_validateConfig(){return this.config?this.config.source_entry_id?(!this.config.show_tariff_comparison||this.config.tariff_entry_ids&&0!==this.config.tariff_entry_ids.length||ge.warn("show_tariff_comparison is enabled but no tariff_entry_ids provided. Comparison will be disabled."),void(this.config.show_cost_on_chart&&!this.config.selected_tariff_for_cost&&ge.warn("show_cost_on_chart is enabled but selected_tariff_for_cost is not set. Cost display will be disabled."))):(this._error="source_entry_id is required. Please select your tariff from the card editor.",void(this._loading=!1)):(this._error="Card configuration is required",void(this._loading=!1))}_createTimeoutPromise(e){return new Promise((t,r)=>{setTimeout(()=>r(new Error("Request timeout. The service call took too long to respond.")),e)})}async _callServiceWithTimeout(e,t,r,o=!0){ge.groupServiceCall(e,t);try{let i;if(ge.serviceCall(e,t,o),r&&ge.serviceData(r),o&&this.hass.callWS)try{i=await this._callServiceViaWebSocket(e,t,r)}catch(o){const a=o instanceof Error?o.message:String(o);ge.warn("⚠ WebSocket call failed, falling back to callService: ",a),i=await this._callServiceViaStandard(e,t,r)}else i=await this._callServiceViaStandard(e,t,r);return ge.serviceResponse(i),ge.groupEnd(),i}catch(r){throw ge.serviceError(r),ge.groupEnd(),this._handleServiceError(r,e,t)}}_handleServiceError(e,t,r){if(e instanceof Error)return e.message.includes("timeout")?new Error(`Service call timeout: ${t}.${r} took longer than ${we.SERVICE_TIMEOUT}ms`):e.message.includes("Service not found")||e.message.includes("not available")?new Error(`Service ${t}.${r} is not available. Please ensure the Octopus Energy España integration is installed and configured.`):"service_validation_error"===e.code?this._handleValidationError(e):new Error(`Service call failed: ${t}.${r} - ${e.message}`);if(e&&"object"==typeof e){const o=e;if("service_validation_error"===o.code)return this._handleValidationError(o);const i=o.message||o.translation_key||"Unknown service error";return new Error(`Service call failed: ${t}.${r} - ${i}`)}return e instanceof Error?e:new Error(String(e))}_handleValidationError(e){const t=(Error,e);let r=t.message||t.translation_key||"Service validation error";return r.includes("return_response")&&(r="The service integration may not support response data yet. Please ensure you're using the latest version of the Octopus Energy España integration and that it has been reloaded after updating."),new Error(`Service validation error: ${r}`)}_validateConsumptionResponse(e){if(!e||"object"!=typeof e)throw ge.groupError("Invalid service response"),ge.error("✗ Invalid service response: ","expected object with success field"),ge.groupEnd(),new Error("Invalid response from service: expected object with success field");if(!("success"in e))throw ge.groupError("Invalid service response format"),ge.error("✗ Invalid service response format: ","response does not contain success field"),ge.data("Received response",e),ge.groupEnd(),new Error("Service returned unexpected response format. The service may not be returning data correctly. Please check the integration configuration and ensure the service supports returning response data.")}_extractErrorMessage(e){return e instanceof Error?e.message:e&&"object"==typeof e?e.message||e.translation_key||JSON.stringify(e):String(e)}_createUserFriendlyError(e){if(e instanceof Error)return e;if(e&&"object"==typeof e){const t=e;let r=t.message||t.translation_key||JSON.stringify(e);return"service_validation_error"===t.code&&(r=r.includes("return_response")?"The service integration may not support response data yet. Please ensure you're using the latest version of the Octopus Energy España integration and that it has been reloaded after updating.":r||"Service validation error. Please check your configuration."),new Error(r)}return new Error(String(e))}_extractWebSocketResponse(e){return e&&"object"==typeof e?"service_response"in e?e.service_response:"response"in e?e.response:e:e}async _callServiceViaWebSocket(e,t,r){if(!this.hass.callWS)throw new Error("callWS is not available");const o=this.hass.callWS({type:"call_service",domain:e,service:t,service_data:r,return_response:!0}),i=this._createTimeoutPromise(we.SERVICE_TIMEOUT),a=await Promise.race([o,i]);return this._extractWebSocketResponse(a)}async _callServiceViaStandard(e,t,r){const o=this.hass.callService(e,t,r),i=this._createTimeoutPromise(we.SERVICE_TIMEOUT);return await Promise.race([o,i])}async _loadData(){if(!this.hass||!this.config)return;const e=this.config.source_entry_id;if(!e)return this._error="source_entry_id is required. Please select your tariff from the card editor.",void(this._loading=!1);this._loading=!0,this._error=null,this._comparisonError=null;try{const{startDate:t,endDate:r}=this._getDateRange();this._validateDateRange(t,r);const o=`${t.toISOString().split("T")[0]} → ${r.toISOString().split("T")[0]}`;ge.groupDataLoad(e,this._currentPeriod,o);const i=await this._fetchConsumptionData(e,t,r);this._consumptionData=i.consumption_data||[],i.tariff_costs?this._tariffCosts=i.tariff_costs:this._tariffCosts=null;const a=this.config.view||"consumption";"tariff-comparison"===a&&this.config.show_tariff_comparison&&this.config.tariff_entry_ids?.length?await this._fetchTariffComparison(e,t,r):this._comparisonResult=null,"week-analysis"===a&&this.config.show_week_comparison?this._weekComparisonData=this._calculateWeekComparison():this._weekComparisonData=null,ge.groupEnd()}catch(e){ge.groupError("Error loading data"),this._error=e instanceof Error?e.message:String(e),ge.error("Error loading data: ",this._extractErrorMessage(e)),ge.data("Error details",e),ge.groupEnd()}finally{this._loading=!1}}_validateDateRange(e,t){if(e>new Date)throw new Error(`Invalid date range: start date (${e.toISOString().split("T")[0]}) is in the future. Please navigate to a past period.`);if(e>t)throw new Error("Invalid date range: start date is after end date.")}async _fetchConsumptionData(e,t,r){const o="heat-calendar"===this.config.chart_type&&"year"===this.config.heat_calendar_period?"daily":"day"===this._currentPeriod||"week"===this._currentPeriod?"hourly":"daily";let i;try{i=await this._callServiceWithTimeout(we.SERVICE_DOMAIN,we.SERVICE_FETCH_CONSUMPTION,{entry_id:e,start_date:t.toISOString().split("T")[0],end_date:r.toISOString().split("T")[0],granularity:o}),ge.data("Raw Service Response (before processing)",i);const a=i;return this._validateConsumptionResponse(a),a.success||this._handleConsumptionError(a,e),a}catch(e){throw ge.groupError("Service call failed"),ge.error("✗ Service call failed: ",this._extractErrorMessage(e)),ge.data("Full Error Object",e),ge.groupEnd(),this._createUserFriendlyError(e)}}_handleConsumptionError(e,t){const r=e.error||"Failed to fetch consumption data";let o=r;throw e.warning&&(o+=`. ${e.warning}`,ge.warn("⚠ Service Warning: ",e.warning)),ge.groupError("Service returned error"),ge.error("✗ Service returned error: ",r),ge.data("Requested Entry ID",t),e.context&&(ge.data("Service Context",e.context),e.context.id&&e.context.id!==t&&ge.warn("⚠ Note: Service context shows different entry ID (",e.context.id+"). This may be informational.")),ge.groupEnd(),ge.data("Full Response",{success:e.success,error:e.error,warning:e.warning,context:e.context}),new Error(o)}async _fetchTariffComparison(e,t,r){try{const o="day"===this._currentPeriod?"daily":"week"===this._currentPeriod?"weekly":"monthly",i=await this._callServiceWithTimeout(we.SERVICE_DOMAIN,we.SERVICE_COMPARE_TARIFFS,{tariff_entry_ids:this.config.tariff_entry_ids,source_entry_id:e,period:o,start_date:t.toISOString().split("T")[0],end_date:r.toISOString().split("T")[0]});if(i.success&&i.result)this._comparisonResult=i.result;else{const e=i.error||"Failed to compare tariffs";this._comparisonError=e,ge.groupError("Tariff comparison failed"),ge.warn("⚠ Tariff comparison failed: ",e),ge.groupEnd()}}catch(e){const t=e instanceof Error?e.message:String(e);this._comparisonError=`Tariff comparison error: ${t}`,ge.groupError("Tariff comparison error"),ge.warn("⚠ Tariff comparison error: ",t),ge.groupEnd()}}_getDateRange(){if("heat-calendar"===this.config.chart_type&&"year"===this.config.heat_calendar_period){const e=this._currentDate.getFullYear(),t=new Date,r=e===t.getFullYear(),o=new Date(e,0,1);o.setHours(0,0,0,0);const i=r?new Date(t):new Date(e,11,31);return i.setHours(23,59,59,999),{startDate:o,endDate:i}}const e=new Date(this._currentDate);e.setHours(23,59,59,999);const t=new Date(e);return"day"===this._currentPeriod?t.setHours(0,0,0,0):"week"===this._currentPeriod?(t.setDate(t.getDate()-6),t.setHours(0,0,0,0)):"month"===this._currentPeriod&&(t.setDate(t.getDate()-29),t.setHours(0,0,0,0)),{startDate:t,endDate:e}}_navigatePeriod(e){const t="prev"===e?-1:1;if("heat-calendar"===this.config.chart_type&&"year"===this.config.heat_calendar_period)return this._currentDate.setFullYear(this._currentDate.getFullYear()+t),this._currentDate=new Date(this._currentDate),void this._loadData();"day"===this._currentPeriod?this._currentDate.setDate(this._currentDate.getDate()+t):"week"===this._currentPeriod?this._currentDate.setDate(this._currentDate.getDate()+7*t):"month"===this._currentPeriod&&this._currentDate.setMonth(this._currentDate.getMonth()+t),this._currentDate=new Date(this._currentDate),this._loadData()}_setPeriod(e){this._currentPeriod=e,this._loadData()}_extractPeriodData(){if(this._tariffCosts&&this.config.source_entry_id){const e=this._tariffCosts[this.config.source_entry_id];if(e&&e.hourly_breakdown){const t=new Map;for(const r of e.hourly_breakdown){const e=r.hour||"",o=r.consumption||0,i=r.period;t.has(e)||t.set(e,{p1:0,p2:0,p3:0});const a=t.get(e);"P1"===i?a.p1+=o:"P2"===i?a.p2+=o:"P3"===i&&(a.p3+=o)}const r=Array.from(t.entries()).map(([e,t])=>({timestamp:e,...t}));if(r.length>0)return r}if(e&&e.daily_breakdown&&"month"===this._currentPeriod&&e.period_breakdown){const t=e.period_breakdown.p1_percentage/100,r=e.period_breakdown.p2_percentage/100,o=e.period_breakdown.p3_percentage/100;return e.daily_breakdown.map(e=>({timestamp:e.date,p1:e.consumption*t,p2:e.consumption*r,p3:e.consumption*o}))}}if(this._consumptionData.length>0){const e=this._consumptionData[0];if(void 0!==e.p1_consumption||e.period)return this._consumptionData.map(e=>({timestamp:e.start_time||e.date||"",p1:e.p1_consumption||("P1"===e.period?e.consumption:0),p2:e.p2_consumption||("P2"===e.period?e.consumption:0),p3:e.p3_consumption||("P3"===e.period?e.consumption:0)}))}return null}_calculateMovingAverage(e,t){if(t<2||0===e.length)return e.map(()=>null);const r=[];for(let o=0;o<e.length;o++)if(o<t-1)r.push(null);else{let i=0;for(let r=0;r<t;r++)i+=e[o-r];r.push(i/t)}return r}_calculateCostMovingAverage(e,t=30){return this._calculateMovingAverage(e,t)}_renderHeatCalendar(){const e=this._getHeatCalendarData(),t="year"===(this.config.heat_calendar_period||"month");if(0===e.length)return V`
         <div class="error-message">
           <div class="error-title">Heat Calendar Unavailable</div>
           <div class="error-details">
@@ -315,7 +997,7 @@ const le={attribute:!0,type:String,converter:y,reflect:!1,hasChanged:w},de=(e=le
       <div class="chart-container">
         ${this._renderHeatCalendar()}
       </div>
-    `}_renderWeekAnalysisView(){return V`
+    `}_renderWeekAnalysisView(){return this.config.show_week_comparison?V`
       ${!1!==this.config.show_navigation?V`
         <div class="period-selector">
           <button
@@ -349,7 +1031,14 @@ const le={attribute:!0,type:String,converter:y,reflect:!1,hasChanged:w},de=(e=le
       `:""}
 
       ${this._renderWeekComparison()}
-    `}_renderTariffComparisonView(){return V`
+    `:V`
+        <div class="error-message">
+          <div class="error-title">Week Comparison Not Enabled</div>
+          <div class="error-details">
+            Please enable "Show Week Comparison" in the card configuration to use the Week Analysis view.
+          </div>
+        </div>
+      `}_renderTariffComparisonView(){return this.config.show_tariff_comparison?V`
       <div class="comparison-section">
         <h3 class="comparison-title">Tariff Comparison</h3>
         ${this._comparisonError?V`
@@ -364,7 +1053,14 @@ const le={attribute:!0,type:String,converter:y,reflect:!1,hasChanged:w},de=(e=le
           <div class="loading">Loading tariff comparison...</div>
         `}
       </div>
-    `}_renderChart(){if(0===this._consumptionData.length)return V`<div class="loading">No consumption data available</div>`;const e=this.config.chart_type||"line";if("heat-calendar"===e)return this._renderHeatCalendar();const t=this._consumptionData.map(e=>e.consumption||e.value||0),r=Math.max(...t,1),o=Math.min(...t,0),i=r-o||1;let a=[],s=0,n=0,c=1;const l=this.config.show_cost_on_chart&&this.config.selected_tariff_for_cost&&null!==this._tariffCosts;if(l&&this._tariffCosts&&this.config.selected_tariff_for_cost){const e=this._tariffCosts[this.config.selected_tariff_for_cost];if(e){const r="month"===this._currentPeriod?e.daily_breakdown:e.hourly_breakdown;r&&r.length>0?(a=r.map(e=>e.cost),a.length!==t.length?(ge.warn(`Cost data length (${a.length}) does not match consumption data length (${t.length}). Cost display disabled.`),a=[]):(s=Math.max(...a,.01),n=Math.min(...a,0),c=s-n||1)):ge.warn(`No breakdown data available for tariff ${this.config.selected_tariff_for_cost}. Cost display disabled.`)}else ge.warn(`Tariff cost data not found for entry ID: ${this.config.selected_tariff_for_cost}. Cost display disabled.`)}const d=l&&a.length>0&&a.length===t.length,p=800,h=300,_=20,u=d?60:20,f=40,m=60,g=h-_-f,v=(p-m-u)/(t.length-1||1),y=t.map((e,t)=>({x:m+t*v,y:_+g-(e-o)/i*g,value:e})),w=y.length>0?`M ${y[0].x} ${y[0].y} ${y.slice(1).map(e=>`L ${e.x} ${e.y}`).join(" ")}`:"",b=y.length>0?`${w} L ${y[y.length-1].x} ${h-f} L ${y[0].x} ${h-f} Z`:"",x=[];if(!isNaN(i)&&i>0)for(let e=0;e<=5;e++){const t=o+i*e/5,r=_+g-e/5*g;x.push({value:t,y:r})}else ge.warn(`Cannot generate Y-axis labels: chartHeight=${g}, range=${i}`);let $=[],k="",C=[];if(d&&a.length>0&&a.length===t.length){$=a.map((e,t)=>({x:m+t*v,y:_+g-(e-n)/c*g,value:e})),$.length>0&&(k=`M ${$[0].x} ${$[0].y} ${$.slice(1).map(e=>`L ${e.x} ${e.y}`).join(" ")}`);for(let e=0;e<=5;e++){const t=n+c*e/5,r=_+g-e/5*g;C.push({value:t,y:r})}}const S=[];if(y.length>0&&this._consumptionData.length>0){const e=this._consumptionData[0],t=this._consumptionData[this._consumptionData.length-1],r=Math.floor(this._consumptionData.length/2),o=this._consumptionData[r],i=e=>{try{return new Date(e).toLocaleDateString("en-US",{month:"short",day:"numeric"})}catch{return e.split("T")[0]}};e&&(e.start_time||e.date)&&S.push({label:i(e.start_time||e.date||""),x:y[0].x}),o&&(o.start_time||o.date)&&S.push({label:i(o.start_time||o.date||""),x:y[r]?.x||y[0].x}),t&&(t.start_time||t.date)&&S.push({label:i(t.start_time||t.date||""),x:y[y.length-1].x})}else ge.warn(`Cannot generate X-axis labels: points.length=${y.length}, consumptionData.length=${this._consumptionData.length}`);if("bar"===e)return V`
+    `:V`
+        <div class="error-message">
+          <div class="error-title">Tariff Comparison Not Enabled</div>
+          <div class="error-details">
+            Please enable "Show Tariff Comparison" in the card configuration to use the Tariff Comparison view.
+          </div>
+        </div>
+      `}_renderChart(){if(0===this._consumptionData.length)return V`<div class="loading">No consumption data available</div>`;const e=this.config.chart_type||"line";if("heat-calendar"===e)return this._renderHeatCalendar();const t=this._consumptionData.map(e=>e.consumption||e.value||0),r=Math.max(...t,1),o=Math.min(...t,0),i=r-o||1;let a=[],s=0,n=0,c=1;const l=this.config.show_cost_on_chart&&this.config.selected_tariff_for_cost&&null!==this._tariffCosts;if(l&&this._tariffCosts&&this.config.selected_tariff_for_cost){const e=this._tariffCosts[this.config.selected_tariff_for_cost];if(e){const r="month"===this._currentPeriod?e.daily_breakdown:e.hourly_breakdown;r&&r.length>0?(a=r.map(e=>e.cost),a.length!==t.length?(ge.warn(`Cost data length (${a.length}) does not match consumption data length (${t.length}). Cost display disabled.`),a=[]):(s=Math.max(...a,.01),n=Math.min(...a,0),c=s-n||1)):ge.warn(`No breakdown data available for tariff ${this.config.selected_tariff_for_cost}. Cost display disabled.`)}else ge.warn(`Tariff cost data not found for entry ID: ${this.config.selected_tariff_for_cost}. Cost display disabled.`)}const d=l&&a.length>0&&a.length===t.length,p=800,h=300,_=20,u=d?60:20,f=40,m=60,g=h-_-f,v=(p-m-u)/(t.length-1||1),y=t.map((e,t)=>({x:m+t*v,y:_+g-(e-o)/i*g,value:e})),w=y.length>0?`M ${y[0].x} ${y[0].y} ${y.slice(1).map(e=>`L ${e.x} ${e.y}`).join(" ")}`:"",b=y.length>0?`${w} L ${y[y.length-1].x} ${h-f} L ${y[0].x} ${h-f} Z`:"",x=[];if(!isNaN(i)&&i>0)for(let e=0;e<=5;e++){const t=o+i*e/5,r=_+g-e/5*g;x.push({value:t,y:r})}else ge.warn(`Cannot generate Y-axis labels: chartHeight=${g}, range=${i}`);let $=[],k="",C=[];if(d&&a.length>0&&a.length===t.length){$=a.map((e,t)=>({x:m+t*v,y:_+g-(e-n)/c*g,value:e})),$.length>0&&(k=`M ${$[0].x} ${$[0].y} ${$.slice(1).map(e=>`L ${e.x} ${e.y}`).join(" ")}`);for(let e=0;e<=5;e++){const t=n+c*e/5,r=_+g-e/5*g;C.push({value:t,y:r})}}const S=[];if(y.length>0&&this._consumptionData.length>0){const e=this._consumptionData[0],t=this._consumptionData[this._consumptionData.length-1],r=Math.floor(this._consumptionData.length/2),o=this._consumptionData[r],i=e=>{try{return new Date(e).toLocaleDateString("en-US",{month:"short",day:"numeric"})}catch{return e.split("T")[0]}};e&&(e.start_time||e.date)&&S.push({label:i(e.start_time||e.date||""),x:y[0].x}),o&&(o.start_time||o.date)&&S.push({label:i(o.start_time||o.date||""),x:y[r]?.x||y[0].x}),t&&(t.start_time||t.date)&&S.push({label:i(t.start_time||t.date||""),x:y[y.length-1].x})}else ge.warn(`Cannot generate X-axis labels: points.length=${y.length}, consumptionData.length=${this._consumptionData.length}`);if("bar"===e)return V`
         <svg class="chart-svg" viewBox="0 0 ${p} ${h}" preserveAspectRatio="xMidYMid meet">
           <!-- Grid lines -->
           ${x.map(e=>V`
@@ -729,686 +1425,4 @@ const le={attribute:!0,type:String,converter:y,reflect:!1,hasChanged:w},de=(e=le
           </div>
         </div>
       </div>
-    `}static getStubConfig(){return{type:"custom:octopus-consumption-card",source_entry_id:"",view:"consumption",show_comparison:!0,default_period:"week",chart_type:"line",show_tariff_comparison:!1,tariff_entry_ids:[],show_cost_on_chart:!1,show_navigation:!0,show_period_distribution:!1,show_moving_average:!1,moving_average_days:7,show_heat_calendar:!1,heat_calendar_period:"month",show_week_comparison:!1,week_comparison_count:2,show_cost_trend:!1,cost_moving_average_days:30,show_tariff_chart:!0}}static getConfigElement(){return document.createElement("octopus-consumption-card-editor")}}function we(){return ye}function be(){return me}function xe(){return ye.getStubConfig()}if(ye.enabledWarnings=[],ye.SERVICE_TIMEOUT=1e4,ye.SERVICE_DOMAIN="octopus_energy_es",ye.SERVICE_FETCH_CONSUMPTION="fetch_consumption",ye.SERVICE_COMPARE_TARIFFS="compare_tariffs",ye.styles=s`
-    :host {
-      display: block;
-      padding: 16px;
-    }
-
-    .period-selector {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-
-    .period-button {
-      padding: 8px 16px;
-      border: 1px solid var(--divider-color);
-      background: var(--card-background-color);
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-    }
-
-    .period-button.active {
-      background: var(--primary-color);
-      color: var(--text-primary-color);
-      border-color: var(--primary-color);
-    }
-
-    .navigation-controls {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-
-    .nav-button {
-      padding: 8px 16px;
-      border: 1px solid var(--divider-color);
-      background: var(--card-background-color);
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-    }
-
-    .chart-container {
-      margin: 0;
-      min-height: 300px;
-      position: relative;
-      width: 100%;
-    }
-
-    .chart-svg {
-      width: 100%;
-      height: 300px;
-      display: block;
-    }
-
-    .chart-line {
-      fill: none;
-      stroke: var(--primary-color, #03a9f4);
-      stroke-width: 2;
-    }
-
-    .chart-line-cost {
-      fill: none;
-      stroke: var(--accent-color, #ff9800);
-      stroke-width: 2;
-      stroke-dasharray: 5, 5;
-    }
-
-    .chart-line-moving-avg {
-      fill: none;
-      stroke: var(--info-color, #2196f3);
-      stroke-width: 2;
-      stroke-dasharray: 3, 3;
-      opacity: 0.8;
-    }
-
-    .chart-area {
-      fill: var(--primary-color, #03a9f4);
-      opacity: 0.2;
-    }
-
-    .chart-area-p1 {
-      fill: var(--error-color, #f44336);
-      opacity: 0.6;
-    }
-
-    .chart-area-p2 {
-      fill: var(--warning-color, #ff9800);
-      opacity: 0.6;
-    }
-
-    .chart-area-p3 {
-      fill: var(--success-color, #4caf50);
-      opacity: 0.6;
-    }
-
-    .chart-line-p1 {
-      stroke: var(--error-color, #f44336);
-      stroke-width: 1;
-      fill: none;
-    }
-
-    .chart-line-p2 {
-      stroke: var(--warning-color, #ff9800);
-      stroke-width: 1;
-      fill: none;
-    }
-
-    .chart-line-p3 {
-      stroke: var(--success-color, #4caf50);
-      stroke-width: 1;
-      fill: none;
-    }
-
-    .chart-bar {
-      fill: var(--primary-color, #03a9f4);
-      opacity: 0.7;
-    }
-
-    .chart-axis {
-      stroke: var(--divider-color, #e0e0e0);
-      stroke-width: 1;
-    }
-
-    .chart-text {
-      fill: var(--secondary-text-color, #888);
-      font-size: 12px;
-      font-family: var(--mdc-typography-body1-font-family, Roboto, sans-serif);
-      pointer-events: none;
-      user-select: none;
-    }
-
-    .chart-grid-line {
-      stroke: var(--divider-color, #e0e0e0);
-      stroke-width: 1;
-      stroke-dasharray: 2, 2;
-    }
-
-    .loading {
-      text-align: center;
-      padding: 40px;
-      color: var(--secondary-text-color);
-    }
-
-    .error {
-      padding: 16px;
-      background: var(--error-color);
-      color: var(--text-primary-color);
-      border-radius: 4px;
-      margin-bottom: 16px;
-    }
-
-    .error-message {
-      padding: 24px;
-      text-align: center;
-      background: var(--card-background-color);
-      border-radius: 8px;
-      border: 2px solid var(--error-color);
-    }
-
-    .error-icon {
-      color: var(--error-color);
-      margin-bottom: 12px;
-    }
-
-    .error-title {
-      font-size: 18px;
-      font-weight: 500;
-      margin-bottom: 8px;
-      color: var(--error-color);
-    }
-
-    .error-details {
-      font-size: 14px;
-      color: var(--secondary-text-color);
-      margin-bottom: 16px;
-    }
-
-    .retry-button {
-      padding: 10px 20px;
-      background: var(--primary-color);
-      color: var(--text-primary-color);
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      margin-top: 8px;
-    }
-
-    .retry-button:hover {
-      opacity: 0.9;
-    }
-
-    .comparison-error {
-      padding: 12px;
-      background: var(--warning-color);
-      color: var(--text-primary-color);
-      border-radius: 4px;
-      margin-top: 16px;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .comparison-error ha-icon {
-      flex-shrink: 0;
-    }
-
-    .comparison-section {
-      margin-top: 24px;
-    }
-
-    .comparison-title {
-      font-size: 20px;
-      font-weight: 500;
-      margin-bottom: 16px;
-    }
-
-    .tariff-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .tariff-item {
-      padding: 16px;
-      border: 1px solid var(--divider-color);
-      border-radius: 4px;
-      background: var(--card-background-color);
-    }
-
-    .tariff-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-
-    .tariff-name {
-      font-size: 18px;
-      font-weight: 500;
-    }
-
-    .tariff-cost {
-      font-size: 24px;
-      font-weight: 600;
-      color: var(--primary-color);
-    }
-
-    .tariff-breakdown {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 12px;
-      margin-top: 12px;
-      font-size: 14px;
-    }
-
-    .breakdown-item {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .breakdown-label {
-      color: var(--secondary-text-color);
-      font-size: 12px;
-    }
-
-    .breakdown-value {
-      font-weight: 500;
-      margin-top: 4px;
-    }
-
-    .period-breakdown {
-      margin-top: 16px;
-      padding-top: 16px;
-      border-top: 1px solid var(--divider-color);
-    }
-
-    .period-breakdown-title {
-      font-size: 16px;
-      font-weight: 500;
-      margin-bottom: 12px;
-    }
-
-    .period-bars {
-      display: flex;
-      gap: 8px;
-      height: 40px;
-      margin-bottom: 8px;
-    }
-
-    .period-bar {
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      align-items: center;
-      flex: 1;
-      min-width: 60px;
-    }
-
-    .period-bar-fill {
-      width: 100%;
-      border-radius: 4px 4px 0 0;
-      transition: height 0.3s ease;
-    }
-
-    .period-bar-fill.p1 {
-      background: var(--error-color);
-    }
-
-    .period-bar-fill.p2 {
-      background: var(--warning-color);
-    }
-
-    .period-bar-fill.p3 {
-      background: var(--success-color);
-    }
-
-    .period-bar-label {
-      margin-top: 4px;
-      font-size: 12px;
-      color: var(--secondary-text-color);
-      text-align: center;
-    }
-
-    .cost-per-kwh {
-      color: var(--primary-color);
-      font-weight: 500;
-      font-size: 11px;
-    }
-
-    .best-tariff-badge {
-      display: inline-block;
-      padding: 4px 8px;
-      background: var(--success-color);
-      color: var(--text-primary-color);
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: 500;
-      margin-left: 8px;
-    }
-
-    .savings-info {
-      margin-top: 16px;
-      padding: 12px;
-      background: var(--info-color);
-      border-radius: 4px;
-      font-size: 14px;
-    }
-
-    .consumption-summary {
-      margin-bottom: 24px;
-      padding: 16px;
-      background: var(--card-background-color);
-      border: 1px solid var(--divider-color);
-      border-radius: 8px;
-    }
-
-    .summary-title {
-      font-size: 18px;
-      font-weight: 500;
-      margin-bottom: 16px;
-      color: var(--primary-text-color);
-    }
-
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 16px;
-    }
-
-    .summary-item {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding: 12px;
-      background: var(--secondary-background-color);
-      border-radius: 6px;
-    }
-
-    .summary-item.summary-total {
-      background: var(--primary-color);
-      color: var(--text-primary-color);
-    }
-
-    .summary-period {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 14px;
-    }
-
-    .period-icon {
-      font-size: 18px;
-    }
-
-    .period-name {
-      font-weight: 500;
-    }
-
-    .summary-value {
-      font-size: 20px;
-      font-weight: 600;
-      color: var(--primary-text-color);
-    }
-
-    .summary-percentage {
-      font-size: 14px;
-      color: var(--secondary-text-color);
-    }
-
-    .summary-total .summary-value,
-    .summary-total .summary-percentage {
-      color: var(--text-primary-color);
-    }
-
-    .heat-calendar-container {
-      margin-top: 24px;
-    }
-
-    .heat-calendar-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 4px;
-      margin-top: 16px;
-    }
-
-    .heat-calendar-day {
-      aspect-ratio: 1;
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      cursor: pointer;
-      position: relative;
-      border: 1px solid var(--divider-color);
-      transition: transform 0.2s ease;
-    }
-
-    .heat-calendar-day:hover {
-      transform: scale(1.1);
-      z-index: 10;
-    }
-
-    .heat-calendar-day.intensity-low {
-      background: var(--info-color, #2196f3);
-      opacity: 0.4;
-    }
-
-    .heat-calendar-day.intensity-medium {
-      background: var(--success-color, #4caf50);
-      opacity: 0.6;
-    }
-
-    .heat-calendar-day.intensity-high {
-      background: var(--error-color, #f44336);
-      opacity: 0.8;
-    }
-
-    .heat-calendar-day.empty {
-      background: var(--card-background-color);
-      opacity: 0.3;
-      cursor: default;
-    }
-
-    .heat-calendar-legend {
-      display: flex;
-      gap: 16px;
-      margin-top: 16px;
-      font-size: 12px;
-      align-items: center;
-    }
-
-    .heat-calendar-legend-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .heat-calendar-legend-color {
-      width: 20px;
-      height: 20px;
-      border-radius: 4px;
-      border: 1px solid var(--divider-color);
-    }
-
-    .heat-calendar-year-view {
-      max-height: 600px;
-      overflow-y: auto;
-    }
-
-    .heat-calendar-year-view .heat-calendar-grid {
-      max-height: 550px;
-      overflow-y: auto;
-    }
-
-    .heat-calendar-grid-year .heat-calendar-day {
-      width: 12px;
-      height: 12px;
-      min-width: 12px;
-      min-height: 12px;
-      font-size: 9px;
-      padding: 0;
-    }
-
-    .heat-calendar-grid-year .heat-calendar-day.empty {
-      width: 12px;
-      height: 12px;
-      min-width: 12px;
-      min-height: 12px;
-    }
-
-    .heat-calendar-month-label {
-      grid-column: 1 / -1;
-      font-size: 10px;
-      font-weight: 600;
-      color: var(--secondary-text-color);
-      padding: 4px 0;
-      text-align: left;
-      border-bottom: 1px solid var(--divider-color);
-      margin-bottom: 2px;
-    }
-
-    .heat-calendar-summary {
-      display: flex;
-      gap: 16px;
-      margin-top: 8px;
-      margin-bottom: 8px;
-      font-size: 14px;
-      color: var(--secondary-text-color);
-      flex-wrap: wrap;
-    }
-
-    .heat-calendar-summary span {
-      padding: 4px 8px;
-      background: var(--secondary-background-color);
-      border-radius: 4px;
-    }
-
-    .week-comparison-section {
-      margin-top: 24px;
-    }
-
-    .week-comparison-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 16px;
-      margin-top: 16px;
-    }
-
-    .week-card {
-      padding: 16px;
-      border: 1px solid var(--divider-color);
-      border-radius: 8px;
-      background: var(--card-background-color);
-    }
-
-    .week-card-header {
-      font-size: 16px;
-      font-weight: 500;
-      margin-bottom: 12px;
-      color: var(--primary-text-color);
-    }
-
-    .week-card-metrics {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .week-metric {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .week-metric-label {
-      font-size: 14px;
-      color: var(--secondary-text-color);
-    }
-
-    .week-metric-value {
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--primary-text-color);
-    }
-
-    .week-change {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: 500;
-      margin-left: 8px;
-    }
-
-    .week-change.positive {
-      background: var(--error-color);
-      color: var(--text-primary-color);
-    }
-
-    .week-change.negative {
-      background: var(--success-color);
-      color: var(--text-primary-color);
-    }
-
-    .tariff-chart-container {
-      margin-top: 16px;
-    }
-
-    .tariff-chart-bars {
-      display: flex;
-      gap: 8px;
-      height: 200px;
-      align-items: flex-end;
-      margin-top: 16px;
-    }
-
-    .tariff-chart-bar-group {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .tariff-chart-bar-label {
-      text-align: center;
-      font-size: 12px;
-      color: var(--secondary-text-color);
-      margin-bottom: 4px;
-    }
-
-    .tariff-chart-bar {
-      border-radius: 4px 4px 0 0;
-      min-height: 4px;
-      position: relative;
-      transition: opacity 0.2s ease;
-    }
-
-    .tariff-chart-bar:hover {
-      opacity: 0.8;
-    }
-
-    .tariff-chart-bar.consumption {
-      background: var(--primary-color, #03a9f4);
-    }
-
-    .tariff-chart-bar.cost {
-      background: var(--accent-color, #ff9800);
-    }
-
-    .tariff-chart-bar.p1 {
-      background: var(--error-color, #f44336);
-    }
-
-    .tariff-chart-bar.p2 {
-      background: var(--warning-color, #ff9800);
-    }
-
-    .tariff-chart-bar.p3 {
-      background: var(--success-color, #4caf50);
-    }
-
-    .tooltip {
-      position: absolute;
-      background: var(--card-background-color);
-      border: 1px solid var(--divider-color);
-      border-radius: 4px;
-      padding: 8px;
-      font-size: 12px;
-      pointer-events: none;
-      z-index: 1000;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-      display: none;
-    }
-
-    .tooltip.visible {
-      display: block;
-    }
-  `,ve([pe({attribute:!1})],ye.prototype,"hass",void 0),ve([pe({attribute:!1})],ye.prototype,"config",void 0),ve([he()],ye.prototype,"_consumptionData",void 0),ve([he()],ye.prototype,"_comparisonResult",void 0),ve([he()],ye.prototype,"_tariffCosts",void 0),ve([he()],ye.prototype,"_loading",void 0),ve([he()],ye.prototype,"_error",void 0),ve([he()],ye.prototype,"_comparisonError",void 0),ve([he()],ye.prototype,"_currentPeriod",void 0),ve([he()],ye.prototype,"_currentDate",void 0),ve([he()],ye.prototype,"_weekComparisonData",void 0),"undefined"!=typeof window&&(window.getCardElement=we,window.getCardConfigElement=be,window.getStubConfig=xe),"undefined"!=typeof window&&"undefined"!=typeof customElements){try{customElements.get("octopus-consumption-card")||customElements.define("octopus-consumption-card",ye)}catch(e){ge.error("Failed to register octopus-consumption-card: ",e instanceof Error?e.message:String(e))}if(void 0===window.customCards&&(window.customCards=[]),Array.isArray(window.customCards)){window.customCards.some(e=>"custom:octopus-consumption-card"===e.type)||window.customCards.push({type:"custom:octopus-consumption-card",name:"Octopus Energy España Consumption Card",preview:!1,description:"Display consumption data and tariff comparisons for Octopus Energy España"})}window.customCards["octopus-consumption-card"]=ye,window.OctopusConsumptionCard=ye;const e="0.5.2",t=!!customElements.get("octopus-consumption-card");console.groupCollapsed("%c⚡ Octopus Energy España","background: linear-gradient(90deg, #e10090 0%, #c000a0 100%);color: #fff;padding: 4px 8px;border-radius: 4px;font-weight: bold;"),ge.info("Consumption Card",`v${e}`),ge.info(t?"✓ Custom element: ":"✗ Custom element: ","octopus-consumption-card"),ge.success("✓ Added to card picker"),ge.success("✓ Visual editor enabled"),ge.info("ℹ Supported languages: ","en, es, be"),t||ge.error("✗ Registration failed! Element not found in customElements registry"),console.groupEnd()}return e.OctopusConsumptionCard=ye,e.getCardConfigElement=be,e.getCardElement=we,e.getStubConfig=xe,e}({});
+    `}static getStubConfig(){return{type:"custom:octopus-consumption-card",source_entry_id:"",view:"consumption",show_comparison:!0,default_period:"week",chart_type:"line",show_tariff_comparison:!1,tariff_entry_ids:[],show_cost_on_chart:!1,show_navigation:!0,show_period_distribution:!1,show_moving_average:!1,moving_average_days:7,show_heat_calendar:!1,heat_calendar_period:"month",show_week_comparison:!1,week_comparison_count:2,show_cost_trend:!1,cost_moving_average_days:30,show_tariff_chart:!0}}static getConfigElement(){return document.createElement("octopus-consumption-card-editor")}}function be(){return we}function xe(){return me}function $e(){return we.getStubConfig()}if(we.enabledWarnings=[],we.SERVICE_TIMEOUT=1e4,we.SERVICE_DOMAIN="octopus_energy_es",we.SERVICE_FETCH_CONSUMPTION="fetch_consumption",we.SERVICE_COMPARE_TARIFFS="compare_tariffs",we.styles=ve,ye([pe({attribute:!1})],we.prototype,"hass",void 0),ye([pe({attribute:!1})],we.prototype,"config",void 0),ye([he()],we.prototype,"_consumptionData",void 0),ye([he()],we.prototype,"_comparisonResult",void 0),ye([he()],we.prototype,"_tariffCosts",void 0),ye([he()],we.prototype,"_loading",void 0),ye([he()],we.prototype,"_error",void 0),ye([he()],we.prototype,"_comparisonError",void 0),ye([he()],we.prototype,"_currentPeriod",void 0),ye([he()],we.prototype,"_currentDate",void 0),ye([he()],we.prototype,"_weekComparisonData",void 0),"undefined"!=typeof window&&(window.getCardElement=be,window.getCardConfigElement=xe,window.getStubConfig=$e),"undefined"!=typeof window&&"undefined"!=typeof customElements){try{customElements.get("octopus-consumption-card")||customElements.define("octopus-consumption-card",we)}catch(e){ge.error("Failed to register octopus-consumption-card: ",e instanceof Error?e.message:String(e))}if(void 0===window.customCards&&(window.customCards=[]),Array.isArray(window.customCards)){window.customCards.some(e=>"custom:octopus-consumption-card"===e.type)||window.customCards.push({type:"custom:octopus-consumption-card",name:"Octopus Energy España Consumption Card",preview:!1,description:"Display consumption data and tariff comparisons for Octopus Energy España"})}window.customCards["octopus-consumption-card"]=we,window.OctopusConsumptionCard=we;const e="0.5.2",t=!!customElements.get("octopus-consumption-card");console.groupCollapsed("%c⚡ Octopus Energy España","background: linear-gradient(90deg, #e10090 0%, #c000a0 100%);color: #fff;padding: 4px 8px;border-radius: 4px;font-weight: bold;"),ge.info("Consumption Card",`v${e}`),ge.info(t?"✓ Custom element: ":"✗ Custom element: ","octopus-consumption-card"),ge.success("✓ Added to card picker"),ge.success("✓ Visual editor enabled"),ge.info("ℹ Supported languages: ","en, es, be"),t||ge.error("✗ Registration failed! Element not found in customElements registry"),console.groupEnd()}return e.OctopusConsumptionCard=we,e.getCardConfigElement=xe,e.getCardElement=be,e.getStubConfig=$e,e}({});

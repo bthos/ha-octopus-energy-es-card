@@ -749,7 +749,18 @@ export class OctopusConsumptionCard extends LitElement {
       throw new Error("Invalid configuration");
     }
 
-    this.config = config;
+    // Ensure view defaults to "consumption" if not specified
+    const configWithDefaults = {
+      ...config,
+      view: config.view || "consumption",
+    };
+
+    this.config = configWithDefaults;
+    
+    // Initialize state from config if available
+    if (configWithDefaults.default_period) {
+      this._currentPeriod = configWithDefaults.default_period;
+    }
   }
 
   /**
@@ -782,6 +793,12 @@ export class OctopusConsumptionCard extends LitElement {
     super.updated(changedProperties);
     if (changedProperties.has("config")) {
       this._validateConfig();
+      
+      // Update state to match config changes
+      if (this.config.default_period && this._currentPeriod !== this.config.default_period) {
+        this._currentPeriod = this.config.default_period;
+      }
+      
       // Only reload data if config actually changed (not just initial set)
       if (changedProperties.get("config") !== undefined) {
         this._loadData();
@@ -2040,6 +2057,17 @@ export class OctopusConsumptionCard extends LitElement {
    * Render week analysis view
    */
   private _renderWeekAnalysisView(): TemplateResult {
+    if (!this.config.show_week_comparison) {
+      return html`
+        <div class="error-message">
+          <div class="error-title">Week Comparison Not Enabled</div>
+          <div class="error-details">
+            Please enable "Show Week Comparison" in the card configuration to use the Week Analysis view.
+          </div>
+        </div>
+      `;
+    }
+
     return html`
       ${this.config.show_navigation !== false ? html`
         <div class="period-selector">
@@ -2081,6 +2109,17 @@ export class OctopusConsumptionCard extends LitElement {
    * Render tariff comparison view
    */
   private _renderTariffComparisonView(): TemplateResult {
+    if (!this.config.show_tariff_comparison) {
+      return html`
+        <div class="error-message">
+          <div class="error-title">Tariff Comparison Not Enabled</div>
+          <div class="error-details">
+            Please enable "Show Tariff Comparison" in the card configuration to use the Tariff Comparison view.
+          </div>
+        </div>
+      `;
+    }
+
     return html`
       <div class="comparison-section">
         <h3 class="comparison-title">Tariff Comparison</h3>

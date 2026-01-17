@@ -5,20 +5,13 @@
 export interface OctopusConsumptionCardConfig {
   type: "custom:octopus-consumption-card";
   
-  // New fields - service-based architecture
-  source_entry_id?: string;  // Primary tariff config entry ID (required if entity not provided)
+  // Service-based architecture
+  source_entry_id?: string;  // Primary tariff config entry ID (required)
   tariff_entry_ids?: string[];  // Additional tariffs for comparison
   consumption_sensor?: string;  // Optional sensor override
   
-  // Deprecated - kept for backward compatibility
-  /** @deprecated Use source_entry_id instead. Entity-based configuration will be removed in a future version. */
-  entity?: string;
-  
-  show_comparison?: boolean;
   default_period?: "day" | "week" | "month";
-  chart_type?: "line" | "bar" | "stacked-area" | "heat-calendar";
-  // Tariff comparison options
-  show_tariff_comparison?: boolean;
+  chart_type?: "line" | "bar" | "stacked-area";
   show_cost_on_chart?: boolean;
   selected_tariff_for_cost?: string;
   // Period navigation
@@ -28,7 +21,6 @@ export interface OctopusConsumptionCardConfig {
   show_moving_average?: boolean; // Show moving average trend line
   moving_average_days?: number; // Days for moving average (default: 7)
   // Heat calendar visualization
-  show_heat_calendar?: boolean; // Show heat calendar (heatmap) visualization
   heat_calendar_period?: "month" | "year"; // Period for heat calendar
   // Week comparison
   show_week_comparison?: boolean; // Show week-over-week comparison

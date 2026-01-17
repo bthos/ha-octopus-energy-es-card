@@ -14,13 +14,8 @@ export const translations: Record<string, Translations> = {
     "editor.basic_settings": "Basic Settings",
     "editor.source_entry_id_label": "Primary Tariff",
     "editor.source_entry_id_helper": "Select the Octopus Energy tariff to display consumption data for",
-    "editor.entity_label": "Entity",
-    "editor.entity_helper": "Select the Octopus Energy España consumption sensor (deprecated)",
-    
     // Display Options
     "editor.display_options": "Display Options",
-    "editor.show_comparison_label": "Show Comparison",
-    "editor.show_comparison_helper": "Compare current period with previous period",
     "editor.default_period_label": "Default Period",
     "editor.default_period_helper": "Initial time period to display",
     "editor.chart_type_label": "Chart Type",
@@ -30,8 +25,6 @@ export const translations: Record<string, Translations> = {
     
     // Tariff Comparison
     "editor.tariff_comparison": "Tariff Comparison",
-    "editor.show_tariff_comparison_label": "Show Tariff Comparison",
-    "editor.show_tariff_comparison_helper": "Compare consumption costs across different tariffs",
     "editor.tariff_entry_ids_label": "Comparison Tariffs",
     "editor.tariff_entry_ids_helper": "Optional: Select additional tariffs to compare costs",
     
@@ -62,7 +55,6 @@ export const translations: Record<string, Translations> = {
     "editor.chart_type_line": "Line",
     "editor.chart_type_bar": "Bar",
     "editor.chart_type_stacked_area": "Stacked Area",
-    "editor.chart_type_heat_calendar": "Heat Calendar",
     
     // Advanced Visualization Options
     "editor.advanced_visualization": "Advanced Visualization",
@@ -79,8 +71,6 @@ export const translations: Record<string, Translations> = {
     "editor.period_month": "Month",
     
     // Heat Calendar Options
-    "editor.show_heat_calendar_label": "Show Heat Calendar",
-    "editor.show_heat_calendar_helper": "Display consumption heatmap calendar",
     "editor.heat_calendar_period_label": "Heat Calendar Period",
     "editor.heat_calendar_period_helper": "Time period for heat calendar display",
     "editor.heat_calendar_period_month": "Month",
@@ -102,22 +92,15 @@ export const translations: Record<string, Translations> = {
     "editor.show_tariff_chart_label": "Show Tariff Chart",
     "editor.show_tariff_chart_helper": "Display visual chart in tariff comparison section",
     
-    // Validation
-    "editor.entity_required": "Entity is required",
-    "editor.entity_invalid": "Entity must be an Octopus Energy España sensor (sensor.octopus_energy_es_*)",
   },
   es: {
     // Basic Settings
     "editor.basic_settings": "Configuración Básica",
     "editor.source_entry_id_label": "Tarifa Principal",
     "editor.source_entry_id_helper": "Selecciona la tarifa de Octopus Energy para mostrar datos de consumo",
-    "editor.entity_label": "Entidad",
-    "editor.entity_helper": "Seleccione el sensor de consumo de Octopus Energy España (obsoleto)",
     
     // Display Options
     "editor.display_options": "Opciones de Visualización",
-    "editor.show_comparison_label": "Mostrar Comparación",
-    "editor.show_comparison_helper": "Comparar período actual con período anterior",
     "editor.default_period_label": "Período Predeterminado",
     "editor.default_period_helper": "Período de tiempo inicial a mostrar",
     "editor.chart_type_label": "Tipo de Gráfico",
@@ -127,8 +110,6 @@ export const translations: Record<string, Translations> = {
     
     // Tariff Comparison
     "editor.tariff_comparison": "Comparación de Tarifas",
-    "editor.show_tariff_comparison_label": "Mostrar Comparación de Tarifas",
-    "editor.show_tariff_comparison_helper": "Comparar costes de consumo entre diferentes tarifas",
     "editor.tariff_entry_ids_label": "Tarifas de Comparación",
     "editor.tariff_entry_ids_helper": "Opcional: Selecciona tarifas adicionales para comparar costes",
     
@@ -159,7 +140,6 @@ export const translations: Record<string, Translations> = {
     "editor.chart_type_line": "Línea",
     "editor.chart_type_bar": "Barras",
     "editor.chart_type_stacked_area": "Área Apilada",
-    "editor.chart_type_heat_calendar": "Calendario de Calor",
     
     // Advanced Visualization Options
     "editor.advanced_visualization": "Visualización Avanzada",
@@ -176,8 +156,6 @@ export const translations: Record<string, Translations> = {
     "editor.period_month": "Mes",
     
     // Heat Calendar Options
-    "editor.show_heat_calendar_label": "Mostrar Calendario de Calor",
-    "editor.show_heat_calendar_helper": "Mostrar mapa de calor de consumo",
     "editor.heat_calendar_period_label": "Período del Calendario de Calor",
     "editor.heat_calendar_period_helper": "Período de tiempo para el calendario de calor",
     "editor.heat_calendar_period_month": "Mes",
@@ -199,22 +177,15 @@ export const translations: Record<string, Translations> = {
     "editor.show_tariff_chart_label": "Mostrar Gráfico de Tarifas",
     "editor.show_tariff_chart_helper": "Mostrar gráfico visual en la sección de comparación de tarifas",
     
-    // Validation
-    "editor.entity_required": "La entidad es requerida",
-    "editor.entity_invalid": "La entidad debe ser un sensor de Octopus Energy España (sensor.octopus_energy_es_*)",
   },
   be: {
     // Basic Settings
     "editor.basic_settings": "Асноўныя налады",
     "editor.source_entry_id_label": "Асноўны тарыф",
     "editor.source_entry_id_helper": "Выберыце тарыф Octopus Energy для адлюстравання даных спажывання",
-    "editor.entity_label": "Сутнасць",
-    "editor.entity_helper": "Выберыце сэнсар спажывання Octopus Energy España (састарэлы)",
     
     // Display Options
     "editor.display_options": "Параметры адлюстравання",
-    "editor.show_comparison_label": "Паказаць параўнанне",
-    "editor.show_comparison_helper": "Параўнаць бягучы перыяд з папярэднім перыядам",
     "editor.default_period_label": "Перыяд па змаўчанні",
     "editor.default_period_helper": "Пачатковы часовы перыяд для адлюстравання",
     "editor.chart_type_label": "Тып дыяграмы",
@@ -224,8 +195,6 @@ export const translations: Record<string, Translations> = {
     
     // Tariff Comparison
     "editor.tariff_comparison": "Параўнанне тарыфаў",
-    "editor.show_tariff_comparison_label": "Паказаць параўнанне тарыфаў",
-    "editor.show_tariff_comparison_helper": "Параўнаць выдаткі на спажыванне паміж рознымі тарыфамі",
     "editor.tariff_entry_ids_label": "Тарыфы для параўнання",
     "editor.tariff_entry_ids_helper": "Неабавязкова: Выберыце дадатковыя тарыфы для параўнання кошту",
     
@@ -256,7 +225,6 @@ export const translations: Record<string, Translations> = {
     "editor.chart_type_line": "Лінія",
     "editor.chart_type_bar": "Слупкі",
     "editor.chart_type_stacked_area": "Стопачная дыяграма",
-    "editor.chart_type_heat_calendar": "Каляндар цяпла",
     
     // Advanced Visualization Options
     "editor.advanced_visualization": "Пашыраная візуалізацыя",
@@ -273,8 +241,6 @@ export const translations: Record<string, Translations> = {
     "editor.period_month": "Месяц",
     
     // Heat Calendar Options
-    "editor.show_heat_calendar_label": "Паказаць каляндар цяпла",
-    "editor.show_heat_calendar_helper": "Адлюстраваць карту цяпла спажывання",
     "editor.heat_calendar_period_label": "Перыяд каляндара цяпла",
     "editor.heat_calendar_period_helper": "Часавы перыяд для адлюстравання каляндара цяпла",
     "editor.heat_calendar_period_month": "Месяц",
@@ -295,10 +261,6 @@ export const translations: Record<string, Translations> = {
     // Tariff Chart Options
     "editor.show_tariff_chart_label": "Паказаць дыяграму тарыфаў",
     "editor.show_tariff_chart_helper": "Адлюстраваць візуальную дыяграму ў раздзеле параўнання тарыфаў",
-    
-    // Validation
-    "editor.entity_required": "Сутнасць абавязковая",
-    "editor.entity_invalid": "Сутнасць павінна быць сэнсарам Octopus Energy España (sensor.octopus_energy_es_*)",
   }
 };
 

@@ -40,10 +40,8 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
     type: "custom:octopus-consumption-card",
     source_entry_id: "",
     view: "consumption",
-    show_comparison: true,
     default_period: "week",
     chart_type: "line",
-    show_tariff_comparison: false,
     tariff_entry_ids: [],
     show_cost_on_chart: false,
     show_navigation: true,
@@ -129,10 +127,8 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
     const viewChanged = this._config.view !== newConfig.view;
     
     // Handle conditional fields
-    if (newConfig.show_tariff_comparison === false) {
-      newConfig.show_cost_on_chart = false;
+    if (newConfig.show_cost_on_chart === false) {
       newConfig.selected_tariff_for_cost = undefined;
-      newConfig.tariff_entry_ids = undefined;
     }
 
     if (newConfig.show_cost_on_chart === false) {
@@ -192,12 +188,6 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
     // Add view-specific options
     if (view === "consumption") {
       schema.push(
-        {
-          name: "show_comparison",
-          selector: {
-            boolean: {},
-          },
-        },
         {
           name: "default_period",
           selector: {
@@ -348,22 +338,13 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
         });
       }
     } else if (view === "tariff-comparison") {
+      // tariff_entry_ids is handled by custom UI, not in schema
       schema.push({
-        name: "show_tariff_comparison",
+        name: "show_tariff_chart",
         selector: {
           boolean: {},
         },
       });
-
-      if (this._config.show_tariff_comparison) {
-        // tariff_entry_ids is handled by custom UI, not in schema
-        schema.push({
-          name: "show_tariff_chart",
-          selector: {
-            boolean: {},
-          },
-        });
-      }
     }
 
     // Old conditional logic removed - now handled in view-specific sections above
@@ -440,10 +421,6 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
   }
 
   private _renderTariffDropdowns(): TemplateResult {
-    if (!this._config.show_tariff_comparison) {
-      return html``;
-    }
-
     const tariffIds = this._config.tariff_entry_ids || [];
     // Always show at least one empty dropdown
     // If there are selected tariffs, show one more empty dropdown for adding another
@@ -503,8 +480,7 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
           @value-changed=${this._valueChanged}
         ></ha-form>
         
-        <!-- Custom Tariff Selection UI for tariff-comparison view -->
-        ${view === "tariff-comparison" && this._config.show_tariff_comparison ? this._renderTariffDropdowns() : ""}
+        ${view === "tariff-comparison" ? this._renderTariffDropdowns() : ""}
       </div>
     `;
   }

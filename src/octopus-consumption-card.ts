@@ -95,7 +95,8 @@ export class OctopusConsumptionCard extends LitElement {
     if (this.config && this.config.show_navigation !== false) {
       size += 1;
     }
-    if (this.config && this.config.show_tariff_comparison) {
+    const view = this.config?.view || "consumption";
+    if (this.config && view === "tariff-comparison") {
       size += 1;
     }
     return size;
@@ -105,7 +106,10 @@ export class OctopusConsumptionCard extends LitElement {
     super.connectedCallback();
     this._validateConfig();
     this._currentPeriod = this.config.default_period || "week";
-    this._loadData();
+    // Only load data if configuration is valid
+    if (!this._error) {
+      this._loadData();
+    }
   }
 
   protected updated(changedProperties: PropertyValues): void {
@@ -137,13 +141,15 @@ export class OctopusConsumptionCard extends LitElement {
 
     // Require source_entry_id
     if (!this.config.source_entry_id) {
-      this._error = "source_entry_id is required. Please select your tariff from the card editor.";
+      this._error = "Configuration incomplete. Please edit this card and select your Octopus Energy tariff.";
       this._loading = false;
       return;
     }
 
-    if (this.config.show_tariff_comparison && (!this.config.tariff_entry_ids || this.config.tariff_entry_ids.length === 0)) {
-      Logger.warn("show_tariff_comparison is enabled but no tariff_entry_ids provided. Comparison will be disabled.");
+    const view = this.config.view || "consumption";
+    // Check if tariff comparison is active (only for tariff-comparison view)
+    if (view === "tariff-comparison" && (!this.config.tariff_entry_ids || this.config.tariff_entry_ids.length === 0)) {
+      Logger.warn("Tariff comparison view is active but no tariff_entry_ids provided. Comparison will be disabled.");
     }
 
     if (this.config.show_cost_on_chart && !this.config.selected_tariff_for_cost) {
@@ -402,8 +408,8 @@ export class OctopusConsumptionCard extends LitElement {
       // Optimize data loading based on active view
       const view = this.config.view || "consumption";
 
-      // Only fetch tariff comparison if tariff-comparison view is active
-      if (view === "tariff-comparison" && this.config.show_tariff_comparison && this.config.tariff_entry_ids?.length) {
+      // Fetch tariff comparison only if tariff-comparison view is active
+      if (view === "tariff-comparison" && this.config.tariff_entry_ids?.length) {
         await this._fetchTariffComparison(entryId, startDate, endDate);
       } else {
         // Clear comparison result if not needed
@@ -451,8 +457,9 @@ export class OctopusConsumptionCard extends LitElement {
     startDate: Date,
     endDate: Date
   ): Promise<FetchConsumptionResult> {
-    // Determine granularity based on period and chart type
-    const isHeatCalendarYear = this.config.chart_type === "heat-calendar" && 
+    // Determine granularity based on period and view
+    const view = this.config.view || "consumption";
+    const isHeatCalendarYear = view === "heat-calendar" && 
                                this.config.heat_calendar_period === "year";
     const granularity = isHeatCalendarYear 
       ? "daily" // Year view always needs daily data
@@ -568,7 +575,8 @@ export class OctopusConsumptionCard extends LitElement {
 
   private _getDateRange(): { startDate: Date; endDate: Date } {
     // Check if heat calendar year view is requested
-    const isHeatCalendarYear = this.config.chart_type === "heat-calendar" && 
+    const view = this.config.view || "consumption";
+    const isHeatCalendarYear = view === "heat-calendar" && 
                                this.config.heat_calendar_period === "year";
     
     if (isHeatCalendarYear) {
@@ -611,7 +619,8 @@ export class OctopusConsumptionCard extends LitElement {
     const change = direction === "prev" ? -1 : 1;
     
     // Check if heat calendar year view navigation is needed
-    const isHeatCalendarYear = this.config.chart_type === "heat-calendar" && 
+    const view = this.config.view || "consumption";
+    const isHeatCalendarYear = view === "heat-calendar" && 
                                this.config.heat_calendar_period === "year";
     
     if (isHeatCalendarYear) {
@@ -1285,14 +1294,22 @@ export class OctopusConsumptionCard extends LitElement {
     }
 
     if (this._error) {
+      const isConfigError = this._error.includes("Configuration incomplete") || this._error.includes("configuration is required");
+      
       return html`
         <div class="error-message">
-          <ha-icon icon="mdi:alert-circle" class="error-icon"></ha-icon>
-          <div class="error-title">Unable to Load Data</div>
+          <ha-icon icon="${isConfigError ? "mdi:cog-outline" : "mdi:alert-circle"}" class="error-icon"></ha-icon>
+          <div class="error-title">${isConfigError ? "Configuration Required" : "Unable to Load Data"}</div>
           <div class="error-details">${this._error}</div>
-          <button class="retry-button" @click=${this._loadData}>
-            Retry
-          </button>
+          ${isConfigError ? html`
+            <div class="error-details" style="margin-top: 12px; font-size: 13px;">
+              Click the <strong>⋮</strong> menu in the top-right corner of this card and select <strong>Edit</strong> to configure it.
+            </div>
+          ` : html`
+            <button class="retry-button" @click=${this._loadData}>
+              Retry
+            </button>
+          `}
         </div>
       `;
     }
@@ -1428,17 +1445,6 @@ export class OctopusConsumptionCard extends LitElement {
    * Render tariff comparison view
    */
   private _renderTariffComparisonView(): TemplateResult {
-    if (!this.config.show_tariff_comparison) {
-      return html`
-        <div class="error-message">
-          <div class="error-title">Tariff Comparison Not Enabled</div>
-          <div class="error-details">
-            Please enable "Show Tariff Comparison" in the card configuration to use the Tariff Comparison view.
-          </div>
-        </div>
-      `;
-    }
-
     return html`
       <div class="comparison-section">
         <h3 class="comparison-title">Tariff Comparison</h3>
@@ -1463,12 +1469,6 @@ export class OctopusConsumptionCard extends LitElement {
     }
 
     const chartType = this.config.chart_type || "line";
-    
-    // Heat calendar should not be rendered here (handled by heat-calendar view)
-    // But keep check for backward compatibility
-    if (chartType === "heat-calendar") {
-      return this._renderHeatCalendar();
-    }
     const data = this._consumptionData.map(d => d.consumption || d.value || 0);
     const maxValue = Math.max(...data, 1);
     const minValue = Math.min(...data, 0);
@@ -2152,17 +2152,14 @@ export class OctopusConsumptionCard extends LitElement {
       type: "custom:octopus-consumption-card",
       source_entry_id: "",
       view: "consumption",
-      show_comparison: true,
       default_period: "week",
       chart_type: "line",
-      show_tariff_comparison: false,
       tariff_entry_ids: [],
       show_cost_on_chart: false,
       show_navigation: true,
       show_period_distribution: false,
       show_moving_average: false,
       moving_average_days: 7,
-      show_heat_calendar: false,
       heat_calendar_period: "month",
       show_week_comparison: false,
       week_comparison_count: 2,

@@ -131,19 +131,15 @@ source_entry_id: "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6"
 title: "Explora tu consumo"
 ```
 
-### Full Configuration Example
+### Full Configuration Example (Consumption View)
 
 ```yaml
 type: custom:octopus-consumption-card
 source_entry_id: "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6"
+view: "consumption"  # "consumption", "heat-calendar", "week-analysis", "tariff-comparison"
 title: "Explora tu consumo"
-show_comparison: true
 default_period: "week"  # "day", "week", "month"
 chart_type: "stacked-area"  # "line", "bar", "stacked-area"
-show_tariff_comparison: true
-tariff_entry_ids:
-  - "6p5o4n3m-2l1k-0j9i-8h7g-6f5e4d3c2b1a"
-  - "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6"
 show_cost_on_chart: true
 selected_tariff_for_cost: "6p5o4n3m-2l1k-0j9i-8h7g-6f5e4d3c2b1a"
 show_navigation: true
@@ -158,12 +154,11 @@ consumption_sensor: "sensor.octopus_energy_es_daily_consumption"  # Optional ove
 | Option | Type | Required | Default | Description |
 |--------|------|----------|---------|-------------|
 | `source_entry_id` | string | ✅ Yes | - | Octopus Energy España integration config entry ID (UUID) for the primary tariff. Select from Visual Editor using the config entry picker. |
+| `view` | string | ❌ No | `"consumption"` | View to display: `"consumption"` for time-series charts, `"heat-calendar"` for heatmap calendar, `"week-analysis"` for week comparison, `"tariff-comparison"` for tariff comparison |
 | `title` | string | ❌ No | `"Consumption"` | Card title displayed at the top of the card |
-| `show_comparison` | boolean | ❌ No | `true` | Show period comparison section with summary statistics |
-| `default_period` | string | ❌ No | `"week"` | Default period to display: `"day"`, `"week"`, or `"month"` |
-| `chart_type` | string | ❌ No | `"line"` | Chart visualization type: `"line"` for line chart, `"bar"` for bar chart, or `"stacked-area"` for period distribution |
-| `show_tariff_comparison` | boolean | ❌ No | `false` | Enable tariff comparison section showing costs for multiple tariffs |
-| `tariff_entry_ids` | array | ❌ No | `[]` | List of additional tariff config entry IDs (UUIDs) to compare against the primary tariff (required if `show_tariff_comparison` is `true`) |
+| `default_period` | string | ❌ No | `"week"` | Default period to display: `"day"`, `"week"`, or `"month"` (only for consumption view) |
+| `chart_type` | string | ❌ No | `"line"` | Chart visualization type: `"line"` for line chart, `"bar"` for bar chart, or `"stacked-area"` for period distribution (only for consumption view) |
+| `tariff_entry_ids` | array | ❌ No | `[]` | List of additional tariff config entry IDs (UUIDs) to compare against the primary tariff (required for tariff-comparison view) |
 | `show_cost_on_chart` | boolean | ❌ No | `false` | Display cost information on the consumption chart using a secondary axis |
 | `selected_tariff_for_cost` | string | ❌ No | - | Tariff config entry ID to use for cost display (required if `show_cost_on_chart` is `true`) |
 | `show_navigation` | boolean | ❌ No | `true` | Show Previous/Next navigation buttons to move between periods |
@@ -177,7 +172,12 @@ consumption_sensor: "sensor.octopus_energy_es_daily_consumption"  # Optional ove
 - **Config Entry ID (source_entry_id)**: This is the UUID of your Octopus Energy España integration instance in Home Assistant. Use the Visual Editor's config entry picker to select it easily, or find it in **Settings → Devices & Services → Octopus Energy España → ⚙️ (three dots) → Download Diagnostics** (look for `entry_id` in the JSON).
 - **Tariff Entry IDs**: These are additional integration config entry IDs for tariff comparison. Each represents a different Octopus Energy tariff configured in Home Assistant. Use the Visual Editor's multi-select config entry picker to choose them.
 - **Consumption Sensor Override**: By default, the card fetches consumption data directly from the integration using the `octopus_energy_es.fetch_consumption` service. Use `consumption_sensor` only if you need to override this behavior with a custom sensor.
-- **Period Selection**: The card supports three period types:
+- **View Selection**: The card supports four views:
+  - `"consumption"`: Time-series charts with consumption data (default)
+  - `"heat-calendar"`: Heatmap calendar visualization
+  - `"week-analysis"`: Week-over-week comparison
+  - `"tariff-comparison"`: Compare multiple tariffs side-by-side
+- **Period Selection** (for consumption view): The card supports three period types:
   - `"day"`: Shows hourly consumption data for a single day
   - `"week"`: Shows hourly consumption data for a week (7 days)
   - `"month"`: Shows daily consumption data for a month
@@ -201,6 +201,7 @@ consumption_sensor: "sensor.octopus_energy_es_daily_consumption"  # Optional ove
 ```yaml
 type: custom:octopus-consumption-card
 source_entry_id: "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6"
+view: "consumption"
 title: "My Consumption"
 default_period: "day"
 ```
@@ -212,10 +213,11 @@ Visualize how your consumption is distributed across P1 (Peak), P2 (Flat), and P
 ```yaml
 type: custom:octopus-consumption-card
 source_entry_id: "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6"
+view: "consumption"
 title: "Consumption by Period"
 chart_type: "stacked-area"
-show_tariff_comparison: true
 default_period: "week"
+show_period_distribution: true
 ```
 
 This chart helps you understand:
@@ -230,6 +232,7 @@ Track trends over time with a moving average line:
 ```yaml
 type: custom:octopus-consumption-card
 source_entry_id: "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6"
+view: "consumption"
 title: "Consumption Trends"
 show_moving_average: true
 moving_average_days: 7
@@ -241,17 +244,17 @@ Perfect for:
 - Spotting seasonal variations
 - Monitoring energy-saving efforts
 
-### Tariff Comparison with Detailed Breakdown
+### Tariff Comparison View
 
 ```yaml
 type: custom:octopus-consumption-card
 source_entry_id: "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6"  # Your primary tariff (e.g., Flexi)
+view: "tariff-comparison"
 title: "Compare Tariffs"
-show_tariff_comparison: true
 tariff_entry_ids:
   - "6p5o4n3m-2l1k-0j9i-8h7g-6f5e4d3c2b1a"  # Comparison tariff (e.g., Relax)
   - "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6"  # Another tariff (e.g., Solar)
-default_period: "month"
+show_tariff_chart: true
 ```
 
 Shows:
@@ -260,11 +263,12 @@ Shows:
 - Consumption distribution summary
 - Potential savings with best tariff
 
-### Cost Visualization
+### Cost Visualization (Consumption View)
 
 ```yaml
 type: custom:octopus-consumption-card
 source_entry_id: "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6"
+view: "consumption"
 title: "Consumption & Cost"
 show_cost_on_chart: true
 selected_tariff_for_cost: "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6"
@@ -273,23 +277,47 @@ moving_average_days: 7
 default_period: "week"
 ```
 
-### Complete Analysis Dashboard
+### Complete Analysis Dashboard (Consumption View)
 
 Combine all features for comprehensive insights:
 
 ```yaml
 type: custom:octopus-consumption-card
 source_entry_id: "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6"
+view: "consumption"
 title: "Energy Analysis"
 chart_type: "stacked-area"
-show_tariff_comparison: true
-tariff_entry_ids:
-  - "6p5o4n3m-2l1k-0j9i-8h7g-6f5e4d3c2b1a"
-  - "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6"
 show_period_distribution: true
 show_moving_average: true
 moving_average_days: 7
 default_period: "month"
+```
+
+### Heat Calendar View
+
+Visualize consumption patterns as a heatmap calendar:
+
+```yaml
+type: custom:octopus-consumption-card
+source_entry_id: "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6"
+view: "heat-calendar"
+title: "Consumption Heatmap"
+heat_calendar_period: "month"  # "month" or "year"
+show_navigation: true
+```
+
+### Week Analysis View
+
+Compare consumption across multiple weeks:
+
+```yaml
+type: custom:octopus-consumption-card
+source_entry_id: "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6"
+view: "week-analysis"
+title: "Week Comparison"
+show_week_comparison: true
+week_comparison_count: 4
+show_navigation: true
 ```
 
 ## 📖 Understanding Your Energy Data
@@ -424,9 +452,9 @@ If the card doesn't appear when clicking "Add Card":
 
 ### Tariff Comparison Not Working
 
+- Ensure `view: "tariff-comparison"` is set
 - Ensure `tariff_entry_ids` contains valid entry IDs
 - Verify that the integration services are available (`octopus_energy_es.compare_tariffs`)
-- Check that `show_tariff_comparison` is set to `true`
 - Ensure at least one tariff entry ID is provided
 - Check Home Assistant logs for service call errors
 - Note: Tariff comparison failures are logged as warnings but don't prevent the card from displaying consumption data

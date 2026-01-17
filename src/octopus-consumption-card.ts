@@ -61,22 +61,13 @@ export class OctopusConsumptionCard extends LitElement {
   static styles = cardStyles;
 
   /**
-   * Use Light DOM instead of Shadow DOM to allow CSS variables to work directly
-   * This solves the issue with SVG fill attributes not working with CSS variables in Shadow DOM
-   */
-  protected createRenderRoot(): HTMLElement | DocumentFragment {
-    return this; // Render to Light DOM instead of Shadow DOM
-  }
-
-  /**
    * Get computed color value from CSS variable
-   * Optional helper for cases where direct CSS variable usage might not work
-   * With Light DOM, CSS variables should work directly, but this provides a fallback
+   * Helper for cases where direct CSS variable usage might not work in SVG fill attributes
    */
   private _getComputedColor(cssVar: string, fallback: string): string {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && this.shadowRoot) {
       try {
-        const root = document.documentElement;
+        const root = this.shadowRoot.host || document.documentElement;
         const style = getComputedStyle(root);
         const value = style.getPropertyValue(cssVar).trim();
         return value || fallback;
@@ -1313,11 +1304,9 @@ export class OctopusConsumptionCard extends LitElement {
   protected render(): TemplateResult {
     if (this._loading) {
       return html`
-        <div class="octopus-consumption-card">
-          <div class="loading">
-            <ha-circular-progress indeterminate></ha-circular-progress>
-            <p>Loading consumption data...</p>
-          </div>
+        <div class="loading">
+          <ha-circular-progress indeterminate></ha-circular-progress>
+          <p>Loading consumption data...</p>
         </div>
       `;
     }
@@ -1326,21 +1315,19 @@ export class OctopusConsumptionCard extends LitElement {
       const isConfigError = this._error.includes("Configuration incomplete") || this._error.includes("configuration is required");
       
       return html`
-        <div class="octopus-consumption-card">
-          <div class="error-message">
-            <ha-icon icon="${isConfigError ? "mdi:cog-outline" : "mdi:alert-circle"}" class="error-icon"></ha-icon>
-            <div class="error-title">${isConfigError ? "Configuration Required" : "Unable to Load Data"}</div>
-            <div class="error-details">${this._error}</div>
-            ${isConfigError ? html`
-              <div class="error-details" style="margin-top: 12px; font-size: 13px;">
-                Click the <strong>⋮</strong> menu in the top-right corner of this card and select <strong>Edit</strong> to configure it.
-              </div>
-            ` : html`
-              <button class="retry-button" @click=${this._loadData}>
-                Retry
-              </button>
-            `}
-          </div>
+        <div class="error-message">
+          <ha-icon icon="${isConfigError ? "mdi:cog-outline" : "mdi:alert-circle"}" class="error-icon"></ha-icon>
+          <div class="error-title">${isConfigError ? "Configuration Required" : "Unable to Load Data"}</div>
+          <div class="error-details">${this._error}</div>
+          ${isConfigError ? html`
+            <div class="error-details" style="margin-top: 12px; font-size: 13px;">
+              Click the <strong>⋮</strong> menu in the top-right corner of this card and select <strong>Edit</strong> to configure it.
+            </div>
+          ` : html`
+            <button class="retry-button" @click=${this._loadData}>
+              Retry
+            </button>
+          `}
         </div>
       `;
     }
@@ -1348,12 +1335,10 @@ export class OctopusConsumptionCard extends LitElement {
     const view = this.config.view || "consumption";
 
     return html`
-      <div class="octopus-consumption-card">
-        ${view === "consumption" ? this._renderConsumptionView() : ""}
-        ${view === "heat-calendar" ? this._renderHeatCalendarView() : ""}
-        ${view === "week-analysis" ? this._renderWeekAnalysisView() : ""}
-        ${view === "tariff-comparison" ? this._renderTariffComparisonView() : ""}
-      </div>
+      ${view === "consumption" ? this._renderConsumptionView() : ""}
+      ${view === "heat-calendar" ? this._renderHeatCalendarView() : ""}
+      ${view === "week-analysis" ? this._renderWeekAnalysisView() : ""}
+      ${view === "tariff-comparison" ? this._renderTariffComparisonView() : ""}
     `;
   }
 
@@ -1566,6 +1551,17 @@ export class OctopusConsumptionCard extends LitElement {
     const labelOffsetX = 80; // Offset for Y-axis labels
     const labelOffsetY = 20; // Offset for X-axis labels
 
+    // Compute colors from CSS variables for SVG text elements
+    // This ensures text labels are visible even when CSS variables don't work in SVG fill attributes
+    const textColor = this._getComputedColor('--secondary-text-color', '#888');
+    const accentColor = this._getComputedColor('--accent-color', '#ff9800');
+    const infoColor = this._getComputedColor('--info-color', '#2196f3');
+    const errorColor = this._getComputedColor('--error-color', '#f44336');
+    const warningColor = this._getComputedColor('--warning-color', '#ff9800');
+    const successColor = this._getComputedColor('--success-color', '#4caf50');
+    const primaryColor = this._getComputedColor('--primary-color', '#03a9f4');
+    const cardBgColor = this._getComputedColor('--card-background-color', '#fff');
+
     // Calculate x positions (with label offset)
     const xStep = chartWidth / (data.length - 1 || 1);
     const points: Array<{ x: number; y: number; value: number }> = data.map((value, index) => {
@@ -1692,14 +1688,14 @@ export class OctopusConsumptionCard extends LitElement {
           
           <!-- Y-axis labels (consumption - left) -->
           ${yAxisLabels.map(label => html`
-            <text class="chart-text chart-text-axis-y" x="${padding.left + labelOffsetX - 10}" y="${label.y + 4}" text-anchor="end" style="font-size: 12px;">
+            <text fill="${textColor}" x="${padding.left + labelOffsetX - 10}" y="${label.y + 4}" text-anchor="end" style="font-size: 12px;">
               ${label.value.toFixed(1)} kWh
             </text>
           `)}
           
           <!-- Cost Y-axis labels (right) -->
           ${showCost ? costYAxisLabels.map(label => html`
-            <text class="chart-text chart-text-cost" x="${width - padding.right + labelOffsetX + 10}" y="${label.y + 4}" text-anchor="start" style="font-size: 12px;">
+            <text fill="${accentColor}" x="${width - padding.right + labelOffsetX + 10}" y="${label.y + 4}" text-anchor="start" style="font-size: 12px;">
               €${label.value.toFixed(2)}
             </text>
           `) : ''}
@@ -1709,7 +1705,7 @@ export class OctopusConsumptionCard extends LitElement {
             <line class="chart-axis" 
               x1="${width - padding.right + labelOffsetX}" y1="${padding.top}" 
               x2="${width - padding.right + labelOffsetX}" y2="${height - padding.bottom}"
-              stroke="var(--accent-color, #ff9800)" opacity="0.5"/>
+              stroke="${accentColor}" opacity="0.5"/>
           ` : ''}
           
           <!-- Cost line overlay (for bar chart) -->
@@ -1720,15 +1716,15 @@ export class OctopusConsumptionCard extends LitElement {
                 cx="${point.x}" 
                 cy="${point.y}" 
                 r="3" 
-                fill="var(--accent-color, #ff9800)"
-                stroke="var(--card-background-color, #fff)"
+                fill="${accentColor}"
+                stroke="${cardBgColor}"
                 stroke-width="2"/>
             `)}
           ` : ''}
           
           <!-- X-axis labels -->
           ${xAxisLabels.map(label => html`
-            <text class="chart-text chart-text-axis-x" x="${label.x}" y="${height - padding.bottom + labelOffsetY}" text-anchor="middle" style="font-size: 12px;">
+            <text fill="${textColor}" x="${label.x}" y="${height - padding.bottom + labelOffsetY}" text-anchor="middle" style="font-size: 12px;">
               ${label.label}
             </text>
           `)}
@@ -1737,11 +1733,11 @@ export class OctopusConsumptionCard extends LitElement {
           ${showCost ? html`
             <g>
               <rect x="${width - padding.right + labelOffsetX - 100}" y="${padding.top + 5}" width="15" height="10" 
-                fill="var(--primary-color, #03a9f4)" opacity="0.7"/>
-              <text x="${width - padding.right + labelOffsetX - 80}" y="${padding.top + 14}" class="chart-text chart-text-axis-y" font-size="11px">Consumption</text>
+                fill="${primaryColor}" opacity="0.7"/>
+              <text fill="${textColor}" x="${width - padding.right + labelOffsetX - 80}" y="${padding.top + 14}" font-size="11px">Consumption</text>
               <line x1="${width - padding.right + labelOffsetX - 100}" y1="${padding.top + 25}" x2="${width - padding.right + labelOffsetX - 85}" y2="${padding.top + 25}" 
-                stroke="var(--accent-color, #ff9800)" stroke-width="2" stroke-dasharray="5,5"/>
-              <text x="${width - padding.right + labelOffsetX - 75}" y="${padding.top + 29}" class="chart-text chart-text-cost" font-size="11px">Cost</text>
+                stroke="${accentColor}" stroke-width="2" stroke-dasharray="5,5"/>
+              <text fill="${accentColor}" x="${width - padding.right + labelOffsetX - 75}" y="${padding.top + 29}" font-size="11px">Cost</text>
             </g>
           ` : ''}
         </svg>
@@ -1878,14 +1874,14 @@ export class OctopusConsumptionCard extends LitElement {
           
           <!-- Y-axis labels -->
           ${stackedYAxisLabels.map(label => html`
-            <text class="chart-text chart-text-axis-y" x="${padding.left + labelOffsetX - 10}" y="${label.y + 4}" text-anchor="end" style="font-size: 12px;">
+            <text fill="${textColor}" x="${padding.left + labelOffsetX - 10}" y="${label.y + 4}" text-anchor="end" style="font-size: 12px;">
               ${label.value.toFixed(1)} kWh
             </text>
           `)}
           
           <!-- X-axis labels -->
           ${stackedXAxisLabels.map(label => html`
-            <text class="chart-text chart-text-axis-x" x="${label.x}" y="${height - padding.bottom + labelOffsetY}" text-anchor="middle" style="font-size: 12px;">
+            <text fill="${textColor}" x="${label.x}" y="${height - padding.bottom + labelOffsetY}" text-anchor="middle" style="font-size: 12px;">
               ${label.label}
             </text>
           `)}
@@ -1893,16 +1889,16 @@ export class OctopusConsumptionCard extends LitElement {
           <!-- Legend -->
           <g>
             <rect x="${padding.left + labelOffsetX + 10}" y="${padding.top + 5}" width="12" height="12" 
-              fill="var(--error-color, #f44336)" opacity="0.6"/>
-            <text x="${padding.left + labelOffsetX + 28}" y="${padding.top + 15}" class="chart-text chart-text-axis-y" font-size="11px">P1 (Peak)</text>
+              fill="${errorColor}" opacity="0.6"/>
+            <text fill="${textColor}" x="${padding.left + labelOffsetX + 28}" y="${padding.top + 15}" font-size="11px">P1 (Peak)</text>
             
             <rect x="${padding.left + labelOffsetX + 100}" y="${padding.top + 5}" width="12" height="12" 
-              fill="var(--warning-color, #ff9800)" opacity="0.6"/>
-            <text x="${padding.left + labelOffsetX + 118}" y="${padding.top + 15}" class="chart-text chart-text-axis-y" font-size="11px">P2 (Flat)</text>
+              fill="${warningColor}" opacity="0.6"/>
+            <text fill="${textColor}" x="${padding.left + labelOffsetX + 118}" y="${padding.top + 15}" font-size="11px">P2 (Flat)</text>
             
             <rect x="${padding.left + labelOffsetX + 190}" y="${padding.top + 5}" width="12" height="12" 
-              fill="var(--success-color, #4caf50)" opacity="0.6"/>
-            <text x="${padding.left + labelOffsetX + 208}" y="${padding.top + 15}" class="chart-text chart-text-axis-y" font-size="11px">P3 (Valley)</text>
+              fill="${successColor}" opacity="0.6"/>
+            <text fill="${textColor}" x="${padding.left + labelOffsetX + 208}" y="${padding.top + 15}" font-size="11px">P3 (Valley)</text>
           </g>
         </svg>
       `;
@@ -1975,8 +1971,8 @@ export class OctopusConsumptionCard extends LitElement {
             cx="${point.x}" 
             cy="${point.y}" 
             r="3" 
-            fill="var(--primary-color, #03a9f4)"
-            stroke="var(--card-background-color, #fff)"
+            fill="${primaryColor}"
+            stroke="${cardBgColor}"
             stroke-width="2"/>
         `)}
         
@@ -1992,14 +1988,14 @@ export class OctopusConsumptionCard extends LitElement {
         
         <!-- Y-axis labels (consumption - left) -->
         ${yAxisLabels.map(label => html`
-          <text class="chart-text chart-text-axis-y" x="${padding.left + labelOffsetX - 10}" y="${label.y + 4}" text-anchor="end" style="font-size: 12px;">
+          <text fill="${textColor}" x="${padding.left + labelOffsetX - 10}" y="${label.y + 4}" text-anchor="end" style="font-size: 12px;">
             ${label.value.toFixed(1)} kWh
           </text>
         `)}
         
         <!-- Cost Y-axis labels (right) -->
         ${showCost ? costYAxisLabels.map(label => html`
-            <text class="chart-text chart-text-cost" x="${width - padding.right + labelOffsetX + 10}" y="${label.y + 4}" text-anchor="start" style="font-size: 12px;">
+            <text fill="${accentColor}" x="${width - padding.right + labelOffsetX + 10}" y="${label.y + 4}" text-anchor="start" style="font-size: 12px;">
               €${label.value.toFixed(2)}
             </text>
           `) : ''}
@@ -2009,12 +2005,12 @@ export class OctopusConsumptionCard extends LitElement {
           <line class="chart-axis" 
             x1="${width - padding.right + labelOffsetX}" y1="${padding.top}" 
             x2="${width - padding.right + labelOffsetX}" y2="${height - padding.bottom}"
-            stroke="var(--accent-color, #ff9800)" opacity="0.5"/>
+            stroke="${accentColor}" opacity="0.5"/>
         ` : ''}
         
         <!-- X-axis labels -->
         ${xAxisLabels.map(label => html`
-          <text class="chart-text chart-text-axis-x" x="${label.x}" y="${height - padding.bottom + labelOffsetY}" text-anchor="middle" style="font-size: 12px;">
+          <text fill="${textColor}" x="${label.x}" y="${height - padding.bottom + labelOffsetY}" text-anchor="middle" style="font-size: 12px;">
             ${label.label}
           </text>
         `)}
@@ -2024,23 +2020,23 @@ export class OctopusConsumptionCard extends LitElement {
           <g>
             ${showCost ? html`
               <rect x="${width - padding.right + labelOffsetX - 120}" y="${padding.top + 5}" width="15" height="10" 
-                fill="var(--primary-color, #03a9f4)" opacity="0.7"/>
-              <text x="${width - padding.right + labelOffsetX - 100}" y="${padding.top + 14}" class="chart-text chart-text-axis-y" font-size="11px">Consumption</text>
+                fill="${primaryColor}" opacity="0.7"/>
+              <text fill="${textColor}" x="${width - padding.right + labelOffsetX - 100}" y="${padding.top + 14}" font-size="11px">Consumption</text>
               <line x1="${width - padding.right + labelOffsetX - 120}" y1="${padding.top + 25}" x2="${width - padding.right + labelOffsetX - 105}" y2="${padding.top + 25}" 
-                stroke="var(--accent-color, #ff9800)" stroke-width="2" stroke-dasharray="5,5"/>
-              <text x="${width - padding.right + labelOffsetX - 95}" y="${padding.top + 29}" class="chart-text chart-text-cost" font-size="11px">Cost</text>
+                stroke="${accentColor}" stroke-width="2" stroke-dasharray="5,5"/>
+              <text fill="${accentColor}" x="${width - padding.right + labelOffsetX - 95}" y="${padding.top + 29}" font-size="11px">Cost</text>
             ` : ''}
             ${this.config.show_moving_average ? html`
               <line x1="${padding.left + labelOffsetX + 10}" y1="${padding.top + 10}" x2="${padding.left + labelOffsetX + 25}" y2="${padding.top + 10}" 
-                stroke="var(--info-color, #2196f3)" stroke-width="2" stroke-dasharray="3,3" opacity="0.8"/>
-              <text x="${padding.left + labelOffsetX + 30}" y="${padding.top + 14}" class="chart-text chart-text-info" font-size="11px">
+                stroke="${infoColor}" stroke-width="2" stroke-dasharray="3,3" opacity="0.8"/>
+              <text fill="${infoColor}" x="${padding.left + labelOffsetX + 30}" y="${padding.top + 14}" font-size="11px">
                 ${this.config.moving_average_days || 7}-day avg
               </text>
             ` : ''}
             ${this.config.show_cost_trend && costTrendAvgPath ? html`
               <line x1="${padding.left + labelOffsetX + 10}" y1="${padding.top + 30}" x2="${padding.left + labelOffsetX + 25}" y2="${padding.top + 30}" 
-                stroke="var(--accent-color, #ff9800)" stroke-width="2" stroke-dasharray="3,3" opacity="0.7"/>
-              <text x="${padding.left + labelOffsetX + 30}" y="${padding.top + 34}" class="chart-text chart-text-cost" font-size="11px">
+                stroke="${accentColor}" stroke-width="2" stroke-dasharray="3,3" opacity="0.7"/>
+              <text fill="${accentColor}" x="${padding.left + labelOffsetX + 30}" y="${padding.top + 34}" font-size="11px">
                 ${this.config.cost_moving_average_days || 30}-day cost avg
               </text>
             ` : ''}

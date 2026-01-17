@@ -6,7 +6,7 @@
 import { css } from "lit";
 
 export const cardStyles = css`
-  .octopus-consumption-card {
+  :host {
     display: block;
     padding: 16px;
   }
@@ -137,7 +137,7 @@ export const cardStyles = css`
     pointer-events: none;
     user-select: none;
   }
-  
+
   .chart-text-axis-y {
     fill: var(--secondary-text-color, #888);
   }

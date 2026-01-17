@@ -137,6 +137,22 @@ export const cardStyles = css`
     pointer-events: none;
     user-select: none;
   }
+  
+  .chart-text-axis-y {
+    fill: var(--secondary-text-color, #888);
+  }
+  
+  .chart-text-axis-x {
+    fill: var(--secondary-text-color, #888);
+  }
+  
+  .chart-text-cost {
+    fill: var(--accent-color, #ff9800);
+  }
+  
+  .chart-text-info {
+    fill: var(--info-color, #2196f3);
+  }
 
   .chart-grid-line {
     stroke: var(--divider-color, #e0e0e0);

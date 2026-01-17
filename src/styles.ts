@@ -131,6 +131,7 @@ export const cardStyles = css`
 
   .chart-text {
     fill: var(--secondary-text-color, #888);
+    color: var(--secondary-text-color, #888);
     font-size: 12px;
     font-family: var(--mdc-typography-body1-font-family, Roboto, sans-serif);
     pointer-events: none;

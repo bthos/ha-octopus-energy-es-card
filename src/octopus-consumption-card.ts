@@ -1651,7 +1651,7 @@ export class OctopusConsumptionCard extends LitElement {
           
           <!-- Y-axis labels (consumption - left) -->
           ${yAxisLabels.map(label => html`
-            <text class="chart-text" x="${padding.left - 10}" y="${label.y + 4}" text-anchor="end">
+            <text class="chart-text" x="${padding.left - 10}" y="${label.y + 4}" text-anchor="end" fill="var(--secondary-text-color, #888)">
               ${label.value.toFixed(1)} kWh
             </text>
           `)}
@@ -1687,7 +1687,7 @@ export class OctopusConsumptionCard extends LitElement {
           
           <!-- X-axis labels -->
           ${xAxisLabels.map(label => html`
-            <text class="chart-text" x="${label.x}" y="${height - padding.bottom + 20}" text-anchor="middle">
+            <text class="chart-text" x="${label.x}" y="${height - padding.bottom + 20}" text-anchor="middle" fill="var(--secondary-text-color, #888)">
               ${label.label}
             </text>
           `)}
@@ -1697,7 +1697,7 @@ export class OctopusConsumptionCard extends LitElement {
             <g>
               <rect x="${width - padding.right - 100}" y="${padding.top + 5}" width="15" height="10" 
                 fill="var(--primary-color, #03a9f4)" opacity="0.7"/>
-              <text x="${width - padding.right - 80}" y="${padding.top + 14}" class="chart-text" font-size="11px">Consumption</text>
+              <text x="${width - padding.right - 80}" y="${padding.top + 14}" class="chart-text" font-size="11px" fill="var(--secondary-text-color, #888)">Consumption</text>
               <line x1="${width - padding.right - 100}" y1="${padding.top + 25}" x2="${width - padding.right - 85}" y2="${padding.top + 25}" 
                 stroke="var(--accent-color, #ff9800)" stroke-width="2" stroke-dasharray="5,5"/>
               <text x="${width - padding.right - 75}" y="${padding.top + 29}" class="chart-text" font-size="11px" fill="var(--accent-color, #ff9800)">Cost</text>
@@ -1803,14 +1803,14 @@ export class OctopusConsumptionCard extends LitElement {
           
           <!-- Y-axis labels -->
           ${stackedYAxisLabels.map(label => html`
-            <text class="chart-text" x="${padding.left}" y="${label.y + 4}" text-anchor="start">
+            <text class="chart-text" x="${padding.left}" y="${label.y + 4}" text-anchor="start" fill="var(--secondary-text-color, #888)">
               ${label.value.toFixed(1)} kWh
             </text>
           `)}
           
           <!-- X-axis labels -->
           ${xAxisLabels.map(label => html`
-            <text class="chart-text" x="${label.x}" y="${height - padding.bottom + 20}" text-anchor="middle">
+            <text class="chart-text" x="${label.x}" y="${height - padding.bottom + 20}" text-anchor="middle" fill="var(--secondary-text-color, #888)">
               ${label.label}
             </text>
           `)}
@@ -1819,15 +1819,15 @@ export class OctopusConsumptionCard extends LitElement {
           <g>
             <rect x="${padding.left + 10}" y="${padding.top + 5}" width="12" height="12" 
               fill="var(--error-color, #f44336)" opacity="0.6"/>
-            <text x="${padding.left + 28}" y="${padding.top + 15}" class="chart-text" font-size="11px">P1 (Peak)</text>
+            <text x="${padding.left + 28}" y="${padding.top + 15}" class="chart-text" font-size="11px" fill="var(--secondary-text-color, #888)">P1 (Peak)</text>
             
             <rect x="${padding.left + 100}" y="${padding.top + 5}" width="12" height="12" 
               fill="var(--warning-color, #ff9800)" opacity="0.6"/>
-            <text x="${padding.left + 118}" y="${padding.top + 15}" class="chart-text" font-size="11px">P2 (Flat)</text>
+            <text x="${padding.left + 118}" y="${padding.top + 15}" class="chart-text" font-size="11px" fill="var(--secondary-text-color, #888)">P2 (Flat)</text>
             
             <rect x="${padding.left + 190}" y="${padding.top + 5}" width="12" height="12" 
               fill="var(--success-color, #4caf50)" opacity="0.6"/>
-            <text x="${padding.left + 208}" y="${padding.top + 15}" class="chart-text" font-size="11px">P3 (Valley)</text>
+            <text x="${padding.left + 208}" y="${padding.top + 15}" class="chart-text" font-size="11px" fill="var(--secondary-text-color, #888)">P3 (Valley)</text>
           </g>
         </svg>
       `;
@@ -1917,7 +1917,7 @@ export class OctopusConsumptionCard extends LitElement {
         
         <!-- Y-axis labels (consumption - left) -->
         ${yAxisLabels.map(label => html`
-          <text class="chart-text" x="${padding.left - 10}" y="${label.y + 4}" text-anchor="end">
+          <text class="chart-text" x="${padding.left - 10}" y="${label.y + 4}" text-anchor="end" fill="var(--secondary-text-color, #888)">
             ${label.value.toFixed(1)} kWh
           </text>
         `)}
@@ -1939,7 +1939,7 @@ export class OctopusConsumptionCard extends LitElement {
         
         <!-- X-axis labels -->
         ${xAxisLabels.map(label => html`
-          <text class="chart-text" x="${label.x}" y="${height - padding.bottom + 20}" text-anchor="middle">
+          <text class="chart-text" x="${label.x}" y="${height - padding.bottom + 20}" text-anchor="middle" fill="var(--secondary-text-color, #888)">
             ${label.label}
           </text>
         `)}
@@ -1950,7 +1950,7 @@ export class OctopusConsumptionCard extends LitElement {
             ${showCost ? html`
               <rect x="${width - padding.right - 120}" y="${padding.top + 5}" width="15" height="10" 
                 fill="var(--primary-color, #03a9f4)" opacity="0.7"/>
-              <text x="${width - padding.right - 100}" y="${padding.top + 14}" class="chart-text" font-size="11px">Consumption</text>
+              <text x="${width - padding.right - 100}" y="${padding.top + 14}" class="chart-text" font-size="11px" fill="var(--secondary-text-color, #888)">Consumption</text>
               <line x1="${width - padding.right - 120}" y1="${padding.top + 25}" x2="${width - padding.right - 105}" y2="${padding.top + 25}" 
                 stroke="var(--accent-color, #ff9800)" stroke-width="2" stroke-dasharray="5,5"/>
               <text x="${width - padding.right - 95}" y="${padding.top + 29}" class="chart-text" font-size="11px" fill="var(--accent-color, #ff9800)">Cost</text>

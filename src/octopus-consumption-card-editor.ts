@@ -137,21 +137,32 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
   `;
 
   setConfig(config: OctopusConsumptionCardConfig): void {
+    // Ensure view is set (default to "consumption" if not specified)
+    const configWithView = {
+      ...config,
+      view: config.view || "consumption",
+    };
+    
     // Only update if config actually changed to prevent unnecessary updates
     const configStr = JSON.stringify(this._config);
-    const newConfigStr = JSON.stringify(config);
+    const newConfigStr = JSON.stringify(configWithView);
     if (configStr !== newConfigStr) {
-      this._config = { ...config };
+      this._config = configWithView;
     }
   }
 
   protected willUpdate(changedProperties: PropertyValues): void {
     // Sync config before update to prevent update cycle
     if (changedProperties.has("config") && this.config) {
+      // Ensure view is set (default to "consumption" if not specified)
+      const configWithView = {
+        ...this.config,
+        view: this.config.view || "consumption",
+      };
       const configStr = JSON.stringify(this._config);
-      const newConfigStr = JSON.stringify(this.config);
+      const newConfigStr = JSON.stringify(configWithView);
       if (configStr !== newConfigStr) {
-        this._config = { ...this.config };
+        this._config = configWithView;
       }
     }
     // Update language if hass changed
@@ -166,10 +177,15 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
   protected firstUpdated(): void {
     // Initial sync if config was provided before first render
     if (this.config) {
+      // Ensure view is set (default to "consumption" if not specified)
+      const configWithView = {
+        ...this.config,
+        view: this.config.view || "consumption",
+      };
       const configStr = JSON.stringify(this._config);
-      const newConfigStr = JSON.stringify(this.config);
+      const newConfigStr = JSON.stringify(configWithView);
       if (configStr !== newConfigStr) {
-        this._config = { ...this.config };
+        this._config = configWithView;
       }
     }
     if (this.hass) {
@@ -184,6 +200,14 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
 
     const newConfig = ev.detail.value;
     
+    // Ensure view is always set (default to "consumption" if not specified)
+    if (!newConfig.view) {
+      newConfig.view = "consumption";
+    }
+    
+    // Handle view change - rebuild schema if view changed
+    const viewChanged = this._config.view !== newConfig.view;
+    
     // Handle conditional fields
     if (newConfig.show_tariff_comparison === false) {
       newConfig.show_cost_on_chart = false;
@@ -196,6 +220,12 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
     }
 
     this._config = newConfig;
+    
+    // Request update if view changed to rebuild schema
+    if (viewChanged) {
+      this.requestUpdate();
+    }
+    
     this._fireConfigChanged();
   }
 

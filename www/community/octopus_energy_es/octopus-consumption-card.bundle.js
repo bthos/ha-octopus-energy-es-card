@@ -14,7 +14,7 @@ var OctopusConsumptionCard=function(e){"use strict";
      * Copyright 2017 Google LLC
      * SPDX-License-Identifier: BSD-3-Clause
      */
-const $=globalThis,k=e=>e,C=$.trustedTypes,S=C?C.createPolicy("lit-html",{createHTML:e=>e}):void 0,E="$lit$",P=`lit$${Math.random().toFixed(9).slice(2)}$`,A="?"+P,D=`<${A}>`,T=document,M=()=>T.createComment(""),O=e=>null===e||"object"!=typeof e&&"function"!=typeof e,R=Array.isArray,F="[ \t\n\f\r]",z=/<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g,W=/-->/g,N=/>/g,U=RegExp(`>|${F}(?:([^\\s"'>=/]+)(${F}*=${F}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`,"g"),I=/'/g,L=/"/g,H=/^(?:script|style|textarea|title)$/i,V=(e=>(t,...r)=>({_$litType$:e,strings:t,values:r}))(1),Y=Symbol.for("lit-noChange"),j=Symbol.for("lit-nothing"),B=new WeakMap,q=T.createTreeWalker(T,129);function J(e,t){if(!R(e)||!e.hasOwnProperty("raw"))throw Error("invalid template strings array");return void 0!==S?S.createHTML(t):t}const X=(e,t)=>{const r=e.length-1,o=[];let i,a=2===t?"<svg>":3===t?"<math>":"",s=z;for(let t=0;t<r;t++){const r=e[t];let n,c,l=-1,d=0;for(;d<r.length&&(s.lastIndex=d,c=s.exec(r),null!==c);)d=s.lastIndex,s===z?"!--"===c[1]?s=W:void 0!==c[1]?s=N:void 0!==c[2]?(H.test(c[2])&&(i=RegExp("</"+c[2],"g")),s=U):void 0!==c[3]&&(s=U):s===U?">"===c[0]?(s=i??z,l=-1):void 0===c[1]?l=-2:(l=s.lastIndex-c[2].length,n=c[1],s=void 0===c[3]?U:'"'===c[3]?L:I):s===L||s===I?s=U:s===W||s===N?s=z:(s=U,i=void 0);const p=s===U&&e[t+1].startsWith("/>")?" ":"";a+=s===z?r+D:l>=0?(o.push(n),r.slice(0,l)+E+r.slice(l)+P+p):r+P+(-2===l?t:p)}return[J(e,a+(e[r]||"<?>")+(2===t?"</svg>":3===t?"</math>":"")),o]};class G{constructor({strings:e,_$litType$:t},r){let o;this.parts=[];let i=0,a=0;const s=e.length-1,n=this.parts,[c,l]=X(e,t);if(this.el=G.createElement(c,r),q.currentNode=this.el.content,2===t||3===t){const e=this.el.content.firstChild;e.replaceWith(...e.childNodes)}for(;null!==(o=q.nextNode())&&n.length<s;){if(1===o.nodeType){if(o.hasAttributes())for(const e of o.getAttributeNames())if(e.endsWith(E)){const t=l[a++],r=o.getAttribute(e).split(P),s=/([.?@])?(.*)/.exec(t);n.push({type:1,index:i,name:s[2],strings:r,ctor:"."===s[1]?te:"?"===s[1]?re:"@"===s[1]?oe:ee}),o.removeAttribute(e)}else e.startsWith(P)&&(n.push({type:6,index:i}),o.removeAttribute(e));if(H.test(o.tagName)){const e=o.textContent.split(P),t=e.length-1;if(t>0){o.textContent=C?C.emptyScript:"";for(let r=0;r<t;r++)o.append(e[r],M()),q.nextNode(),n.push({type:2,index:++i});o.append(e[t],M())}}}else if(8===o.nodeType)if(o.data===A)n.push({type:2,index:i});else{let e=-1;for(;-1!==(e=o.data.indexOf(P,e+1));)n.push({type:7,index:i}),e+=P.length-1}i++}}static createElement(e,t){const r=T.createElement("template");return r.innerHTML=e,r}}function Z(e,t,r=e,o){if(t===Y)return t;let i=void 0!==o?r._$Co?.[o]:r._$Cl;const a=O(t)?void 0:t._$litDirective$;return i?.constructor!==a&&(i?._$AO?.(!1),void 0===a?i=void 0:(i=new a(e),i._$AT(e,r,o)),void 0!==o?(r._$Co??=[])[o]=i:r._$Cl=i),void 0!==i&&(t=Z(e,i._$AS(e,t.values),i,o)),t}class K{constructor(e,t){this._$AV=[],this._$AN=void 0,this._$AD=e,this._$AM=t}get parentNode(){return this._$AM.parentNode}get _$AU(){return this._$AM._$AU}u(e){const{el:{content:t},parts:r}=this._$AD,o=(e?.creationScope??T).importNode(t,!0);q.currentNode=o;let i=q.nextNode(),a=0,s=0,n=r[0];for(;void 0!==n;){if(a===n.index){let t;2===n.type?t=new Q(i,i.nextSibling,this,e):1===n.type?t=new n.ctor(i,n.name,n.strings,this,e):6===n.type&&(t=new ie(i,this,e)),this._$AV.push(t),n=r[++s]}a!==n?.index&&(i=q.nextNode(),a++)}return q.currentNode=T,o}p(e){let t=0;for(const r of this._$AV)void 0!==r&&(void 0!==r.strings?(r._$AI(e,r,t),t+=r.strings.length-2):r._$AI(e[t])),t++}}class Q{get _$AU(){return this._$AM?._$AU??this._$Cv}constructor(e,t,r,o){this.type=2,this._$AH=j,this._$AN=void 0,this._$AA=e,this._$AB=t,this._$AM=r,this.options=o,this._$Cv=o?.isConnected??!0}get parentNode(){let e=this._$AA.parentNode;const t=this._$AM;return void 0!==t&&11===e?.nodeType&&(e=t.parentNode),e}get startNode(){return this._$AA}get endNode(){return this._$AB}_$AI(e,t=this){e=Z(this,e,t),O(e)?e===j||null==e||""===e?(this._$AH!==j&&this._$AR(),this._$AH=j):e!==this._$AH&&e!==Y&&this._(e):void 0!==e._$litType$?this.$(e):void 0!==e.nodeType?this.T(e):(e=>R(e)||"function"==typeof e?.[Symbol.iterator])(e)?this.k(e):this._(e)}O(e){return this._$AA.parentNode.insertBefore(e,this._$AB)}T(e){this._$AH!==e&&(this._$AR(),this._$AH=this.O(e))}_(e){this._$AH!==j&&O(this._$AH)?this._$AA.nextSibling.data=e:this.T(T.createTextNode(e)),this._$AH=e}$(e){const{values:t,_$litType$:r}=e,o="number"==typeof r?this._$AC(e):(void 0===r.el&&(r.el=G.createElement(J(r.h,r.h[0]),this.options)),r);if(this._$AH?._$AD===o)this._$AH.p(t);else{const e=new K(o,this),r=e.u(this.options);e.p(t),this.T(r),this._$AH=e}}_$AC(e){let t=B.get(e.strings);return void 0===t&&B.set(e.strings,t=new G(e)),t}k(e){R(this._$AH)||(this._$AH=[],this._$AR());const t=this._$AH;let r,o=0;for(const i of e)o===t.length?t.push(r=new Q(this.O(M()),this.O(M()),this,this.options)):r=t[o],r._$AI(i),o++;o<t.length&&(this._$AR(r&&r._$AB.nextSibling,o),t.length=o)}_$AR(e=this._$AA.nextSibling,t){for(this._$AP?.(!1,!0,t);e!==this._$AB;){const t=k(e).nextSibling;k(e).remove(),e=t}}setConnected(e){void 0===this._$AM&&(this._$Cv=e,this._$AP?.(e))}}class ee{get tagName(){return this.element.tagName}get _$AU(){return this._$AM._$AU}constructor(e,t,r,o,i){this.type=1,this._$AH=j,this._$AN=void 0,this.element=e,this.name=t,this._$AM=o,this.options=i,r.length>2||""!==r[0]||""!==r[1]?(this._$AH=Array(r.length-1).fill(new String),this.strings=r):this._$AH=j}_$AI(e,t=this,r,o){const i=this.strings;let a=!1;if(void 0===i)e=Z(this,e,t,0),a=!O(e)||e!==this._$AH&&e!==Y,a&&(this._$AH=e);else{const o=e;let s,n;for(e=i[0],s=0;s<i.length-1;s++)n=Z(this,o[r+s],t,s),n===Y&&(n=this._$AH[s]),a||=!O(n)||n!==this._$AH[s],n===j?e=j:e!==j&&(e+=(n??"")+i[s+1]),this._$AH[s]=n}a&&!o&&this.j(e)}j(e){e===j?this.element.removeAttribute(this.name):this.element.setAttribute(this.name,e??"")}}class te extends ee{constructor(){super(...arguments),this.type=3}j(e){this.element[this.name]=e===j?void 0:e}}class re extends ee{constructor(){super(...arguments),this.type=4}j(e){this.element.toggleAttribute(this.name,!!e&&e!==j)}}class oe extends ee{constructor(e,t,r,o,i){super(e,t,r,o,i),this.type=5}_$AI(e,t=this){if((e=Z(this,e,t,0)??j)===Y)return;const r=this._$AH,o=e===j&&r!==j||e.capture!==r.capture||e.once!==r.once||e.passive!==r.passive,i=e!==j&&(r===j||o);o&&this.element.removeEventListener(this.name,this,r),i&&this.element.addEventListener(this.name,this,e),this._$AH=e}handleEvent(e){"function"==typeof this._$AH?this._$AH.call(this.options?.host??this.element,e):this._$AH.handleEvent(e)}}class ie{constructor(e,t,r){this.element=e,this.type=6,this._$AN=void 0,this._$AM=t,this.options=r}get _$AU(){return this._$AM._$AU}_$AI(e){Z(this,e)}}const ae=$.litHtmlPolyfillSupport;ae?.(G,Q),($.litHtmlVersions??=[]).push("3.3.2");const se=globalThis;
+const $=globalThis,k=e=>e,C=$.trustedTypes,S=C?C.createPolicy("lit-html",{createHTML:e=>e}):void 0,E="$lit$",P=`lit$${Math.random().toFixed(9).slice(2)}$`,A="?"+P,D=`<${A}>`,T=document,M=()=>T.createComment(""),O=e=>null===e||"object"!=typeof e&&"function"!=typeof e,R=Array.isArray,z="[ \t\n\f\r]",F=/<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g,W=/-->/g,N=/>/g,U=RegExp(`>|${z}(?:([^\\s"'>=/]+)(${z}*=${z}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`,"g"),I=/'/g,L=/"/g,H=/^(?:script|style|textarea|title)$/i,V=(e=>(t,...r)=>({_$litType$:e,strings:t,values:r}))(1),Y=Symbol.for("lit-noChange"),j=Symbol.for("lit-nothing"),B=new WeakMap,q=T.createTreeWalker(T,129);function J(e,t){if(!R(e)||!e.hasOwnProperty("raw"))throw Error("invalid template strings array");return void 0!==S?S.createHTML(t):t}const X=(e,t)=>{const r=e.length-1,o=[];let i,a=2===t?"<svg>":3===t?"<math>":"",s=F;for(let t=0;t<r;t++){const r=e[t];let n,c,l=-1,d=0;for(;d<r.length&&(s.lastIndex=d,c=s.exec(r),null!==c);)d=s.lastIndex,s===F?"!--"===c[1]?s=W:void 0!==c[1]?s=N:void 0!==c[2]?(H.test(c[2])&&(i=RegExp("</"+c[2],"g")),s=U):void 0!==c[3]&&(s=U):s===U?">"===c[0]?(s=i??F,l=-1):void 0===c[1]?l=-2:(l=s.lastIndex-c[2].length,n=c[1],s=void 0===c[3]?U:'"'===c[3]?L:I):s===L||s===I?s=U:s===W||s===N?s=F:(s=U,i=void 0);const p=s===U&&e[t+1].startsWith("/>")?" ":"";a+=s===F?r+D:l>=0?(o.push(n),r.slice(0,l)+E+r.slice(l)+P+p):r+P+(-2===l?t:p)}return[J(e,a+(e[r]||"<?>")+(2===t?"</svg>":3===t?"</math>":"")),o]};class G{constructor({strings:e,_$litType$:t},r){let o;this.parts=[];let i=0,a=0;const s=e.length-1,n=this.parts,[c,l]=X(e,t);if(this.el=G.createElement(c,r),q.currentNode=this.el.content,2===t||3===t){const e=this.el.content.firstChild;e.replaceWith(...e.childNodes)}for(;null!==(o=q.nextNode())&&n.length<s;){if(1===o.nodeType){if(o.hasAttributes())for(const e of o.getAttributeNames())if(e.endsWith(E)){const t=l[a++],r=o.getAttribute(e).split(P),s=/([.?@])?(.*)/.exec(t);n.push({type:1,index:i,name:s[2],strings:r,ctor:"."===s[1]?te:"?"===s[1]?re:"@"===s[1]?oe:ee}),o.removeAttribute(e)}else e.startsWith(P)&&(n.push({type:6,index:i}),o.removeAttribute(e));if(H.test(o.tagName)){const e=o.textContent.split(P),t=e.length-1;if(t>0){o.textContent=C?C.emptyScript:"";for(let r=0;r<t;r++)o.append(e[r],M()),q.nextNode(),n.push({type:2,index:++i});o.append(e[t],M())}}}else if(8===o.nodeType)if(o.data===A)n.push({type:2,index:i});else{let e=-1;for(;-1!==(e=o.data.indexOf(P,e+1));)n.push({type:7,index:i}),e+=P.length-1}i++}}static createElement(e,t){const r=T.createElement("template");return r.innerHTML=e,r}}function Z(e,t,r=e,o){if(t===Y)return t;let i=void 0!==o?r._$Co?.[o]:r._$Cl;const a=O(t)?void 0:t._$litDirective$;return i?.constructor!==a&&(i?._$AO?.(!1),void 0===a?i=void 0:(i=new a(e),i._$AT(e,r,o)),void 0!==o?(r._$Co??=[])[o]=i:r._$Cl=i),void 0!==i&&(t=Z(e,i._$AS(e,t.values),i,o)),t}class K{constructor(e,t){this._$AV=[],this._$AN=void 0,this._$AD=e,this._$AM=t}get parentNode(){return this._$AM.parentNode}get _$AU(){return this._$AM._$AU}u(e){const{el:{content:t},parts:r}=this._$AD,o=(e?.creationScope??T).importNode(t,!0);q.currentNode=o;let i=q.nextNode(),a=0,s=0,n=r[0];for(;void 0!==n;){if(a===n.index){let t;2===n.type?t=new Q(i,i.nextSibling,this,e):1===n.type?t=new n.ctor(i,n.name,n.strings,this,e):6===n.type&&(t=new ie(i,this,e)),this._$AV.push(t),n=r[++s]}a!==n?.index&&(i=q.nextNode(),a++)}return q.currentNode=T,o}p(e){let t=0;for(const r of this._$AV)void 0!==r&&(void 0!==r.strings?(r._$AI(e,r,t),t+=r.strings.length-2):r._$AI(e[t])),t++}}class Q{get _$AU(){return this._$AM?._$AU??this._$Cv}constructor(e,t,r,o){this.type=2,this._$AH=j,this._$AN=void 0,this._$AA=e,this._$AB=t,this._$AM=r,this.options=o,this._$Cv=o?.isConnected??!0}get parentNode(){let e=this._$AA.parentNode;const t=this._$AM;return void 0!==t&&11===e?.nodeType&&(e=t.parentNode),e}get startNode(){return this._$AA}get endNode(){return this._$AB}_$AI(e,t=this){e=Z(this,e,t),O(e)?e===j||null==e||""===e?(this._$AH!==j&&this._$AR(),this._$AH=j):e!==this._$AH&&e!==Y&&this._(e):void 0!==e._$litType$?this.$(e):void 0!==e.nodeType?this.T(e):(e=>R(e)||"function"==typeof e?.[Symbol.iterator])(e)?this.k(e):this._(e)}O(e){return this._$AA.parentNode.insertBefore(e,this._$AB)}T(e){this._$AH!==e&&(this._$AR(),this._$AH=this.O(e))}_(e){this._$AH!==j&&O(this._$AH)?this._$AA.nextSibling.data=e:this.T(T.createTextNode(e)),this._$AH=e}$(e){const{values:t,_$litType$:r}=e,o="number"==typeof r?this._$AC(e):(void 0===r.el&&(r.el=G.createElement(J(r.h,r.h[0]),this.options)),r);if(this._$AH?._$AD===o)this._$AH.p(t);else{const e=new K(o,this),r=e.u(this.options);e.p(t),this.T(r),this._$AH=e}}_$AC(e){let t=B.get(e.strings);return void 0===t&&B.set(e.strings,t=new G(e)),t}k(e){R(this._$AH)||(this._$AH=[],this._$AR());const t=this._$AH;let r,o=0;for(const i of e)o===t.length?t.push(r=new Q(this.O(M()),this.O(M()),this,this.options)):r=t[o],r._$AI(i),o++;o<t.length&&(this._$AR(r&&r._$AB.nextSibling,o),t.length=o)}_$AR(e=this._$AA.nextSibling,t){for(this._$AP?.(!1,!0,t);e!==this._$AB;){const t=k(e).nextSibling;k(e).remove(),e=t}}setConnected(e){void 0===this._$AM&&(this._$Cv=e,this._$AP?.(e))}}class ee{get tagName(){return this.element.tagName}get _$AU(){return this._$AM._$AU}constructor(e,t,r,o,i){this.type=1,this._$AH=j,this._$AN=void 0,this.element=e,this.name=t,this._$AM=o,this.options=i,r.length>2||""!==r[0]||""!==r[1]?(this._$AH=Array(r.length-1).fill(new String),this.strings=r):this._$AH=j}_$AI(e,t=this,r,o){const i=this.strings;let a=!1;if(void 0===i)e=Z(this,e,t,0),a=!O(e)||e!==this._$AH&&e!==Y,a&&(this._$AH=e);else{const o=e;let s,n;for(e=i[0],s=0;s<i.length-1;s++)n=Z(this,o[r+s],t,s),n===Y&&(n=this._$AH[s]),a||=!O(n)||n!==this._$AH[s],n===j?e=j:e!==j&&(e+=(n??"")+i[s+1]),this._$AH[s]=n}a&&!o&&this.j(e)}j(e){e===j?this.element.removeAttribute(this.name):this.element.setAttribute(this.name,e??"")}}class te extends ee{constructor(){super(...arguments),this.type=3}j(e){this.element[this.name]=e===j?void 0:e}}class re extends ee{constructor(){super(...arguments),this.type=4}j(e){this.element.toggleAttribute(this.name,!!e&&e!==j)}}class oe extends ee{constructor(e,t,r,o,i){super(e,t,r,o,i),this.type=5}_$AI(e,t=this){if((e=Z(this,e,t,0)??j)===Y)return;const r=this._$AH,o=e===j&&r!==j||e.capture!==r.capture||e.once!==r.once||e.passive!==r.passive,i=e!==j&&(r===j||o);o&&this.element.removeEventListener(this.name,this,r),i&&this.element.addEventListener(this.name,this,e),this._$AH=e}handleEvent(e){"function"==typeof this._$AH?this._$AH.call(this.options?.host??this.element,e):this._$AH.handleEvent(e)}}class ie{constructor(e,t,r){this.element=e,this.type=6,this._$AN=void 0,this._$AM=t,this.options=r}get _$AU(){return this._$AM._$AU}_$AI(e){Z(this,e)}}const ae=$.litHtmlPolyfillSupport;ae?.(G,Q),($.litHtmlVersions??=[]).push("3.3.2");const se=globalThis;
 /**
      * @license
      * Copyright 2017 Google LLC
@@ -1107,44 +1107,44 @@ const le={attribute:!0,type:String,converter:y,reflect:!1,hasChanged:x},de=(e=le
           <div class="loading">Loading tariff comparison...</div>
         `}
       </div>
-    `}_renderChart(){if(0===this._consumptionData.length)return V`<div class="loading">No consumption data available</div>`;const e=this.config.chart_type||"line",t=this._consumptionData.map(e=>e.consumption||e.value||0),r=Math.max(...t,1),o=Math.min(...t,0),i=r-o||1;let a=[],s=0,n=0,c=1;const l=this.config.show_cost_on_chart&&this.config.selected_tariff_for_cost&&null!==this._tariffCosts;if(l&&this._tariffCosts&&this.config.selected_tariff_for_cost){const e=this._tariffCosts[this.config.selected_tariff_for_cost];if(e){const r="month"===this._currentPeriod?e.daily_breakdown:e.hourly_breakdown;r&&r.length>0?(a=r.map(e=>e.cost),a.length!==t.length?(ye.warn(`Cost data length (${a.length}) does not match consumption data length (${t.length}). Cost display disabled.`),a=[]):(s=Math.max(...a,.01),n=Math.min(...a,0),c=s-n||1)):ye.warn(`No breakdown data available for tariff ${this.config.selected_tariff_for_cost}. Cost display disabled.`)}else ye.warn(`Tariff cost data not found for entry ID: ${this.config.selected_tariff_for_cost}. Cost display disabled.`)}const d=l&&a.length>0&&a.length===t.length,p=800,h=300,_=20,u=d?60:20,f=40,g=60,m=h-_-f,v=(p-g-u)/(t.length-1||1),y=t.map((e,t)=>({x:g+t*v,y:_+m-(e-o)/i*m,value:e})),x=y.length>0?`M ${y[0].x} ${y[0].y} ${y.slice(1).map(e=>`L ${e.x} ${e.y}`).join(" ")}`:"",w=y.length>0?`${x} L ${y[y.length-1].x} ${h-f} L ${y[0].x} ${h-f} Z`:"",b=[];if(!isNaN(i)&&i>0)for(let e=0;e<=5;e++){const t=o+i*e/5,r=_+m-e/5*m;b.push({value:t,y:r})}else ye.warn(`Cannot generate Y-axis labels: chartHeight=${m}, range=${i}`);let $=[],k="",C=[];if(d&&a.length>0&&a.length===t.length){$=a.map((e,t)=>({x:g+t*v,y:_+m-(e-n)/c*m,value:e})),$.length>0&&(k=`M ${$[0].x} ${$[0].y} ${$.slice(1).map(e=>`L ${e.x} ${e.y}`).join(" ")}`);for(let e=0;e<=5;e++){const t=n+c*e/5,r=_+m-e/5*m;C.push({value:t,y:r})}}const S=[];if(y.length>0&&this._consumptionData.length>0){const e=this._consumptionData[0],t=this._consumptionData[this._consumptionData.length-1],r=Math.floor(this._consumptionData.length/2),o=this._consumptionData[r],i=e=>{try{return new Date(e).toLocaleDateString("en-US",{month:"short",day:"numeric"})}catch{return e.split("T")[0]}};e&&(e.start_time||e.date)&&S.push({label:i(e.start_time||e.date||""),x:y[0].x}),o&&(o.start_time||o.date)&&S.push({label:i(o.start_time||o.date||""),x:y[r]?.x||y[0].x}),t&&(t.start_time||t.date)&&S.push({label:i(t.start_time||t.date||""),x:y[y.length-1].x})}else ye.warn(`Cannot generate X-axis labels: points.length=${y.length}, consumptionData.length=${this._consumptionData.length}`);if("bar"===e)return V`
-        <svg class="chart-svg" viewBox="0 0 ${p} ${h}" preserveAspectRatio="xMidYMid meet">
+    `}_renderChart(){if(0===this._consumptionData.length)return V`<div class="loading">No consumption data available</div>`;const e=this.config.chart_type||"line",t=this._consumptionData.map(e=>e.consumption||e.value||0),r=Math.max(...t,1),o=Math.min(...t,0),i=r-o||1;let a=[],s=0,n=0,c=1;const l=this.config.show_cost_on_chart&&this.config.selected_tariff_for_cost&&null!==this._tariffCosts;if(l&&this._tariffCosts&&this.config.selected_tariff_for_cost){const e=this._tariffCosts[this.config.selected_tariff_for_cost];if(e){const r="month"===this._currentPeriod?e.daily_breakdown:e.hourly_breakdown;r&&r.length>0?(a=r.map(e=>e.cost),a.length!==t.length?(ye.warn(`Cost data length (${a.length}) does not match consumption data length (${t.length}). Cost display disabled.`),a=[]):(s=Math.max(...a,.01),n=Math.min(...a,0),c=s-n||1)):ye.warn(`No breakdown data available for tariff ${this.config.selected_tariff_for_cost}. Cost display disabled.`)}else ye.warn(`Tariff cost data not found for entry ID: ${this.config.selected_tariff_for_cost}. Cost display disabled.`)}const d=l&&a.length>0&&a.length===t.length,p=800,h=300,_=20,u=d?60:20,f=40,g=60,m=h-_-f,v=80,y=(p-g-u)/(t.length-1||1),x=t.map((e,t)=>({x:g+v+t*y,y:_+m-(e-o)/i*m,value:e})),w=x.length>0?`M ${x[0].x} ${x[0].y} ${x.slice(1).map(e=>`L ${e.x} ${e.y}`).join(" ")}`:"",b=x.length>0?`${w} L ${x[x.length-1].x} ${h-f} L ${x[0].x} ${h-f} Z`:"",$=[];if(!isNaN(i)&&i>0)for(let e=0;e<=5;e++){const t=o+i*e/5,r=_+m-e/5*m;$.push({value:t,y:r})}else ye.warn(`Cannot generate Y-axis labels: chartHeight=${m}, range=${i}`);let k=[],C="",S=[];if(d&&a.length>0&&a.length===t.length){k=a.map((e,t)=>({x:g+v+t*y,y:_+m-(e-n)/c*m,value:e})),k.length>0&&(C=`M ${k[0].x} ${k[0].y} ${k.slice(1).map(e=>`L ${e.x} ${e.y}`).join(" ")}`);for(let e=0;e<=5;e++){const t=n+c*e/5,r=_+m-e/5*m;S.push({value:t,y:r})}}const E=[];if(x.length>0&&this._consumptionData.length>0){const e=this._consumptionData[0],t=this._consumptionData[this._consumptionData.length-1],r=Math.floor(this._consumptionData.length/2),o=this._consumptionData[r],i=e=>{try{return new Date(e).toLocaleDateString("en-US",{month:"short",day:"numeric"})}catch{return e.split("T")[0]}};e&&(e.start_time||e.date)&&E.push({label:i(e.start_time||e.date||""),x:x[0].x}),o&&(o.start_time||o.date)&&E.push({label:i(o.start_time||o.date||""),x:x[r]?.x||x[0].x}),t&&(t.start_time||t.date)&&E.push({label:i(t.start_time||t.date||""),x:x[x.length-1].x})}else ye.warn(`Cannot generate X-axis labels: points.length=${x.length}, consumptionData.length=${this._consumptionData.length}`);if("bar"===e)return V`
+        <svg class="chart-svg" viewBox="0 0 ${880} ${340}" preserveAspectRatio="xMidYMid meet">
           <!-- Grid lines -->
-          ${b.map(e=>V`
+          ${$.map(e=>V`
             <line class="chart-grid-line" 
-              x1="${g}" y1="${e.y}" 
-              x2="${p-u}" y2="${e.y}"/>
+              x1="${g+v}" y1="${e.y}" 
+              x2="${p-u+v}" y2="${e.y}"/>
           `)}
           
           <!-- Bars -->
-          ${y.map((e,t)=>{const r=Math.max(.6*v,2),o=e.x-r/2,i=h-f-e.y;return V`
+          ${x.map((e,t)=>{const r=Math.max(.6*y,2),o=e.x-r/2,i=h-f,a=e.y,s=Math.max(i-a,0);return V`
               <rect class="chart-bar"
                 x="${o}" 
-                y="${e.y}" 
+                y="${a}" 
                 width="${r}" 
-                height="${i}"/>
+                height="${s}"/>
             `})}
           
           <!-- Y-axis -->
           <line class="chart-axis" 
-            x1="${g}" y1="${_}" 
-            x2="${g}" y2="${h-f}"/>
+            x1="${g+v}" y1="${_}" 
+            x2="${g+v}" y2="${h-f}"/>
           
           <!-- X-axis -->
           <line class="chart-axis" 
-            x1="${g}" y1="${h-f}" 
-            x2="${p-u}" y2="${h-f}"/>
+            x1="${g+v}" y1="${h-f}" 
+            x2="${p-u+v}" y2="${h-f}"/>
           
           <!-- Y-axis labels (consumption - left) -->
-          ${b.map(e=>V`
-            <text class="chart-text" x="${g-10}" y="${e.y+4}" text-anchor="end" fill="var(--secondary-text-color, #888)">
+          ${$.map(e=>V`
+            <text class="chart-text" x="${g+v-10}" y="${e.y+4}" text-anchor="end" fill="var(--secondary-text-color, #888)" style="font-size: 12px;">
               ${e.value.toFixed(1)} kWh
             </text>
           `)}
           
           <!-- Cost Y-axis labels (right) -->
-          ${d?C.map(e=>V`
-            <text class="chart-text" x="${p-u+10}" y="${e.y+4}" text-anchor="start" fill="var(--accent-color, #ff9800)">
+          ${d?S.map(e=>V`
+            <text class="chart-text" x="${p-u+v+10}" y="${e.y+4}" text-anchor="start" fill="var(--accent-color, #ff9800)" style="font-size: 12px;">
               €${e.value.toFixed(2)}
             </text>
           `):""}
@@ -1152,15 +1152,15 @@ const le={attribute:!0,type:String,converter:y,reflect:!1,hasChanged:x},de=(e=le
           <!-- Cost Y-axis (right) -->
           ${d?V`
             <line class="chart-axis" 
-              x1="${p-u}" y1="${_}" 
-              x2="${p-u}" y2="${h-f}"
+              x1="${p-u+v}" y1="${_}" 
+              x2="${p-u+v}" y2="${h-f}"
               stroke="var(--accent-color, #ff9800)" opacity="0.5"/>
           `:""}
           
           <!-- Cost line overlay (for bar chart) -->
-          ${d&&k?V`
-            <path class="chart-line-cost" d="${k}"/>
-            ${$.map(e=>V`
+          ${d&&C?V`
+            <path class="chart-line-cost" d="${C}"/>
+            ${k.map(e=>V`
               <circle 
                 cx="${e.x}" 
                 cy="${e.y}" 
@@ -1172,8 +1172,8 @@ const le={attribute:!0,type:String,converter:y,reflect:!1,hasChanged:x},de=(e=le
           `:""}
           
           <!-- X-axis labels -->
-          ${S.map(e=>V`
-            <text class="chart-text" x="${e.x}" y="${h-f+20}" text-anchor="middle" fill="var(--secondary-text-color, #888)">
+          ${E.map(e=>V`
+            <text class="chart-text" x="${e.x}" y="${h-f+20}" text-anchor="middle" fill="var(--secondary-text-color, #888)" style="font-size: 12px;">
               ${e.label}
             </text>
           `)}
@@ -1181,12 +1181,12 @@ const le={attribute:!0,type:String,converter:y,reflect:!1,hasChanged:x},de=(e=le
           <!-- Legend -->
           ${d?V`
             <g>
-              <rect x="${p-u-100}" y="${_+5}" width="15" height="10" 
+              <rect x="${p-u+v-100}" y="${_+5}" width="15" height="10" 
                 fill="var(--primary-color, #03a9f4)" opacity="0.7"/>
-              <text x="${p-u-80}" y="${_+14}" class="chart-text" font-size="11px" fill="var(--secondary-text-color, #888)">Consumption</text>
-              <line x1="${p-u-100}" y1="${_+25}" x2="${p-u-85}" y2="${_+25}" 
+              <text x="${p-u+v-80}" y="${_+14}" class="chart-text" font-size="11px" fill="var(--secondary-text-color, #888)">Consumption</text>
+              <line x1="${p-u+v-100}" y1="${_+25}" x2="${p-u+v-85}" y2="${_+25}" 
                 stroke="var(--accent-color, #ff9800)" stroke-width="2" stroke-dasharray="5,5"/>
-              <text x="${p-u-75}" y="${_+29}" class="chart-text" font-size="11px" fill="var(--accent-color, #ff9800)">Cost</text>
+              <text x="${p-u+v-75}" y="${_+29}" class="chart-text" font-size="11px" fill="var(--accent-color, #ff9800)">Cost</text>
             </g>
           `:""}
         </svg>
@@ -1198,81 +1198,81 @@ const le={attribute:!0,type:String,converter:y,reflect:!1,hasChanged:x},de=(e=le
               Please ensure tariff comparison is enabled or period data is available from the service.
             </div>
           </div>
-        `;const t=e.map(e=>e.p1||0),r=e.map(e=>e.p2||0),o=e.map(e=>e.p3||0),i=o,a=o.map((e,t)=>e+(r[t]||0)),s=a.map((e,r)=>e+(t[r]||0)),n=Math.max(...s,1),c=0,l=n-c||1,d=(e,t)=>{if(0===e.length)return"";const r=e.map((e,t)=>({x:g+t*v,y:_+m-(e-c)/l*m})),o=t.map((e,t)=>({x:g+t*v,y:_+m-(e-c)/l*m})).reverse(),i=r.map((e,t)=>0===t?`M ${e.x} ${e.y}`:`L ${e.x} ${e.y}`).join(" "),a=o.map(e=>`L ${e.x} ${e.y}`).join(" ");return`${i} ${a} Z`},y=[];for(let e=0;e<=5;e++){const t=c+l*e/5,r=_+m-e/5*m;y.push({value:t,y:r})}const x=d(i,new Array(e.length).fill(0)),w=d(a,i),b=d(s,a);return V`
-        <svg class="chart-svg" viewBox="0 0 ${p} ${h}" preserveAspectRatio="xMidYMid meet">
+        `;const t=e.map(e=>e.p1||0),r=e.map(e=>e.p2||0),o=e.map(e=>e.p3||0),i=o,a=o.map((e,t)=>e+(r[t]||0)),s=a.map((e,r)=>e+(t[r]||0)),n=Math.max(...s,1),c=0,l=n-c||1,d=(e,t)=>{if(0===e.length)return"";const r=e.map((e,t)=>({x:g+v+t*y,y:_+m-(e-c)/l*m})),o=t.map((e,t)=>({x:g+v+t*y,y:_+m-(e-c)/l*m})).reverse(),i=r.map((e,t)=>0===t?`M ${e.x} ${e.y}`:`L ${e.x} ${e.y}`).join(" "),a=o.map(e=>`L ${e.x} ${e.y}`).join(" ");return`${i} ${a} Z`},x=[];for(let e=0;e<=5;e++){const t=c+l*e/5,r=_+m-e/5*m;x.push({value:t,y:r})}const w=d(i,new Array(e.length).fill(0)),b=d(a,i),$=d(s,a);return V`
+        <svg class="chart-svg" viewBox="0 0 ${880} ${340}" preserveAspectRatio="xMidYMid meet">
           <!-- Grid lines -->
-          ${y.map(e=>V`
+          ${x.map(e=>V`
             <line class="chart-grid-line" 
-              x1="${g}" y1="${e.y}" 
-              x2="${p-u}" y2="${e.y}"/>
+              x1="${g+v}" y1="${e.y}" 
+              x2="${p-u+v}" y2="${e.y}"/>
           `)}
           
           <!-- Stacked areas (bottom to top: P3, P2, P1) -->
-          <path class="chart-area-p3" d="${x}"/>
-          <path class="chart-area-p2" d="${w}"/>
-          <path class="chart-area-p1" d="${b}"/>
+          <path class="chart-area-p3" d="${w}"/>
+          <path class="chart-area-p2" d="${b}"/>
+          <path class="chart-area-p1" d="${$}"/>
           
           <!-- Y-axis -->
           <line class="chart-axis" 
-            x1="${g}" y1="${_}" 
-            x2="${g}" y2="${h-f}"/>
+            x1="${g+v}" y1="${_}" 
+            x2="${g+v}" y2="${h-f}"/>
           
           <!-- X-axis -->
           <line class="chart-axis" 
-            x1="${g}" y1="${h-f}" 
-            x2="${p-u}" y2="${h-f}"/>
+            x1="${g+v}" y1="${h-f}" 
+            x2="${p-u+v}" y2="${h-f}"/>
           
           <!-- Y-axis labels -->
-          ${y.map(e=>V`
-            <text class="chart-text" x="${g}" y="${e.y+4}" text-anchor="start" fill="var(--secondary-text-color, #888)">
+          ${x.map(e=>V`
+            <text class="chart-text" x="${g+v-10}" y="${e.y+4}" text-anchor="end" fill="var(--secondary-text-color, #888)" style="font-size: 12px;">
               ${e.value.toFixed(1)} kWh
             </text>
           `)}
           
           <!-- X-axis labels -->
-          ${S.map(e=>V`
-            <text class="chart-text" x="${e.x}" y="${h-f+20}" text-anchor="middle" fill="var(--secondary-text-color, #888)">
+          ${E.map(e=>V`
+            <text class="chart-text" x="${e.x}" y="${h-f+20}" text-anchor="middle" fill="var(--secondary-text-color, #888)" style="font-size: 12px;">
               ${e.label}
             </text>
           `)}
           
           <!-- Legend -->
           <g>
-            <rect x="${g+10}" y="${_+5}" width="12" height="12" 
+            <rect x="${g+v+10}" y="${_+5}" width="12" height="12" 
               fill="var(--error-color, #f44336)" opacity="0.6"/>
-            <text x="${g+28}" y="${_+15}" class="chart-text" font-size="11px" fill="var(--secondary-text-color, #888)">P1 (Peak)</text>
+            <text x="${g+v+28}" y="${_+15}" class="chart-text" font-size="11px" fill="var(--secondary-text-color, #888)">P1 (Peak)</text>
             
-            <rect x="${g+100}" y="${_+5}" width="12" height="12" 
+            <rect x="${g+v+100}" y="${_+5}" width="12" height="12" 
               fill="var(--warning-color, #ff9800)" opacity="0.6"/>
-            <text x="${g+118}" y="${_+15}" class="chart-text" font-size="11px" fill="var(--secondary-text-color, #888)">P2 (Flat)</text>
+            <text x="${g+v+118}" y="${_+15}" class="chart-text" font-size="11px" fill="var(--secondary-text-color, #888)">P2 (Flat)</text>
             
-            <rect x="${g+190}" y="${_+5}" width="12" height="12" 
+            <rect x="${g+v+190}" y="${_+5}" width="12" height="12" 
               fill="var(--success-color, #4caf50)" opacity="0.6"/>
-            <text x="${g+208}" y="${_+15}" class="chart-text" font-size="11px" fill="var(--secondary-text-color, #888)">P3 (Valley)</text>
+            <text x="${g+v+208}" y="${_+15}" class="chart-text" font-size="11px" fill="var(--secondary-text-color, #888)">P3 (Valley)</text>
           </g>
         </svg>
-      `}let E="";if(this.config.show_moving_average){const e=this.config.moving_average_days||7,r=this._calculateMovingAverage(t,e).map((e,t)=>{if(null===e)return null;return{x:g+t*v,y:_+m-(e-o)/i*m,value:e}}).filter(e=>null!==e);r.length>0&&(E=`M ${r[0].x} ${r[0].y} ${r.slice(1).map(e=>`L ${e.x} ${e.y}`).join(" ")}`)}let P="";if(this.config.show_cost_trend&&d&&a.length>0){const e=this.config.cost_moving_average_days||30,t=this._calculateCostMovingAverage(a,e).map((e,t)=>{if(null===e)return null;return{x:g+t*v,y:_+m-(e-n)/c*m,value:e}}).filter(e=>null!==e);t.length>0&&(P=`M ${t[0].x} ${t[0].y} ${t.slice(1).map(e=>`L ${e.x} ${e.y}`).join(" ")}`)}return V`
-      <svg class="chart-svg" viewBox="0 0 ${p} ${h}" preserveAspectRatio="xMidYMid meet">
+      `}let P="";if(this.config.show_moving_average){const e=this.config.moving_average_days||7,r=this._calculateMovingAverage(t,e).map((e,t)=>{if(null===e)return null;return{x:g+v+t*y,y:_+m-(e-o)/i*m,value:e}}).filter(e=>null!==e);r.length>0&&(P=`M ${r[0].x} ${r[0].y} ${r.slice(1).map(e=>`L ${e.x} ${e.y}`).join(" ")}`)}let A="";if(this.config.show_cost_trend&&d&&a.length>0){const e=this.config.cost_moving_average_days||30,t=this._calculateCostMovingAverage(a,e).map((e,t)=>{if(null===e)return null;return{x:g+v+t*y,y:_+m-(e-n)/c*m,value:e}}).filter(e=>null!==e);t.length>0&&(A=`M ${t[0].x} ${t[0].y} ${t.slice(1).map(e=>`L ${e.x} ${e.y}`).join(" ")}`)}return V`
+      <svg class="chart-svg" viewBox="0 0 ${880} ${340}" preserveAspectRatio="xMidYMid meet">
         <!-- Grid lines -->
-        ${b.map(e=>V`
+        ${$.map(e=>V`
           <line class="chart-grid-line" 
-            x1="${g}" y1="${e.y}" 
-            x2="${p-u}" y2="${e.y}"/>
+            x1="${g+v}" y1="${e.y}" 
+            x2="${p-u+v}" y2="${e.y}"/>
         `)}
         
         <!-- Area under line -->
-        <path class="chart-area" d="${w}"/>
+        <path class="chart-area" d="${b}"/>
         
         <!-- Line -->
-        <path class="chart-line" d="${x}"/>
+        <path class="chart-line" d="${w}"/>
         
         <!-- Moving average line -->
-        ${this.config.show_moving_average&&E?V`
-          <path class="chart-line-moving-avg" d="${E}"/>
+        ${this.config.show_moving_average&&P?V`
+          <path class="chart-line-moving-avg" d="${P}"/>
         `:""}
         
         <!-- Data points -->
-        ${y.map(e=>V`
+        ${x.map(e=>V`
           <circle 
             cx="${e.x}" 
             cy="${e.y}" 
@@ -1284,24 +1284,24 @@ const le={attribute:!0,type:String,converter:y,reflect:!1,hasChanged:x},de=(e=le
         
         <!-- Y-axis -->
         <line class="chart-axis" 
-          x1="${g}" y1="${_}" 
-          x2="${g}" y2="${h-f}"/>
+          x1="${g+v}" y1="${_}" 
+          x2="${g+v}" y2="${h-f}"/>
         
         <!-- X-axis -->
         <line class="chart-axis" 
-          x1="${g}" y1="${h-f}" 
-          x2="${p-u}" y2="${h-f}"/>
+          x1="${g+v}" y1="${h-f}" 
+          x2="${p-u+v}" y2="${h-f}"/>
         
         <!-- Y-axis labels (consumption - left) -->
-        ${b.map(e=>V`
-          <text class="chart-text" x="${g-10}" y="${e.y+4}" text-anchor="end" fill="var(--secondary-text-color, #888)">
+        ${$.map(e=>V`
+          <text class="chart-text" x="${g+v-10}" y="${e.y+4}" text-anchor="end" fill="var(--secondary-text-color, #888)" style="font-size: 12px;">
             ${e.value.toFixed(1)} kWh
           </text>
         `)}
         
         <!-- Cost Y-axis labels (right) -->
-        ${d?C.map(e=>V`
-            <text class="chart-text" x="${p-u+10}" y="${e.y+4}" text-anchor="start" fill="var(--accent-color, #ff9800)">
+        ${d?S.map(e=>V`
+            <text class="chart-text" x="${p-u+v+10}" y="${e.y+4}" text-anchor="start" fill="var(--accent-color, #ff9800)" style="font-size: 12px;">
               €${e.value.toFixed(2)}
             </text>
           `):""}
@@ -1309,14 +1309,14 @@ const le={attribute:!0,type:String,converter:y,reflect:!1,hasChanged:x},de=(e=le
         <!-- Cost Y-axis (right) -->
         ${d?V`
           <line class="chart-axis" 
-            x1="${p-u}" y1="${_}" 
-            x2="${p-u}" y2="${h-f}"
+            x1="${p-u+v}" y1="${_}" 
+            x2="${p-u+v}" y2="${h-f}"
             stroke="var(--accent-color, #ff9800)" opacity="0.5"/>
         `:""}
         
         <!-- X-axis labels -->
-        ${S.map(e=>V`
-          <text class="chart-text" x="${e.x}" y="${h-f+20}" text-anchor="middle" fill="var(--secondary-text-color, #888)">
+        ${E.map(e=>V`
+          <text class="chart-text" x="${e.x}" y="${h-f+20}" text-anchor="middle" fill="var(--secondary-text-color, #888)" style="font-size: 12px;">
             ${e.label}
           </text>
         `)}
@@ -1325,24 +1325,24 @@ const le={attribute:!0,type:String,converter:y,reflect:!1,hasChanged:x},de=(e=le
         ${d||this.config.show_moving_average||this.config.show_cost_trend?V`
           <g>
             ${d?V`
-              <rect x="${p-u-120}" y="${_+5}" width="15" height="10" 
+              <rect x="${p-u+v-120}" y="${_+5}" width="15" height="10" 
                 fill="var(--primary-color, #03a9f4)" opacity="0.7"/>
-              <text x="${p-u-100}" y="${_+14}" class="chart-text" font-size="11px" fill="var(--secondary-text-color, #888)">Consumption</text>
-              <line x1="${p-u-120}" y1="${_+25}" x2="${p-u-105}" y2="${_+25}" 
+              <text x="${p-u+v-100}" y="${_+14}" class="chart-text" font-size="11px" fill="var(--secondary-text-color, #888)">Consumption</text>
+              <line x1="${p-u+v-120}" y1="${_+25}" x2="${p-u+v-105}" y2="${_+25}" 
                 stroke="var(--accent-color, #ff9800)" stroke-width="2" stroke-dasharray="5,5"/>
-              <text x="${p-u-95}" y="${_+29}" class="chart-text" font-size="11px" fill="var(--accent-color, #ff9800)">Cost</text>
+              <text x="${p-u+v-95}" y="${_+29}" class="chart-text" font-size="11px" fill="var(--accent-color, #ff9800)">Cost</text>
             `:""}
             ${this.config.show_moving_average?V`
-              <line x1="${g+10}" y1="${_+10}" x2="${g+25}" y2="${_+10}" 
+              <line x1="${g+v+10}" y1="${_+10}" x2="${g+v+25}" y2="${_+10}" 
                 stroke="var(--info-color, #2196f3)" stroke-width="2" stroke-dasharray="3,3" opacity="0.8"/>
-              <text x="${g+30}" y="${_+14}" class="chart-text" font-size="11px" fill="var(--info-color, #2196f3)">
+              <text x="${g+v+30}" y="${_+14}" class="chart-text" font-size="11px" fill="var(--info-color, #2196f3)">
                 ${this.config.moving_average_days||7}-day avg
               </text>
             `:""}
-            ${this.config.show_cost_trend&&P?V`
-              <line x1="${g+10}" y1="${_+30}" x2="${g+25}" y2="${_+30}" 
+            ${this.config.show_cost_trend&&A?V`
+              <line x1="${g+v+10}" y1="${_+30}" x2="${g+v+25}" y2="${_+30}" 
                 stroke="var(--accent-color, #ff9800)" stroke-width="2" stroke-dasharray="3,3" opacity="0.7"/>
-              <text x="${g+30}" y="${_+34}" class="chart-text" font-size="11px" fill="var(--accent-color, #ff9800)">
+              <text x="${g+v+30}" y="${_+34}" class="chart-text" font-size="11px" fill="var(--accent-color, #ff9800)">
                 ${this.config.cost_moving_average_days||30}-day cost avg
               </text>
             `:""}

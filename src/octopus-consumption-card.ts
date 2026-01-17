@@ -1959,7 +1959,7 @@ export class OctopusConsumptionCard extends LitElement {
         
         <!-- Y-axis labels (consumption - left) -->
         ${yAxisLabels.map(label => html`
-          <text class="chart-text" x="${padding.left + labelOffsetX - 10}" y="${label.y + 4}" text-anchor="end" fill="var(--secondary-text-color, #888)" style="font-size: 12px;">
+          <text class="chart-text chart-text-axis-y" x="${padding.left + labelOffsetX - 10}" y="${label.y + 4}" text-anchor="end" style="font-size: 12px;">
             ${label.value.toFixed(1)} kWh
           </text>
         `)}
@@ -1981,7 +1981,7 @@ export class OctopusConsumptionCard extends LitElement {
         
         <!-- X-axis labels -->
         ${xAxisLabels.map(label => html`
-          <text class="chart-text" x="${label.x}" y="${height - padding.bottom + labelOffsetY}" text-anchor="middle" fill="var(--secondary-text-color, #888)" style="font-size: 12px;">
+          <text class="chart-text chart-text-axis-x" x="${label.x}" y="${height - padding.bottom + labelOffsetY}" text-anchor="middle" style="font-size: 12px;">
             ${label.label}
           </text>
         `)}

@@ -64,7 +64,7 @@ export class OctopusConsumptionCard extends LitElement {
    * Use Light DOM instead of Shadow DOM to allow CSS variables to work directly
    * This solves the issue with SVG fill attributes not working with CSS variables in Shadow DOM
    */
-  protected createRenderRoot(): Element | ShadowRoot {
+  protected createRenderRoot(): HTMLElement | DocumentFragment {
     return this; // Render to Light DOM instead of Shadow DOM
   }
 

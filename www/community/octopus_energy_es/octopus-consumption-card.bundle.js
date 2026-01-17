@@ -1310,7 +1310,7 @@ const le={attribute:!0,type:String,converter:y,reflect:!1,hasChanged:x},de=(e=le
         
         <!-- Y-axis labels (consumption - left) -->
         ${k.map(e=>V`
-          <text class="chart-text" x="${g+y-10}" y="${e.y+4}" text-anchor="end" fill="var(--secondary-text-color, #888)" style="font-size: 12px;">
+          <text class="chart-text chart-text-axis-y" x="${g+y-10}" y="${e.y+4}" text-anchor="end" style="font-size: 12px;">
             ${e.value.toFixed(1)} kWh
           </text>
         `)}
@@ -1332,7 +1332,7 @@ const le={attribute:!0,type:String,converter:y,reflect:!1,hasChanged:x},de=(e=le
         
         <!-- X-axis labels -->
         ${P.map(e=>V`
-          <text class="chart-text" x="${e.x}" y="${h-f+20}" text-anchor="middle" fill="var(--secondary-text-color, #888)" style="font-size: 12px;">
+          <text class="chart-text chart-text-axis-x" x="${e.x}" y="${h-f+20}" text-anchor="middle" style="font-size: 12px;">
             ${e.label}
           </text>
         `)}

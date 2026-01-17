@@ -85,43 +85,17 @@ jobs:
           sed -i "s/const VERSION = ['\"][^'\"]*['\"];/const VERSION = '$NEW_VERSION';/" src/octopus-consumption-card.ts
           echo "Updated version in src/octopus-consumption-card.ts to $NEW_VERSION"
 
-      - name: Set up Node.js
-        if: steps.check_last_commit.outputs.skip == 'false'
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
-          cache: 'npm'
-
-      - name: Install dependencies
-        if: steps.check_last_commit.outputs.skip == 'false'
-        run: npm ci
-
-      - name: Create www directory structure
-        if: steps.check_last_commit.outputs.skip == 'false'
-        run: mkdir -p www/community/octopus_energy_es
-
-      - name: Build bundle
-        if: steps.check_last_commit.outputs.skip == 'false'
-        run: npm run build
-
-      - name: Verify bundle exists and is unique
+      - name: Verify bundle exists (from Build workflow)
         if: steps.check_last_commit.outputs.skip == 'false'
         run: |
           BUNDLE_PATH="www/community/octopus_energy_es/octopus-consumption-card.bundle.js"
           if [ ! -f "$BUNDLE_PATH" ]; then
             echo "Error: Bundle file not found at $BUNDLE_PATH"
+            echo "Bundle should be built by Build workflow before Release workflow runs"
             exit 1
           fi
           
-          # Count bundle files in www directory (should be exactly 1)
-          BUNDLE_COUNT=$(find www -name "*.bundle.js" -type f | wc -l)
-          if [ "$BUNDLE_COUNT" -ne 1 ]; then
-            echo "Error: Expected exactly 1 bundle file, found $BUNDLE_COUNT"
-            find www -name "*.bundle.js" -type f
-            exit 1
-          fi
-          
-          echo "✓ Bundle file exists and is unique: $BUNDLE_PATH"
+          echo "✓ Bundle file exists: $BUNDLE_PATH"
           echo "Bundle size: $(ls -lh $BUNDLE_PATH | awk '{print $5}')"
 
       - name: Commit version update and bundle

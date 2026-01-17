@@ -1746,18 +1746,21 @@ export class OctopusConsumptionCard extends LitElement {
       const minStackedValue = 0; // Stacked charts always start at 0
       const stackedRange = maxStackedValue - minStackedValue || 1;
 
+      // Calculate xStep for stacked chart (based on periodData length, not consumption data)
+      const stackedXStep = chartWidth / (periodData.length - 1 || 1);
+
       // Generate stacked area paths
       const generateStackedPath = (cumulativeData: number[], baseData: number[]) => {
         if (cumulativeData.length === 0) return '';
         
         const topPoints = cumulativeData.map((value, index) => {
-          const x = padding.left + labelOffsetX + index * xStep;
+          const x = padding.left + labelOffsetX + index * stackedXStep;
           const y = padding.top + chartHeight - ((value - minStackedValue) / stackedRange) * chartHeight;
           return { x, y };
         });
         
         const bottomPoints = baseData.map((value, index) => {
-          const x = padding.left + labelOffsetX + index * xStep;
+          const x = padding.left + labelOffsetX + index * stackedXStep;
           const y = padding.top + chartHeight - ((value - minStackedValue) / stackedRange) * chartHeight;
           return { x, y };
         }).reverse();
@@ -1784,6 +1787,37 @@ export class OctopusConsumptionCard extends LitElement {
       const p3Path = generateStackedPath(p3Cumulative, zeroLine);
       const p2Path = generateStackedPath(p2Cumulative, p3Cumulative);
       const p1Path = generateStackedPath(p1Cumulative, p2Cumulative);
+      
+      // Generate X-axis labels for stacked chart
+      const stackedXAxisLabels: Array<{ label: string; x: number }> = [];
+      if (periodData.length > 0) {
+        const firstPoint = periodData[0];
+        const lastPoint = periodData[periodData.length - 1];
+        const midIndex = Math.floor(periodData.length / 2);
+        const midPoint = periodData[midIndex];
+
+        const formatDate = (dateStr: string) => {
+          try {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          } catch {
+            return dateStr.split('T')[0];
+          }
+        };
+
+        if (firstPoint && firstPoint.timestamp) {
+          const firstX = padding.left + labelOffsetX;
+          stackedXAxisLabels.push({ label: formatDate(firstPoint.timestamp), x: firstX });
+        }
+        if (midPoint && midPoint.timestamp) {
+          const midX = padding.left + labelOffsetX + midIndex * stackedXStep;
+          stackedXAxisLabels.push({ label: formatDate(midPoint.timestamp), x: midX });
+        }
+        if (lastPoint && lastPoint.timestamp) {
+          const lastX = padding.left + labelOffsetX + (periodData.length - 1) * stackedXStep;
+          stackedXAxisLabels.push({ label: formatDate(lastPoint.timestamp), x: lastX });
+        }
+      }
 
       return html`
         <svg class="chart-svg" viewBox="0 0 ${expandedWidth} ${expandedHeight}" preserveAspectRatio="xMidYMid meet">
@@ -1817,7 +1851,7 @@ export class OctopusConsumptionCard extends LitElement {
           `)}
           
           <!-- X-axis labels -->
-          ${xAxisLabels.map(label => html`
+          ${stackedXAxisLabels.map(label => html`
             <text class="chart-text chart-text-axis-x" x="${label.x}" y="${height - padding.bottom + labelOffsetY}" text-anchor="middle" style="font-size: 12px;">
               ${label.label}
             </text>

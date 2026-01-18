@@ -75,7 +75,7 @@ The card will be automatically registered as a Lovelace resource and will appear
 
 **Note:** If the card doesn't appear in the card picker, make sure:
 1. The resource is added in **Settings → Dashboards → Resources**
-2. The resource URL is correct: `/hacsfiles/octopus_energy_es_card/octopus-consumption-card.bundle.js` (for HACS) or `/local/community/octopus_energy_es/octopus-consumption-card.bundle.js` (for manual installation)
+2. The resource URL is correct: `/hacsfiles/ha-octopus-energy-es-card/octopus-consumption-card.bundle.js` (for HACS) or `/local/community/ha-octopus-energy-es-card/octopus-consumption-card.bundle.js` (for manual installation)
 3. The resource type is set to **JavaScript Module**
 4. Home Assistant has been restarted after installation
 5. Clear your browser cache or use incognito mode to ensure the latest version is loaded
@@ -85,17 +85,17 @@ The card will be automatically registered as a Lovelace resource and will appear
 ### 📁 Manual Installation
 
 1. Download `octopus-consumption-card.bundle.js` from the [latest release](https://github.com/bthos/ha-octopus-energy-es-card/releases)
-2. Copy to your `www/community/octopus_energy_es/` directory:
+2. Copy to your `www/community/ha-octopus-energy-es-card/` directory:
 
    ```bash
-   mkdir -p www/community/octopus_energy_es
-   cp octopus-consumption-card.bundle.js www/community/octopus_energy_es/
+   mkdir -p www/community/ha-octopus-energy-es-card
+   cp octopus-consumption-card.bundle.js www/community/ha-octopus-energy-es-card/
    ```
 
 3. Register the resource:
    - Go to **Settings → Dashboards → Resources**
    - Click **Add Resource**
-   - Enter: `/local/community/octopus_energy_es/octopus-consumption-card.bundle.js`
+   - Enter: `/local/community/ha-octopus-energy-es-card/octopus-consumption-card.bundle.js`
    - Type: **JavaScript Module**
    - Click **Create**
 4. **Restart Home Assistant**
@@ -413,7 +413,7 @@ If the card doesn't appear when clicking "Add Card":
 
 1. **Verify Resource Registration**:
    - Go to **Settings → Dashboards → Resources**
-   - Ensure the resource is listed with URL: `/hacsfiles/octopus_energy_es_card/octopus-consumption-card.bundle.js` (HACS) or `/local/community/octopus_energy_es/octopus-consumption-card.bundle.js` (manual)
+   - Ensure the resource is listed with URL: `/hacsfiles/ha-octopus-energy-es-card/octopus-consumption-card.bundle.js` (HACS) or `/local/community/ha-octopus-energy-es-card/octopus-consumption-card.bundle.js` (manual)
    - Resource type must be **JavaScript Module**
 
 2. **Check Browser Console**:
@@ -431,8 +431,8 @@ If the card doesn't appear when clicking "Add Card":
 
 4. **Verify File Access**:
    - Check that the bundle file exists at the specified path
-   - For HACS: Check `config/www/community/octopus_energy_es_card/octopus-consumption-card.bundle.js`
-   - For manual: Check `config/www/community/octopus_energy_es/octopus-consumption-card.bundle.js`
+   - For HACS: Check `config/www/community/ha-octopus-energy-es-card/octopus-consumption-card.bundle.js`
+   - For manual: Check `config/www/community/ha-octopus-energy-es-card/octopus-consumption-card.bundle.js`
 
 5. **Restart Home Assistant**:
    - After adding/updating the resource, restart Home Assistant completely

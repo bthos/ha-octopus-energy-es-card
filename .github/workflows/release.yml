@@ -88,7 +88,7 @@ jobs:
       - name: Verify bundle exists (from Build workflow)
         if: steps.check_last_commit.outputs.skip == 'false'
         run: |
-          BUNDLE_PATH="www/community/octopus_energy_es/octopus-consumption-card.bundle.js"
+          BUNDLE_PATH="www/community/ha-octopus-energy-es-card/octopus-consumption-card.bundle.js"
           if [ ! -f "$BUNDLE_PATH" ]; then
             echo "Error: Bundle file not found at $BUNDLE_PATH"
             echo "Bundle should be built by Build workflow before Release workflow runs"
@@ -104,7 +104,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add package.json src/octopus-consumption-card.ts
-          git add -f www/community/octopus_energy_es/octopus-consumption-card.bundle.js
+          git add -f www/community/ha-octopus-energy-es-card/octopus-consumption-card.bundle.js
           git commit -m "Bump version to ${{ steps.calculate_version.outputs.new_version }} [skip ci]" || echo "No changes to commit"
           git push || echo "Nothing to push"
 
@@ -204,7 +204,7 @@ jobs:
             ---
             *This release was automatically created after successful validation.*
           files: |
-            www/community/octopus_energy_es/octopus-consumption-card.bundle.js
+            www/community/ha-octopus-energy-es-card/octopus-consumption-card.bundle.js
           draft: false
           prerelease: false
 

@@ -63,36 +63,65 @@ export function generateYAxisLabels(
  */
 export function generateXAxisLabels(
   points: DataPoint[],
-  formatDate: (dateStr: string) => string
+  formatDate: (dateStr: string) => string,
+  period?: 'day' | 'week' | 'month' | 'year'
 ): Array<{ label: string; x: number }> {
   if (points.length === 0) return [];
   
   const labels: Array<{ label: string; x: number }> = [];
   
-  // Show all labels for better readability (like Octopus Energy España)
-  // But limit to reasonable number to avoid overcrowding
-  const maxLabels = 12; // Max labels to show (e.g., 12 months)
-  const step = Math.max(1, Math.floor(points.length / maxLabels));
-  
-  for (let i = 0; i < points.length; i += step) {
-    const point = points[i];
-    if (point?.timestamp) {
-      labels.push({
-        label: formatDate(point.timestamp),
-        x: point.x
-      });
+  // For month view, show all odd-numbered days (1, 3, 5, 7, etc.) like Octopus Energy España
+  if (period === 'month') {
+    for (let i = 0; i < points.length; i++) {
+      const point = points[i];
+      if (point?.timestamp) {
+        const date = new Date(point.timestamp);
+        const day = date.getDate();
+        // Show only odd-numbered days (1, 3, 5, 7, 9, etc.)
+        if (day % 2 === 1) {
+          labels.push({
+            label: formatDate(point.timestamp),
+            x: point.x
+          });
+        }
+      }
     }
-  }
-  
-  // Always include the last point if not already included
-  if (points.length > 0) {
-    const lastPoint = points[points.length - 1];
-    const lastLabel = labels[labels.length - 1];
-    if (lastPoint?.timestamp && (!lastLabel || lastLabel.x !== lastPoint.x)) {
-      labels.push({
-        label: formatDate(lastPoint.timestamp),
-        x: lastPoint.x
-      });
+    // Always include the last point if not already included
+    if (points.length > 0) {
+      const lastPoint = points[points.length - 1];
+      const lastLabel = labels[labels.length - 1];
+      if (lastPoint?.timestamp && (!lastLabel || lastLabel.x !== lastPoint.x)) {
+        labels.push({
+          label: formatDate(lastPoint.timestamp),
+          x: lastPoint.x
+        });
+      }
+    }
+  } else {
+    // For other periods, show labels with reasonable spacing
+    const maxLabels = period === 'year' ? 12 : period === 'week' ? 7 : 24;
+    const step = Math.max(1, Math.floor(points.length / maxLabels));
+    
+    for (let i = 0; i < points.length; i += step) {
+      const point = points[i];
+      if (point?.timestamp) {
+        labels.push({
+          label: formatDate(point.timestamp),
+          x: point.x
+        });
+      }
+    }
+    
+    // Always include the last point if not already included
+    if (points.length > 0) {
+      const lastPoint = points[points.length - 1];
+      const lastLabel = labels[labels.length - 1];
+      if (lastPoint?.timestamp && (!lastLabel || lastLabel.x !== lastPoint.x)) {
+        labels.push({
+          label: formatDate(lastPoint.timestamp),
+          x: lastPoint.x
+        });
+      }
     }
   }
   
@@ -133,8 +162,11 @@ export function formatDate(dateStr: string, period?: 'day' | 'week' | 'month' | 
       const weekStart = getWeekStart(date);
       return `Week ${getISOWeekNumber(weekStart)}`;
     } else if (period === 'month') {
-      // Format as day of month (e.g., "15")
-      return date.toLocaleDateString('en-US', { day: 'numeric' });
+      // Format as day number + abbreviated month (e.g., "8 ENE") - matching Octopus Energy España
+      const monthNames = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+      const day = date.getDate();
+      const month = monthNames[date.getMonth()];
+      return `${day} ${month}`;
     } else if (period === 'year') {
       // Format as abbreviated month name in Spanish (e.g., "ene", "feb", "mar") - matching Octopus Energy España
       const monthNames = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];

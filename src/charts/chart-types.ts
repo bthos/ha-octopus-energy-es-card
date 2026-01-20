@@ -14,6 +14,7 @@ export interface ChartColors {
   text: string;
   accent: string;
   primary: string;
+  hover?: string; // Hover color for bars/points
   error: string;
   warning: string;
   success: string;

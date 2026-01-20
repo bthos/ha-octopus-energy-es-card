@@ -1473,6 +1473,11 @@ export class OctopusConsumptionCard extends LitElement {
    * Render consumption view (time-series charts)
    */
   private _renderConsumptionView(): TemplateResult {
+    // Calculate total consumption for summary
+    const totalConsumption = this._consumptionData.reduce((sum, d) => 
+      sum + (d.consumption || d.value || 0), 0
+    );
+    
     return html`
       ${this.config.show_navigation !== false ? html`
         <div class="period-selector">
@@ -1480,25 +1485,33 @@ export class OctopusConsumptionCard extends LitElement {
             class="period-button ${this._currentPeriod === "day" ? "active" : ""}"
             @click=${() => this._setPeriod("day")}
           >
-            Day
+            Día
           </button>
           <button
             class="period-button ${this._currentPeriod === "week" ? "active" : ""}"
             @click=${() => this._setPeriod("week")}
           >
-            Week
+            Semana
           </button>
           <button
             class="period-button ${this._currentPeriod === "month" ? "active" : ""}"
             @click=${() => this._setPeriod("month")}
           >
-            Month
+            Mes
           </button>
+          ${this.config.view === "heat-calendar" && this.config.heat_calendar_period === "year" ? html`
+            <button
+              class="period-button"
+              disabled
+            >
+              Año
+            </button>
+          ` : ""}
         </div>
 
         <div class="navigation-controls">
           <button class="nav-button" @click=${() => this._navigatePeriod("prev")}>
-            ← Previous
+            ← Anterior
           </button>
           <button 
             class="nav-button" 
@@ -1506,8 +1519,28 @@ export class OctopusConsumptionCard extends LitElement {
             ?disabled=${this._wouldNavigateToFuture()}
             style=${this._wouldNavigateToFuture() ? "opacity: 0.5; cursor: not-allowed;" : ""}
           >
-            Next →
+            Siguiente →
           </button>
+        </div>
+      ` : ""}
+
+      ${this._consumptionData.length > 0 ? html`
+        <div class="consumption-summary-header">
+          <div class="summary-header-top">
+            <div class="summary-title-section">
+              <ha-icon icon="mdi:lightning-bolt" class="summary-icon"></ha-icon>
+              <h3 class="summary-title">Electricidad</h3>
+            </div>
+            <div class="summary-view-toggle">
+              <ha-icon icon="mdi:chart-line" class="view-icon active"></ha-icon>
+              <ha-icon icon="mdi:view-list" class="view-icon"></ha-icon>
+            </div>
+          </div>
+          <div class="summary-date-range">${this._formatDateRange()}</div>
+          <div class="summary-total-consumption">${totalConsumption.toLocaleString('es-ES', { 
+            minimumFractionDigits: 0, 
+            maximumFractionDigits: 0 
+          })} kWh</div>
         </div>
       ` : ""}
 
@@ -1624,18 +1657,24 @@ export class OctopusConsumptionCard extends LitElement {
   }
 
   /**
-   * Format date for display
+   * Format date for display (Spanish locale)
    */
-  private _formatDate(date: Date): string {
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
+  private _formatDate(date: Date, period?: 'day' | 'week' | 'month' | 'year'): string {
+    if (period === 'year') {
+      // For year view, show month abbreviation in Spanish
+      const monthNames = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+      return monthNames[date.getMonth()];
+    }
+    
+    return date.toLocaleDateString('es-ES', { 
       day: 'numeric',
-      year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+      month: 'long',
+      year: 'numeric'
     });
   }
 
   /**
-   * Format date range for display
+   * Format date range for display (Spanish locale)
    */
   private _formatDateRange(): string {
     const { startDate, endDate } = this._getDateRange();
@@ -1784,12 +1823,16 @@ export class OctopusConsumptionCard extends LitElement {
     );
 
     // Get colors - matching Octopus Energy España style
-    // Primary color should be vibrant pink/magenta like on their site
-    const primaryColor = this._getComputedColor('--primary-color', '#ff69b4'); // Bright pink like Octopus Energy
+    // Bar default color: purple/violet (#8B5CF6)
+    // Bar hover color: bright pink (#ff69b4)
+    const barDefaultColor = '#8B5CF6'; // Purple/violet like Octopus Energy España
+    const barHoverColor = '#ff69b4'; // Bright pink for hover
+    const primaryColor = this._getComputedColor('--primary-color', barDefaultColor);
     const colors = {
       text: this._getComputedColor('--secondary-text-color', '#b0b0b0'),
       accent: this._getComputedColor('--accent-color', '#ff9800'),
-      primary: primaryColor, // Use vibrant pink for bars
+      primary: primaryColor, // Use purple for default bars
+      hover: barHoverColor, // Bright pink for hover
       error: this._getComputedColor('--error-color', '#f44336'),
       warning: this._getComputedColor('--warning-color', '#ff9800'),
       success: this._getComputedColor('--success-color', '#4caf50'),

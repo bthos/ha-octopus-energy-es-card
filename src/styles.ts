@@ -274,6 +274,68 @@ export const cardStyles = css`
     font-size: 14px;
   }
 
+  .consumption-summary-header {
+    margin-bottom: 24px;
+    padding: 16px;
+    background: var(--card-background-color);
+    border-radius: 8px;
+  }
+
+  .summary-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .summary-title-section {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .summary-icon {
+    color: var(--primary-color);
+    font-size: 24px;
+  }
+
+  .summary-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+    color: var(--primary-text-color);
+  }
+
+  .summary-view-toggle {
+    display: flex;
+    gap: 8px;
+  }
+
+  .view-icon {
+    color: var(--secondary-text-color);
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+  }
+
+  .view-icon.active {
+    color: var(--primary-color);
+    opacity: 1;
+  }
+
+  .summary-date-range {
+    font-size: 14px;
+    color: var(--secondary-text-color);
+    margin-bottom: 8px;
+  }
+
+  .summary-total-consumption {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--primary-text-color);
+    line-height: 1.2;
+  }
+
   .consumption-summary {
     margin-bottom: 24px;
     padding: 16px;

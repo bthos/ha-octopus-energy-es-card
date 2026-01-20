@@ -334,6 +334,7 @@ export class CanvasChart {
 
   /**
    * Draw hover effect (highlight bar/point)
+   * For bars: change color to hover color instead of overlay
    */
   private _drawHoverEffect(point: DataPoint): void {
     if (!point) return;
@@ -341,19 +342,35 @@ export class CanvasChart {
     this.ctx.save();
     
     if (this.currentBarWidth > 0) {
-      // Highlight bar
+      // Change bar color to hover color (bright pink)
       const { height, padding } = this.config;
       const bottomY = height - padding.bottom;
       const barX = point.x - this.currentBarWidth / 2;
       const barTop = point.y;
       const barHeight = bottomY - barTop;
       
-      // Draw highlight overlay
-      this.ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-      this.ctx.fillRect(barX, barTop, this.currentBarWidth, barHeight);
+      // Use hover color if available, otherwise use primary color
+      const hoverColor = this.config.colors.hover || this.config.colors.primary;
+      this.ctx.fillStyle = hoverColor;
+      this.ctx.globalAlpha = 1.0;
+      
+      // Draw rounded rectangle with hover color
+      const cornerRadius = Math.min(this.currentBarWidth * 0.15, 4);
+      this.ctx.beginPath();
+      this.ctx.moveTo(barX + cornerRadius, barTop);
+      this.ctx.lineTo(barX + this.currentBarWidth - cornerRadius, barTop);
+      this.ctx.quadraticCurveTo(barX + this.currentBarWidth, barTop, barX + this.currentBarWidth, barTop + cornerRadius);
+      this.ctx.lineTo(barX + this.currentBarWidth, barTop + barHeight - cornerRadius);
+      this.ctx.quadraticCurveTo(barX + this.currentBarWidth, barTop + barHeight, barX + this.currentBarWidth - cornerRadius, barTop + barHeight);
+      this.ctx.lineTo(barX + cornerRadius, barTop + barHeight);
+      this.ctx.quadraticCurveTo(barX, barTop + barHeight, barX, barTop + barHeight - cornerRadius);
+      this.ctx.lineTo(barX, barTop + cornerRadius);
+      this.ctx.quadraticCurveTo(barX, barTop, barX + cornerRadius, barTop);
+      this.ctx.closePath();
+      this.ctx.fill();
     } else {
       // Highlight point with circle
-      this.ctx.fillStyle = this.config.colors.primary;
+      this.ctx.fillStyle = this.config.colors.hover || this.config.colors.primary;
       this.ctx.beginPath();
       this.ctx.arc(point.x, point.y, 6, 0, Math.PI * 2);
       this.ctx.fill();
@@ -376,16 +393,17 @@ export class CanvasChart {
     this.tooltipElement = document.createElement('div');
     this.tooltipElement.style.cssText = `
       position: fixed;
-      background: rgba(0, 0, 0, 0.9);
+      background: rgba(40, 26, 61, 0.95);
       color: #fff;
       padding: 8px 12px;
-      border-radius: 4px;
-      font-size: 12px;
+      border-radius: 8px;
+      font-size: 13px;
       pointer-events: none;
       z-index: 10000;
       display: none;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       font-family: Roboto, sans-serif;
+      white-space: nowrap;
     `;
     
     // Append to body or shadow root
@@ -399,28 +417,37 @@ export class CanvasChart {
 
   /**
    * Show tooltip at mouse position
+   * Format: value first, then date (matching Octopus Energy España)
    */
   private _showTooltip(mouseX: number, mouseY: number, point: DataPoint): void {
     if (!this.tooltipElement) return;
     
-    // Format tooltip content
-    const date = point.timestamp ? new Date(point.timestamp) : null;
-    const dateStr = date ? date.toLocaleDateString('es-ES', { 
-      day: 'numeric', 
-      month: 'short',
-      year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
-    }) : 'N/A';
-    const valueStr = point.value.toFixed(2);
+    // Format value with Spanish locale (comma as decimal separator)
+    const valueStr = point.value.toLocaleString('es-ES', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
     
+    // Format date as "8 ENE" (day + abbreviated month)
+    const date = point.timestamp ? new Date(point.timestamp) : null;
+    let dateStr = 'N/A';
+    if (date) {
+      const monthNames = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+      const day = date.getDate();
+      const month = monthNames[date.getMonth()];
+      dateStr = `${day} ${month}`;
+    }
+    
+    // Show value first, then date (matching Octopus Energy España)
     this.tooltipElement.innerHTML = `
-      <div style="font-weight: 500; margin-bottom: 4px;">${dateStr}</div>
-      <div>${valueStr} kWh</div>
+      <div style="font-size: 16px; font-weight: 600; color: #ff69b4; margin-bottom: 4px;">${valueStr} kWh</div>
+      <div style="font-weight: 500; color: #fff;">${dateStr}</div>
     `;
     
     this.tooltipElement.style.display = 'block';
     
     // Position tooltip near mouse cursor
-    const offset = 10;
+    const offset = 15;
     this.tooltipElement.style.left = `${mouseX + offset}px`;
     this.tooltipElement.style.top = `${mouseY + offset}px`;
     

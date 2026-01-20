@@ -2677,19 +2677,9 @@ export class OctopusConsumptionCard extends LitElement {
     
     // Group data based on period type
     // Week: group daily data by weeks
-    // Year (heat calendar): group daily data by months
-    const view = this.config.view;
-    const isHeatCalendarYear = view === "heat-calendar" && 
-                               this.config.heat_calendar_period === "year";
-    
     if (this._currentPeriod === "week" && values.length > 0) {
       // Group daily data by weeks
       const grouped = groupByWeeks(values, timestamps);
-      values = grouped.values;
-      timestamps = grouped.timestamps;
-    } else if (isHeatCalendarYear && values.length > 0) {
-      // Group daily data by months for year view
-      const grouped = groupByMonths(values, timestamps);
       values = grouped.values;
       timestamps = grouped.timestamps;
     }
@@ -2717,10 +2707,6 @@ export class OctopusConsumptionCard extends LitElement {
           // Group cost data the same way as consumption data
           if (this._currentPeriod === "week" && costValues.length > 0) {
             const grouped = groupByWeeks(costValues, costTimestamps);
-            costValues = grouped.values;
-            costTimestamps = grouped.timestamps;
-          } else if (isHeatCalendarYear && costValues.length > 0) {
-            const grouped = groupByMonths(costValues, costTimestamps);
             costValues = grouped.values;
             costTimestamps = grouped.timestamps;
           }
@@ -2807,7 +2793,7 @@ export class OctopusConsumptionCard extends LitElement {
     };
 
     // Determine period type for X-axis formatting
-    const periodType = isHeatCalendarYear ? 'year' : this._currentPeriod;
+    const periodType = this._currentPeriod;
     
     // Render based on chart type
     try {

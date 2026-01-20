@@ -54,33 +54,55 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
 
   static styles = editorStyles;
 
-  setConfig(config: OctopusConsumptionCardConfig): void {
-    // Ensure view is set (default to "consumption" if not specified)
-    const configWithView = {
-      ...config,
+  /**
+   * Apply default values to match card behavior
+   * Only applies defaults for undefined values
+   */
+  private _applyDefaults(config: OctopusConsumptionCardConfig): OctopusConsumptionCardConfig {
+    return {
+      type: config.type || "custom:octopus-consumption-card",
+      source_entry_id: config.source_entry_id || "",
       view: config.view || "consumption",
+      default_period: config.default_period || "week",
+      chart_type: config.chart_type || "line",
+      tariff_entry_ids: config.tariff_entry_ids || [],
+      show_cost_on_chart: config.show_cost_on_chart !== undefined ? config.show_cost_on_chart : false,
+      show_navigation: config.show_navigation !== undefined ? config.show_navigation : true,
+      show_period_distribution: config.show_period_distribution !== undefined ? config.show_period_distribution : false,
+      show_moving_average: config.show_moving_average !== undefined ? config.show_moving_average : false,
+      moving_average_days: config.moving_average_days || 7,
+      heat_calendar_period: config.heat_calendar_period || "month",
+      show_week_comparison: config.show_week_comparison !== undefined ? config.show_week_comparison : false,
+      week_comparison_count: config.week_comparison_count || 2,
+      show_cost_trend: config.show_cost_trend !== undefined ? config.show_cost_trend : false,
+      cost_moving_average_days: config.cost_moving_average_days || 30,
+      show_tariff_chart: config.show_tariff_chart !== undefined ? config.show_tariff_chart : true,
+      selected_tariff_for_cost: config.selected_tariff_for_cost,
+      consumption_sensor: config.consumption_sensor,
     };
+  }
+
+  setConfig(config: OctopusConsumptionCardConfig): void {
+    // Apply defaults to match card behavior
+    const configWithDefaults = this._applyDefaults(config);
     
     // Only update if config actually changed to prevent unnecessary updates
     const configStr = JSON.stringify(this._config);
-    const newConfigStr = JSON.stringify(configWithView);
+    const newConfigStr = JSON.stringify(configWithDefaults);
     if (configStr !== newConfigStr) {
-      this._config = configWithView;
+      this._config = configWithDefaults;
     }
   }
 
   protected willUpdate(changedProperties: PropertyValues): void {
     // Sync config before update to prevent update cycle
     if (changedProperties.has("config") && this.config) {
-      // Ensure view is set (default to "consumption" if not specified)
-      const configWithView = {
-        ...this.config,
-        view: this.config.view || "consumption",
-      };
+      // Apply defaults to match card behavior
+      const configWithDefaults = this._applyDefaults(this.config);
       const configStr = JSON.stringify(this._config);
-      const newConfigStr = JSON.stringify(configWithView);
+      const newConfigStr = JSON.stringify(configWithDefaults);
       if (configStr !== newConfigStr) {
-        this._config = configWithView;
+        this._config = configWithDefaults;
       }
     }
     // Update language if hass changed
@@ -95,15 +117,12 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
   protected firstUpdated(): void {
     // Initial sync if config was provided before first render
     if (this.config) {
-      // Ensure view is set (default to "consumption" if not specified)
-      const configWithView = {
-        ...this.config,
-        view: this.config.view || "consumption",
-      };
+      // Apply defaults to match card behavior
+      const configWithDefaults = this._applyDefaults(this.config);
       const configStr = JSON.stringify(this._config);
-      const newConfigStr = JSON.stringify(configWithView);
+      const newConfigStr = JSON.stringify(configWithDefaults);
       if (configStr !== newConfigStr) {
-        this._config = configWithView;
+        this._config = configWithDefaults;
       }
     }
     if (this.hass) {

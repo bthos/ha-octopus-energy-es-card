@@ -644,7 +644,84 @@ export class OctopusConsumptionCard extends LitElement {
     return { startDate, endDate };
   }
 
+  /**
+   * Check if navigating "next" would go into the future
+   */
+  private _wouldNavigateToFuture(): boolean {
+    const now = new Date();
+    now.setHours(23, 59, 59, 999); // End of today
+    
+    const view = this.config.view || "consumption";
+    const isHeatCalendarYear = view === "heat-calendar" && 
+                               this.config.heat_calendar_period === "year";
+    
+    if (isHeatCalendarYear) {
+      const nextYear = this._currentDate.getFullYear() + 1;
+      return nextYear > now.getFullYear();
+    }
+    
+    const testDate = new Date(this._currentDate);
+    if (this._currentPeriod === "day") {
+      testDate.setDate(testDate.getDate() + 1);
+    } else if (this._currentPeriod === "week") {
+      testDate.setDate(testDate.getDate() + 7);
+    } else if (this._currentPeriod === "month") {
+      testDate.setMonth(testDate.getMonth() + 1);
+    }
+    
+    // Check if the end date of the next period would be in the future
+    const { endDate } = this._getDateRangeForDate(testDate);
+    return endDate > now;
+  }
+
+  /**
+   * Get date range for a specific date (used for future check)
+   */
+  private _getDateRangeForDate(date: Date): { startDate: Date; endDate: Date } {
+    const view = this.config.view || "consumption";
+    const isHeatCalendarYear = view === "heat-calendar" && 
+                               this.config.heat_calendar_period === "year";
+    
+    if (isHeatCalendarYear) {
+      const selectedYear = date.getFullYear();
+      const now = new Date();
+      const isCurrentYear = selectedYear === now.getFullYear();
+      
+      const startDate = new Date(selectedYear, 0, 1);
+      startDate.setHours(0, 0, 0, 0);
+      
+      const endDate = isCurrentYear 
+        ? new Date(now)
+        : new Date(selectedYear, 11, 31);
+      endDate.setHours(23, 59, 59, 999);
+      
+      return { startDate, endDate };
+    }
+    
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+    
+    const startDate = new Date(endDate);
+    
+    if (this._currentPeriod === "day") {
+      startDate.setHours(0, 0, 0, 0);
+    } else if (this._currentPeriod === "week") {
+      startDate.setDate(startDate.getDate() - 6);
+      startDate.setHours(0, 0, 0, 0);
+    } else if (this._currentPeriod === "month") {
+      startDate.setDate(startDate.getDate() - 29);
+      startDate.setHours(0, 0, 0, 0);
+    }
+    
+    return { startDate, endDate };
+  }
+
   private _navigatePeriod(direction: "prev" | "next"): void {
+    // Prevent navigating to the future
+    if (direction === "next" && this._wouldNavigateToFuture()) {
+      return;
+    }
+    
     const change = direction === "prev" ? -1 : 1;
     
     // Check if heat calendar year view navigation is needed
@@ -1384,7 +1461,12 @@ export class OctopusConsumptionCard extends LitElement {
           <button class="nav-button" @click=${() => this._navigatePeriod("prev")}>
             ← Previous
           </button>
-          <button class="nav-button" @click=${() => this._navigatePeriod("next")}>
+          <button 
+            class="nav-button" 
+            @click=${() => this._navigatePeriod("next")}
+            ?disabled=${this._wouldNavigateToFuture()}
+            style=${this._wouldNavigateToFuture() ? "opacity: 0.5; cursor: not-allowed;" : ""}
+          >
             Next →
           </button>
         </div>
@@ -1406,7 +1488,12 @@ export class OctopusConsumptionCard extends LitElement {
           <button class="nav-button" @click=${() => this._navigatePeriod("prev")}>
             ${this.config.heat_calendar_period === "year" ? "← Previous Year" : "← Previous Month"}
           </button>
-          <button class="nav-button" @click=${() => this._navigatePeriod("next")}>
+          <button 
+            class="nav-button" 
+            @click=${() => this._navigatePeriod("next")}
+            ?disabled=${this._wouldNavigateToFuture()}
+            style=${this._wouldNavigateToFuture() ? "opacity: 0.5; cursor: not-allowed;" : ""}
+          >
             ${this.config.heat_calendar_period === "year" ? "Next Year →" : "Next Month →"}
           </button>
         </div>
@@ -1460,7 +1547,12 @@ export class OctopusConsumptionCard extends LitElement {
           <button class="nav-button" @click=${() => this._navigatePeriod("prev")}>
             ← Previous
           </button>
-          <button class="nav-button" @click=${() => this._navigatePeriod("next")}>
+          <button 
+            class="nav-button" 
+            @click=${() => this._navigatePeriod("next")}
+            ?disabled=${this._wouldNavigateToFuture()}
+            style=${this._wouldNavigateToFuture() ? "opacity: 0.5; cursor: not-allowed;" : ""}
+          >
             Next →
           </button>
         </div>
@@ -1492,9 +1584,43 @@ export class OctopusConsumptionCard extends LitElement {
     `;
   }
 
+  /**
+   * Format date for display
+   */
+  private _formatDate(date: Date): string {
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+    });
+  }
+
+  /**
+   * Format date range for display
+   */
+  private _formatDateRange(): string {
+    const { startDate, endDate } = this._getDateRange();
+    const startStr = this._formatDate(startDate);
+    const endStr = this._formatDate(endDate);
+    
+    if (startStr === endStr) {
+      return startStr;
+    }
+    
+    return `${startStr} - ${endStr}`;
+  }
+
   private _renderChart(): TemplateResult {
     if (this._consumptionData.length === 0) {
-      return html`<div class="loading">No consumption data available</div>`;
+      const dateRange = this._formatDateRange();
+      return html`
+        <div class="loading">
+          <div>No consumption data available</div>
+          <div style="margin-top: 8px; font-size: 12px; color: var(--secondary-text-color);">
+            Period: ${dateRange}
+          </div>
+        </div>
+      `;
     }
 
     // Return canvas element - actual rendering happens in _renderCanvasChart
@@ -1604,11 +1730,9 @@ export class OctopusConsumptionCard extends LitElement {
       this._chartInstance.resize(width, height);
     }
 
-    // Animation config
+    // Animation config - disabled for instant display
     const animationConfig: AnimationConfig = {
-      enabled: true,
-      duration: 800,
-      easing: 'easeOut'
+      enabled: false
     };
 
     // Render based on chart type

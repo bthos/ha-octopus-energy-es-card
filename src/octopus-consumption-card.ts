@@ -62,6 +62,7 @@ export class OctopusConsumptionCard extends LitElement {
   @state() private _weekComparisonData: WeekComparisonData | null = null;
   private _chartInstance: D3Chart | null = null;
   private _hasInitialData = false; // Track if we have loaded data at least once
+  private _hasAttemptedLoad = false; // Track if we have attempted to load data during initialization
   
   // Event handler references for proper cleanup (Home Assistant best practice)
   private _chartEventHandlers: {
@@ -261,6 +262,7 @@ export class OctopusConsumptionCard extends LitElement {
       if (oldConfig !== undefined && 
           oldConfig.source_entry_id !== this.config.source_entry_id) {
         this._hasInitialData = false;
+        this._hasAttemptedLoad = false; // Allow reloading with new entry ID
       }
       
       // Update state to match config changes
@@ -276,29 +278,34 @@ export class OctopusConsumptionCard extends LitElement {
     }
     
     // Handle hass updates (Home Assistant best practice: use strict equality for state changes)
-    // Throttle hass updates to prevent unnecessary re-renders
+    // Prevent constant reloading when hass object is updated frequently by Home Assistant
     if (changedProperties.has("hass")) {
       const oldHass = changedProperties.get("hass") as HomeAssistant | undefined;
       // Only react if hass actually changed (strict equality check)
       if (oldHass !== undefined && oldHass !== this.hass) {
-        // Hass object changed - check if we need to reload data
-        // Only reload if we have config but no data yet, or if critical entities changed
-        // Skip if navigation is in progress
+        // Hass object changed - but don't reload data unless we really need to
+        // Home Assistant updates hass object frequently, so we should only reload
+        // if we have no data AND haven't attempted to load yet
+        // Skip if navigation is in progress or data is already loading
         if (this.hass && 
             !this._loading && 
             !this._isNavigating &&
             !this._error && 
+            !this._hasAttemptedLoad &&
             this._consumptionData.length === 0 && 
             this.config?.source_entry_id) {
+          this._hasAttemptedLoad = true;
           this._loadData();
         }
-      } else if (this.hass && 
+      } else if (oldHass === undefined && this.hass && 
                  !this._loading && 
                  !this._isNavigating &&
                  !this._error && 
+                 !this._hasAttemptedLoad &&
                  this._consumptionData.length === 0 && 
                  this.config?.source_entry_id) {
-        // Initial hass assignment - load data if we have config
+        // Initial hass assignment - load data if we have config (only once)
+        this._hasAttemptedLoad = true;
         this._loadData();
       }
     }
@@ -636,6 +643,11 @@ export class OctopusConsumptionCard extends LitElement {
       }
 
       Logger.groupEnd();
+      
+      // Mark that we have initial data loaded after successful load
+      if (!this._hasInitialData) {
+        this._hasInitialData = true;
+      }
     } catch (error) {
       Logger.groupError("Error loading data");
       // Home Assistant best practice: Provide user-friendly error messages

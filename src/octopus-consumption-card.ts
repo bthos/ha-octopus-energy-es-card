@@ -831,34 +831,26 @@ export class OctopusConsumptionCard extends LitElement {
       const isHeatCalendarYear = this.config.heat_calendar_period === "year";
       
       if (isHeatCalendarYear) {
-        // For year view, fetch full year of data
+        // For year view, always fetch full year of data (January 1 - December 31)
         const selectedYear = this._currentDate.getFullYear();
-        const now = new Date();
-        const isCurrentYear = selectedYear === now.getFullYear();
         
         const startDate = new Date(selectedYear, 0, 1); // January 1st
         startDate.setHours(0, 0, 0, 0);
         
-        const endDate = isCurrentYear 
-          ? new Date(now) // Today if current year
-          : new Date(selectedYear, 11, 31); // December 31st if past year
+        const endDate = new Date(selectedYear, 11, 31); // December 31st
         endDate.setHours(23, 59, 59, 999);
         
         return { startDate, endDate };
       } else {
-        // For month view, fetch full month of daily data
+        // For month view, always fetch full month of daily data (1st to last day of month)
         const selectedDate = new Date(this._currentDate);
         const year = selectedDate.getFullYear();
         const month = selectedDate.getMonth();
-        const now = new Date();
-        const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
         
         const startDate = new Date(year, month, 1); // First day of month
         startDate.setHours(0, 0, 0, 0);
         
-        const endDate = isCurrentMonth 
-          ? new Date(now) // Today if current month
-          : new Date(year, month + 1, 0); // Last day of month
+        const endDate = new Date(year, month + 1, 0); // Last day of month
         endDate.setHours(23, 59, 59, 999);
         
         return { startDate, endDate };
@@ -979,32 +971,25 @@ export class OctopusConsumptionCard extends LitElement {
       const isHeatCalendarYear = this.config.heat_calendar_period === "year";
       
       if (isHeatCalendarYear) {
+        // For year view, always fetch full year of data (January 1 - December 31)
         const selectedYear = date.getFullYear();
-        const now = new Date();
-        const isCurrentYear = selectedYear === now.getFullYear();
         
-        const startDate = new Date(selectedYear, 0, 1);
+        const startDate = new Date(selectedYear, 0, 1); // January 1st
         startDate.setHours(0, 0, 0, 0);
         
-        const endDate = isCurrentYear 
-          ? new Date(now)
-          : new Date(selectedYear, 11, 31);
+        const endDate = new Date(selectedYear, 11, 31); // December 31st
         endDate.setHours(23, 59, 59, 999);
         
         return { startDate, endDate };
       } else {
-        // For month view, fetch full month of daily data
+        // For month view, always fetch full month of daily data (1st to last day of month)
         const year = date.getFullYear();
         const month = date.getMonth();
-        const now = new Date();
-        const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
         
         const startDate = new Date(year, month, 1); // First day of month
         startDate.setHours(0, 0, 0, 0);
         
-        const endDate = isCurrentMonth 
-          ? new Date(now) // Today if current month
-          : new Date(year, month + 1, 0); // Last day of month
+        const endDate = new Date(year, month + 1, 0); // Last day of month
         endDate.setHours(23, 59, 59, 999);
         
         return { startDate, endDate };

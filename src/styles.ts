@@ -155,6 +155,26 @@ export const cardStyles = css`
     color: var(--secondary-text-color);
   }
 
+  .card-content-wrapper {
+    position: relative;
+  }
+
+  .loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--card-background-color, rgba(255, 255, 255, 0.95));
+    opacity: 0.9;
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    border-radius: var(--ha-card-border-radius, 4px);
+  }
+
   .error {
     padding: 16px;
     background: var(--error-color);

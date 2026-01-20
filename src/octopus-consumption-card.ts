@@ -61,6 +61,7 @@ export class OctopusConsumptionCard extends LitElement {
   @state() private _currentDate: Date = new Date();
   @state() private _weekComparisonData: WeekComparisonData | null = null;
   private _chartInstance: D3Chart | null = null;
+  private _hasInitialData = false; // Track if we have loaded data at least once
   
   // Event handler references for proper cleanup (Home Assistant best practice)
   private _chartEventHandlers: {
@@ -255,6 +256,12 @@ export class OctopusConsumptionCard extends LitElement {
     if (changedProperties.has("config")) {
       const oldConfig = changedProperties.get("config") as OctopusConsumptionCardConfig | undefined;
       this._validateConfig();
+      
+      // Reset initial data flag if source entry ID changed (significant config change)
+      if (oldConfig !== undefined && 
+          oldConfig.source_entry_id !== this.config.source_entry_id) {
+        this._hasInitialData = false;
+      }
       
       // Update state to match config changes
       if (this.config.default_period && this._currentPeriod !== this.config.default_period) {
@@ -639,6 +646,11 @@ export class OctopusConsumptionCard extends LitElement {
       Logger.error("Error loading data: ", this._extractErrorMessage(error));
       Logger.data("Error details", error);
       Logger.groupEnd();
+      
+      // Mark that we have initial data loaded
+      if (!this._hasInitialData && this._consumptionData.length > 0) {
+        this._hasInitialData = true;
+      }
     } finally {
       // Home Assistant best practice: Always reset loading state
       this._loading = false;
@@ -1638,7 +1650,8 @@ export class OctopusConsumptionCard extends LitElement {
   protected render(): TemplateResult {
     const language = this.hass?.language || 'en';
     
-    if (this._loading) {
+    // Show full loading screen only on initial load (when we don't have data yet)
+    if (this._loading && !this._hasInitialData) {
       return html`
         <div class="loading">
           <ha-circular-progress indeterminate></ha-circular-progress>
@@ -1671,10 +1684,17 @@ export class OctopusConsumptionCard extends LitElement {
     const view = this.config.view || "consumption";
 
     return html`
-      ${view === "consumption" ? this._renderConsumptionView() : ""}
-      ${view === "heat-calendar" ? this._renderHeatCalendarView() : ""}
-      ${view === "week-analysis" ? this._renderWeekAnalysisView() : ""}
-      ${view === "tariff-comparison" ? this._renderTariffComparisonView() : ""}
+      <div class="card-content-wrapper">
+        ${this._loading && this._hasInitialData ? html`
+          <div class="loading-overlay">
+            <ha-circular-progress indeterminate style="--mdc-theme-primary: var(--primary-color);"></ha-circular-progress>
+          </div>
+        ` : ""}
+        ${view === "consumption" ? this._renderConsumptionView() : ""}
+        ${view === "heat-calendar" ? this._renderHeatCalendarView() : ""}
+        ${view === "week-analysis" ? this._renderWeekAnalysisView() : ""}
+        ${view === "tariff-comparison" ? this._renderTariffComparisonView() : ""}
+      </div>
     `;
   }
 

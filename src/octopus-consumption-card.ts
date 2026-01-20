@@ -20,7 +20,7 @@ import { Logger } from "./logger";
 import { cardStyles } from "./styles";
 import { CanvasChart } from "./charts";
 import type { ChartData, StackedData, AnimationConfig, ChartConfig } from "./charts";
-import { prepareChartData, calculatePoints } from "./charts/chart-utils";
+import { prepareChartData, calculatePoints, groupByWeeks, groupByMonths } from "./charts/chart-utils";
 
 // Home Assistant types
 interface HomeAssistant {
@@ -148,6 +148,41 @@ export class OctopusConsumptionCard extends LitElement {
       if (changedProperties.get("config") !== undefined) {
         this._loadData();
       }
+    }
+    
+    // Ensure we load data when period or date changes
+    // Note: _navigatePeriod() and _setPeriod() already call _loadData() directly,
+    // but this check ensures data is loaded even if period/date changes through other means
+    // The !this._loading check prevents duplicate calls when _loadData() is already in progress
+    if ((changedProperties.has("_currentPeriod") || changedProperties.has("_currentDate")) &&
+        !this._loading &&
+        this.hass &&
+        this.config?.source_entry_id &&
+        !this._error) {
+      // Check if this is a real change (not initial set)
+      const oldPeriod = changedProperties.get("_currentPeriod");
+      const oldDate = changedProperties.get("_currentDate");
+      const periodChanged = changedProperties.has("_currentPeriod") && 
+                           oldPeriod !== undefined && 
+                           oldPeriod !== this._currentPeriod;
+      const dateChanged = changedProperties.has("_currentDate") && 
+                         oldDate !== undefined &&
+                         oldDate.getTime() !== this._currentDate.getTime();
+      
+      if (periodChanged || dateChanged) {
+        this._loadData();
+      }
+    }
+    
+    // Ensure we try to load data if hass becomes available and we don't have data yet
+    // This handles cases where hass might be set after config
+    if (changedProperties.has("hass") && 
+        this.hass && 
+        !this._loading && 
+        !this._error && 
+        this._consumptionData.length === 0 && 
+        this.config?.source_entry_id) {
+      this._loadData();
     }
     
     // Render canvas chart when data or config changes
@@ -487,12 +522,16 @@ export class OctopusConsumptionCard extends LitElement {
     endDate: Date
   ): Promise<FetchConsumptionResult> {
     // Determine granularity based on period and view
+    // Day: hourly consumption
+    // Week: daily consumption (will be grouped by weeks)
+    // Month: daily consumption
+    // Year (heat calendar): daily consumption (will be aggregated by months)
     const view = this.config.view || "consumption";
     const isHeatCalendarYear = view === "heat-calendar" && 
                                this.config.heat_calendar_period === "year";
     const granularity = isHeatCalendarYear 
-      ? "daily" // Year view always needs daily data
-      : (this._currentPeriod === "day" ? "hourly" : this._currentPeriod === "week" ? "hourly" : "daily");
+      ? "daily" // Year view uses daily data, aggregated by months
+      : (this._currentPeriod === "day" ? "hourly" : "daily"); // Week and month use daily
     
     let rawResponse: any;
     try {
@@ -1611,7 +1650,13 @@ export class OctopusConsumptionCard extends LitElement {
   }
 
   private _renderChart(): TemplateResult {
-    if (this._consumptionData.length === 0) {
+    // Show loading indicator while fetching data
+    if (this._loading) {
+      return html`<div class="loading">Loading consumption data...</div>`;
+    }
+
+    // Show "No consumption data" only if loading is complete, no error, and no data
+    if (!this._loading && !this._error && this._consumptionData.length === 0) {
       const dateRange = this._formatDateRange();
       return html`
         <div class="loading">
@@ -1636,7 +1681,8 @@ export class OctopusConsumptionCard extends LitElement {
 
   private async _renderCanvasChart(): Promise<void> {
     const canvas = this.shadowRoot?.querySelector('#chart-canvas') as HTMLCanvasElement;
-    if (!canvas || this._consumptionData.length === 0) {
+    // Only render if canvas exists, not loading, no error, and we have data
+    if (!canvas || this._loading || this._error || this._consumptionData.length === 0) {
       return;
     }
 
@@ -1644,7 +1690,30 @@ export class OctopusConsumptionCard extends LitElement {
     const width = 800;
     const height = 300;
     
-    // Prepare cost data if enabled
+    // Prepare chart data with grouping based on period
+    let values = this._consumptionData.map(d => d.consumption || d.value || 0);
+    let timestamps = this._consumptionData.map(d => d.start_time || d.date || '');
+    
+    // Group data based on period type
+    // Week: group daily data by weeks
+    // Year (heat calendar): group daily data by months
+    const view = this.config.view || "consumption";
+    const isHeatCalendarYear = view === "heat-calendar" && 
+                               this.config.heat_calendar_period === "year";
+    
+    if (this._currentPeriod === "week" && values.length > 0) {
+      // Group daily data by weeks
+      const grouped = groupByWeeks(values, timestamps);
+      values = grouped.values;
+      timestamps = grouped.timestamps;
+    } else if (isHeatCalendarYear && values.length > 0) {
+      // Group daily data by months for year view
+      const grouped = groupByMonths(values, timestamps);
+      values = grouped.values;
+      timestamps = grouped.timestamps;
+    }
+    
+    // Prepare cost data if enabled (after grouping consumption data)
     let costData: ChartData | undefined;
     const costEnabled = !!(this.config.show_cost_on_chart && 
                         this.config.selected_tariff_for_cost && 
@@ -1653,18 +1722,31 @@ export class OctopusConsumptionCard extends LitElement {
     if (costEnabled && this._tariffCosts && this.config.selected_tariff_for_cost) {
       const tariffCost = this._tariffCosts[this.config.selected_tariff_for_cost];
       if (tariffCost) {
-        const breakdown = this._currentPeriod === "month" 
-          ? tariffCost.daily_breakdown 
-          : tariffCost.hourly_breakdown;
+        // Use daily breakdown for week and month periods, hourly for day
+        const breakdown = this._currentPeriod === "day" 
+          ? tariffCost.hourly_breakdown 
+          : tariffCost.daily_breakdown;
         
         if (breakdown && breakdown.length > 0) {
-          const costValues = breakdown.map((item: { cost: number }) => item.cost);
-          const consumptionValues = this._consumptionData.map(d => d.consumption || d.value || 0);
+          let costValues = breakdown.map((item: { cost: number }) => item.cost);
+          let costTimestamps = breakdown.map((item: { timestamp?: string; date?: string }) => 
+            item.timestamp || item.date || ''
+          );
           
-          if (costValues.length === consumptionValues.length) {
+          // Group cost data the same way as consumption data
+          if (this._currentPeriod === "week" && costValues.length > 0) {
+            const grouped = groupByWeeks(costValues, costTimestamps);
+            costValues = grouped.values;
+            costTimestamps = grouped.timestamps;
+          } else if (isHeatCalendarYear && costValues.length > 0) {
+            const grouped = groupByMonths(costValues, costTimestamps);
+            costValues = grouped.values;
+            costTimestamps = grouped.timestamps;
+          }
+          
+          if (costValues.length === values.length) {
             const maxCost = Math.max(...costValues, 0.01);
             const minCost = Math.min(...costValues, 0);
-            const timestamps = this._consumptionData.map(d => d.start_time || d.date || '');
             const tempConfig: ChartConfig = {
               width,
               height,
@@ -1673,7 +1755,7 @@ export class OctopusConsumptionCard extends LitElement {
             };
             
             costData = {
-              points: calculatePoints(costValues, tempConfig, minCost, maxCost, timestamps),
+              points: calculatePoints(costValues, tempConfig, minCost, maxCost, costTimestamps),
               minValue: minCost,
               maxValue: maxCost,
               range: maxCost - minCost || 1
@@ -1685,10 +1767,7 @@ export class OctopusConsumptionCard extends LitElement {
 
     const rightPadding = costData ? 60 : 20;
     const padding = { top: 20, right: rightPadding, bottom: 40, left: 60 };
-
-    // Prepare chart data
-    const values = this._consumptionData.map(d => d.consumption || d.value || 0);
-    const timestamps = this._consumptionData.map(d => d.start_time || d.date || '');
+    
     const chartData: ChartData = prepareChartData(values, timestamps);
     const tempConfig: ChartConfig = {
       width,
@@ -1704,18 +1783,20 @@ export class OctopusConsumptionCard extends LitElement {
       timestamps
     );
 
-    // Get colors
+    // Get colors - matching Octopus Energy España style
+    // Primary color should be vibrant pink/magenta like on their site
+    const primaryColor = this._getComputedColor('--primary-color', '#ff69b4'); // Bright pink like Octopus Energy
     const colors = {
-      text: this._getComputedColor('--secondary-text-color', '#888'),
+      text: this._getComputedColor('--secondary-text-color', '#b0b0b0'),
       accent: this._getComputedColor('--accent-color', '#ff9800'),
-      primary: this._getComputedColor('--primary-color', '#03a9f4'),
+      primary: primaryColor, // Use vibrant pink for bars
       error: this._getComputedColor('--error-color', '#f44336'),
       warning: this._getComputedColor('--warning-color', '#ff9800'),
       success: this._getComputedColor('--success-color', '#4caf50'),
       info: this._getComputedColor('--info-color', '#2196f3'),
       background: this._getComputedColor('--card-background-color', '#fff'),
-      grid: this._getComputedColor('--divider-color', '#e0e0e0'),
-      axis: this._getComputedColor('--divider-color', '#e0e0e0')
+      grid: this._getComputedColor('--divider-color', 'rgba(255, 255, 255, 0.1)'), // Subtle grid lines
+      axis: this._getComputedColor('--divider-color', 'rgba(255, 255, 255, 0.2)') // Slightly more visible axis
     };
 
     // Create or update chart instance
@@ -1735,6 +1816,9 @@ export class OctopusConsumptionCard extends LitElement {
       enabled: false
     };
 
+    // Determine period type for X-axis formatting
+    const periodType = isHeatCalendarYear ? 'year' : this._currentPeriod;
+    
     // Render based on chart type
     try {
       switch (chartType) {
@@ -1745,21 +1829,27 @@ export class OctopusConsumptionCard extends LitElement {
             movingAverageDays: this.config.moving_average_days || 7,
             showCostAxis: !!(costEnabled && costData),
             costData,
-            animation: animationConfig
+            animation: animationConfig,
+            period: periodType,
+            interactive: true // Enable tooltips
           });
           break;
         case 'bar':
           await this._chartInstance.renderBarChart(chartData, {
             showCostOverlay: !!(costEnabled && costData),
             costData,
-            animation: animationConfig
+            animation: animationConfig,
+            period: periodType,
+            interactive: true // Enable tooltips
           });
           break;
         case 'stacked-area':
           const stackedData = this._prepareStackedData();
           if (stackedData) {
             await this._chartInstance.renderStackedAreaChart(stackedData, {
-              animation: animationConfig
+              animation: animationConfig,
+              period: periodType,
+              interactive: true // Enable tooltips
             });
           } else {
             // Show error message in canvas parent

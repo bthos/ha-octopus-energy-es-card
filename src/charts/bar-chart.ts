@@ -59,7 +59,8 @@ export async function renderBarChart(
     5,
     config
   );
-  const xAxisLabels = generateXAxisLabels(points, formatDate);
+  const period = options?.period || 'month';
+  const xAxisLabels = generateXAxisLabels(points, (dateStr) => formatDate(dateStr, period));
   const gridLines = generateGridLines(yAxisLabels, config);
 
   // Draw grid lines
@@ -165,6 +166,31 @@ export async function renderBarChart(
   }
 }
 
+/**
+ * Draw rounded rectangle (like Octopus Energy España style)
+ */
+function drawRoundedRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number
+): void {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + width - radius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+  ctx.lineTo(x + width, y + height - radius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  ctx.lineTo(x + radius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+  ctx.fill();
+}
+
 async function drawBars(
   ctx: CanvasRenderingContext2D,
   config: ChartConfig,
@@ -178,10 +204,11 @@ async function drawBars(
 
   const { height, padding } = config;
   const bottomY = height - padding.bottom;
+  const cornerRadius = Math.min(barWidth * 0.15, 4); // Rounded corners like Octopus Energy
 
   ctx.save();
   ctx.fillStyle = color;
-  ctx.globalAlpha = 0.7;
+  ctx.globalAlpha = 1.0; // Full opacity like Octopus Energy
 
   if (animConfig.enabled) {
     const duration = animConfig.duration || 800;
@@ -203,8 +230,9 @@ async function drawBars(
         (progress) => {
           const currentHeight = maxHeight * progress;
           const currentTop = bottomY - currentHeight;
-
-          ctx.fillRect(barX, currentTop, barWidth, currentHeight);
+          
+          // Draw rounded rectangle
+          drawRoundedRect(ctx, barX, currentTop, barWidth, currentHeight, cornerRadius);
         },
         delay + i * barDelay
       );
@@ -215,7 +243,8 @@ async function drawBars(
       const barTop = point.y;
       const barHeight = bottomY - barTop;
 
-      ctx.fillRect(barX, barTop, barWidth, barHeight);
+      // Draw rounded rectangle
+      drawRoundedRect(ctx, barX, barTop, barWidth, barHeight, cornerRadius);
     });
   }
 

@@ -56,6 +56,7 @@ export interface AnimationConfig {
 export interface ChartOptions {
   animation?: AnimationConfig;
   interactive?: boolean; // включить tooltips и hover эффекты
+  period?: 'day' | 'week' | 'month' | 'year'; // Period type for proper X-axis formatting
 }
 
 export interface LineChartOptions extends ChartOptions {

@@ -59,7 +59,7 @@ export function generateYAxisLabels(
 }
 
 /**
- * Generate X-axis labels (first, middle, last)
+ * Generate X-axis labels - show all labels like Octopus Energy España
  */
 export function generateXAxisLabels(
   points: DataPoint[],
@@ -69,32 +69,29 @@ export function generateXAxisLabels(
   
   const labels: Array<{ label: string; x: number }> = [];
   
-  // First point
-  if (points[0]?.timestamp) {
-    labels.push({
-      label: formatDate(points[0].timestamp),
-      x: points[0].x
-    });
-  }
+  // Show all labels for better readability (like Octopus Energy España)
+  // But limit to reasonable number to avoid overcrowding
+  const maxLabels = 12; // Max labels to show (e.g., 12 months)
+  const step = Math.max(1, Math.floor(points.length / maxLabels));
   
-  // Middle point
-  if (points.length > 2) {
-    const midIndex = Math.floor(points.length / 2);
-    if (points[midIndex]?.timestamp) {
+  for (let i = 0; i < points.length; i += step) {
+    const point = points[i];
+    if (point?.timestamp) {
       labels.push({
-        label: formatDate(points[midIndex].timestamp),
-        x: points[midIndex].x
+        label: formatDate(point.timestamp),
+        x: point.x
       });
     }
   }
   
-  // Last point
-  if (points.length > 1 && points[points.length - 1]?.timestamp) {
-    const timestamp = points[points.length - 1].timestamp;
-    if (timestamp) {
+  // Always include the last point if not already included
+  if (points.length > 0) {
+    const lastPoint = points[points.length - 1];
+    const lastLabel = labels[labels.length - 1];
+    if (lastPoint?.timestamp && (!lastLabel || lastLabel.x !== lastPoint.x)) {
       labels.push({
-        label: formatDate(timestamp),
-        x: points[points.length - 1].x
+        label: formatDate(lastPoint.timestamp),
+        x: lastPoint.x
       });
     }
   }
@@ -122,16 +119,36 @@ export function generateGridLines(
 }
 
 /**
- * Format date for X-axis labels
+ * Format date for X-axis labels based on period type
  */
-export function formatDate(dateStr: string): string {
+export function formatDate(dateStr: string, period?: 'day' | 'week' | 'month' | 'year'): string {
   try {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    
+    if (period === 'day') {
+      // Format as hour:minute for hourly data (e.g., "14:00")
+      return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: false });
+    } else if (period === 'week') {
+      // Format as week number (e.g., "Week 3")
+      const weekStart = getWeekStart(date);
+      return `Week ${getISOWeekNumber(weekStart)}`;
+    } else if (period === 'month') {
+      // Format as day of month (e.g., "15")
+      return date.toLocaleDateString('en-US', { day: 'numeric' });
+    } else if (period === 'year') {
+      // Format as abbreviated month name in Spanish (e.g., "ene", "feb", "mar") - matching Octopus Energy España
+      const monthNames = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+      return monthNames[date.getMonth()];
+    }
+    
+    // Default: abbreviated month name in Spanish
+    const monthNames = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    return monthNames[date.getMonth()];
   } catch {
     return dateStr.split('T')[0];
   }
 }
+
 
 /**
  * Format value for Y-axis labels
@@ -211,4 +228,105 @@ export function prepareChartData(
     maxValue,
     range
   };
+}
+
+/**
+ * Group daily data by weeks (ISO weeks)
+ * Returns aggregated weekly data with week start timestamps
+ */
+export function groupByWeeks(
+  values: number[],
+  timestamps: string[]
+): { values: number[]; timestamps: string[] } {
+  if (values.length === 0 || timestamps.length === 0) {
+    return { values: [], timestamps: [] };
+  }
+  
+  const weekMap = new Map<string, { sum: number; count: number; weekStart: Date }>();
+  
+  for (let i = 0; i < values.length; i++) {
+    const date = new Date(timestamps[i]);
+    const weekStart = getWeekStart(date);
+    const weekKey = weekStart.toISOString().split('T')[0];
+    
+    if (!weekMap.has(weekKey)) {
+      weekMap.set(weekKey, { sum: 0, count: 0, weekStart });
+    }
+    
+    const weekData = weekMap.get(weekKey)!;
+    weekData.sum += values[i];
+    weekData.count += 1;
+  }
+  
+  // Sort by week start date
+  const sortedWeeks = Array.from(weekMap.entries()).sort((a, b) => 
+    a[1].weekStart.getTime() - b[1].weekStart.getTime()
+  );
+  
+  return {
+    values: sortedWeeks.map(week => week[1].sum),
+    timestamps: sortedWeeks.map(week => week[1].weekStart.toISOString())
+  };
+}
+
+/**
+ * Group daily data by months
+ * Returns aggregated monthly data with month start timestamps
+ */
+export function groupByMonths(
+  values: number[],
+  timestamps: string[]
+): { values: number[]; timestamps: string[] } {
+  if (values.length === 0 || timestamps.length === 0) {
+    return { values: [], timestamps: [] };
+  }
+  
+  const monthMap = new Map<string, { sum: number; count: number; monthStart: Date }>();
+  
+  for (let i = 0; i < values.length; i++) {
+    const date = new Date(timestamps[i]);
+    const monthStart = new Date(date.getFullYear(), date.getMonth(), 1);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    
+    if (!monthMap.has(monthKey)) {
+      monthMap.set(monthKey, { sum: 0, count: 0, monthStart });
+    }
+    
+    const monthData = monthMap.get(monthKey)!;
+    monthData.sum += values[i];
+    monthData.count += 1;
+  }
+  
+  // Sort by month start date
+  const sortedMonths = Array.from(monthMap.entries()).sort((a, b) => 
+    a[1].monthStart.getTime() - b[1].monthStart.getTime()
+  );
+  
+  return {
+    values: sortedMonths.map(month => month[1].sum),
+    timestamps: sortedMonths.map(month => month[1].monthStart.toISOString())
+  };
+}
+
+/**
+ * Get start of ISO week (Monday) for a date
+ */
+function getWeekStart(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+  const weekStart = new Date(d.setDate(diff));
+  weekStart.setHours(0, 0, 0, 0);
+  return weekStart;
+}
+
+/**
+ * Get ISO week number for a date
+ */
+function getISOWeekNumber(date: Date): number {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
 }

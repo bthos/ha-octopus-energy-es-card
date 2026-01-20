@@ -28,13 +28,14 @@ export class ChartRenderer {
   }
 
   /**
-   * Draw grid lines
+   * Draw grid lines (horizontal lines for better readability)
    */
   drawGridLines(gridLines: GridLine[], color: string): void {
     this.ctx.save();
     this.ctx.strokeStyle = color;
     this.ctx.lineWidth = 1;
-    this.ctx.setLineDash([2, 2]);
+    this.ctx.globalAlpha = 0.2; // Make grid lines more subtle
+    this.ctx.setLineDash([]); // Solid lines like Octopus Energy
 
     gridLines.forEach(line => {
       this.ctx.beginPath();
@@ -88,7 +89,7 @@ export class ChartRenderer {
   }
 
   /**
-   * Draw Y-axis labels (left side)
+   * Draw Y-axis labels (left side) - improved styling like Octopus Energy
    */
   drawYAxisLabels(
     labels: AxisLabel[],
@@ -101,9 +102,10 @@ export class ChartRenderer {
 
     this.ctx.save();
     this.ctx.fillStyle = color;
-    this.ctx.font = `12px ${this.config.fontFamily || 'Roboto, sans-serif'}`;
+    this.ctx.font = `13px ${this.config.fontFamily || 'Roboto, sans-serif'}`;
     this.ctx.textAlign = 'end';
     this.ctx.textBaseline = 'middle';
+    this.ctx.globalAlpha = 0.9; // Slightly transparent for better readability
 
     labels.forEach(label => {
       const text = format(label.value) + suffix;
@@ -140,7 +142,7 @@ export class ChartRenderer {
   }
 
   /**
-   * Draw X-axis labels
+   * Draw X-axis labels - improved styling like Octopus Energy
    */
   drawXAxisLabels(
     labels: Array<{ label: string; x: number }>,
@@ -151,9 +153,10 @@ export class ChartRenderer {
 
     this.ctx.save();
     this.ctx.fillStyle = color;
-    this.ctx.font = `12px ${this.config.fontFamily || 'Roboto, sans-serif'}`;
+    this.ctx.font = `13px ${this.config.fontFamily || 'Roboto, sans-serif'}`;
     this.ctx.textAlign = 'center';
     this.ctx.textBaseline = 'top';
+    this.ctx.globalAlpha = 0.9; // Slightly transparent for better readability
 
     labels.forEach(label => {
       this.ctx.fillText(label.label, label.x, labelY);

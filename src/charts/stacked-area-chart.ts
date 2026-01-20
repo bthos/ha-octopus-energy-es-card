@@ -67,7 +67,8 @@ export async function renderStackedAreaChart(
     timestamps
   );
 
-  const xAxisLabels = generateXAxisLabels(firstLayerPoints, formatDate);
+  const period = options?.period || 'month';
+  const xAxisLabels = generateXAxisLabels(firstLayerPoints, (dateStr) => formatDate(dateStr, period));
   const gridLines = generateGridLines(yAxisLabels, config);
 
   // Draw grid lines

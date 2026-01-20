@@ -62,7 +62,8 @@ export async function renderLineChart(
     5,
     config
   );
-  const xAxisLabels = generateXAxisLabels(points, formatDate);
+  const period = options?.period || 'month';
+  const xAxisLabels = generateXAxisLabels(points, (dateStr) => formatDate(dateStr, period));
   const gridLines = generateGridLines(yAxisLabels, config);
 
   // Draw grid lines

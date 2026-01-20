@@ -341,10 +341,21 @@ export class OctopusConsumptionCard extends LitElement {
     }
     
     // Render D3 chart when data changes (separate concern from data loading)
+    // Also check if loading just finished (for navigation scenarios)
+    const loadingFinished = changedProperties.has("_loading") && 
+                           this._loading === false && 
+                           changedProperties.get("_loading") === true;
+    
     if (changedProperties.has("_consumptionData") || 
         changedProperties.has("_tariffCosts") ||
-        (changedProperties.has("config") && this._consumptionData.length > 0)) {
-      this._renderD3Chart();
+        (changedProperties.has("config") && this._consumptionData.length > 0) ||
+        loadingFinished) {
+      // Use requestAnimationFrame to ensure DOM is ready and container exists
+      requestAnimationFrame(() => {
+        if (this.config.view === "consumption" && this._consumptionData.length > 0 && !this._loading && !this._error) {
+          this._renderD3Chart();
+        }
+      });
     }
   }
 
@@ -1403,6 +1414,13 @@ export class OctopusConsumptionCard extends LitElement {
     // Load data asynchronously (fetch without page refresh)
     this._loadData().finally(() => {
       this._isNavigating = false;
+      // Ensure chart is re-rendered after navigation completes
+      // Use requestAnimationFrame to ensure DOM is updated
+      requestAnimationFrame(() => {
+        if (this.config.view === "consumption" && this._consumptionData.length > 0 && !this._loading && !this._error) {
+          this._renderD3Chart();
+        }
+      });
     });
   }
 
@@ -2640,7 +2658,12 @@ export class OctopusConsumptionCard extends LitElement {
   private async _renderD3Chart(): Promise<void> {
     const container = this.shadowRoot?.querySelector('#chart-container') as HTMLElement;
     // Only render if container exists, not loading, no error, and we have data
-    if (!container || this._loading || this._error || this._consumptionData.length === 0) {
+    // Also check that we're in consumption view
+    if (!container || 
+        this._loading || 
+        this._error || 
+        this._consumptionData.length === 0 ||
+        this.config.view !== "consumption") {
       return;
     }
 

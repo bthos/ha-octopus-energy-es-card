@@ -1730,7 +1730,7 @@ export class OctopusConsumptionCard extends LitElement {
               class="period-button"
               disabled
             >
-              Año
+              ${localize("editor.heat_calendar_period_year", language)}
             </button>
           ` : ""}
         </div>

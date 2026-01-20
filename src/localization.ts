@@ -97,6 +97,48 @@ export const translations: Record<string, Translations> = {
     "chart.accessibility.title_with_data": "Energy consumption chart. {period}. Total: {total} kWh",
     "chart.print.header": "Energy Consumption Chart",
     
+    // Card UI Text
+    "card.loading": "Loading consumption data...",
+    "card.error.configuration_required": "Configuration Required",
+    "card.error.unable_to_load": "Unable to Load Data",
+    "card.error.config_help": "Click the ⋮ menu in the top-right corner of this card and select Edit to configure it.",
+    "card.button.retry": "Retry",
+    "card.button.previous": "← Previous",
+    "card.button.next": "Next →",
+    "card.title.electricity": "Electricity",
+    "card.heat_calendar.unavailable": "Heat Calendar Unavailable",
+    "card.heat_calendar.unavailable_details": "Heat calendar view requires consumption data. Please ensure data is available for the selected period.",
+    "card.week_comparison.not_enabled": "Week Comparison Not Enabled",
+    "card.week_comparison.not_enabled_details": "Week comparison is not enabled in the card configuration. Please edit the card and enable 'Show Week Comparison'.",
+    "card.week_comparison.no_data": "No week comparison data available",
+    "card.tariff_comparison.loading": "Loading tariff comparison...",
+    "card.no_data": "No consumption data available",
+    "card.stacked_area.unavailable": "Stacked Area Chart Unavailable",
+    "card.stacked_area.unavailable_details": "Stacked area chart requires period breakdown data (P1/P2/P3). This data may not be available for the selected tariff or period.",
+    
+    // Month names (short)
+    "card.month.jan": "Jan",
+    "card.month.feb": "Feb",
+    "card.month.mar": "Mar",
+    "card.month.apr": "Apr",
+    "card.month.may": "May",
+    "card.month.jun": "Jun",
+    "card.month.jul": "Jul",
+    "card.month.aug": "Aug",
+    "card.month.sep": "Sep",
+    "card.month.oct": "Oct",
+    "card.month.nov": "Nov",
+    "card.month.dec": "Dec",
+    
+    // Day names (short)
+    "card.day.sun": "Sun",
+    "card.day.mon": "Mon",
+    "card.day.tue": "Tue",
+    "card.day.wed": "Wed",
+    "card.day.thu": "Thu",
+    "card.day.fri": "Fri",
+    "card.day.sat": "Sat",
+    
   },
   es: {
     // Basic Settings
@@ -187,6 +229,48 @@ export const translations: Record<string, Translations> = {
     "chart.accessibility.title_with_data": "Gráfico de consumo energético. {period}. Total: {total} kWh",
     "chart.print.header": "Gráfico de Consumo Energético",
     
+    // Card UI Text
+    "card.loading": "Cargando datos de consumo...",
+    "card.error.configuration_required": "Configuración Requerida",
+    "card.error.unable_to_load": "No se Puede Cargar Datos",
+    "card.error.config_help": "Haz clic en el menú ⋮ en la esquina superior derecha de esta tarjeta y selecciona Editar para configurarla.",
+    "card.button.retry": "Reintentar",
+    "card.button.previous": "← Anterior",
+    "card.button.next": "Siguiente →",
+    "card.title.electricity": "Electricidad",
+    "card.heat_calendar.unavailable": "Calendario de Calor No Disponible",
+    "card.heat_calendar.unavailable_details": "La vista del calendario de calor requiere datos de consumo. Por favor, asegúrate de que los datos estén disponibles para el período seleccionado.",
+    "card.week_comparison.not_enabled": "Comparación Semanal No Habilitada",
+    "card.week_comparison.not_enabled_details": "La comparación semanal no está habilitada en la configuración de la tarjeta. Por favor, edita la tarjeta y habilita 'Mostrar Comparación Semanal'.",
+    "card.week_comparison.no_data": "No hay datos de comparación semanal disponibles",
+    "card.tariff_comparison.loading": "Cargando comparación de tarifas...",
+    "card.no_data": "No hay datos de consumo disponibles",
+    "card.stacked_area.unavailable": "Gráfico de Área Apilada No Disponible",
+    "card.stacked_area.unavailable_details": "El gráfico de área apilada requiere datos de desglose por períodos (P1/P2/P3). Estos datos pueden no estar disponibles para la tarifa o período seleccionado.",
+    
+    // Month names (short)
+    "card.month.jan": "ene",
+    "card.month.feb": "feb",
+    "card.month.mar": "mar",
+    "card.month.apr": "abr",
+    "card.month.may": "may",
+    "card.month.jun": "jun",
+    "card.month.jul": "jul",
+    "card.month.aug": "ago",
+    "card.month.sep": "sep",
+    "card.month.oct": "oct",
+    "card.month.nov": "nov",
+    "card.month.dec": "dic",
+    
+    // Day names (short)
+    "card.day.sun": "Dom",
+    "card.day.mon": "Lun",
+    "card.day.tue": "Mar",
+    "card.day.wed": "Mié",
+    "card.day.thu": "Jue",
+    "card.day.fri": "Vie",
+    "card.day.sat": "Sáb",
+    
   },
   be: {
     // Basic Settings
@@ -276,6 +360,48 @@ export const translations: Record<string, Translations> = {
     "chart.accessibility.title": "Дыяграма спажывання энергіі для выбранага перыяду",
     "chart.accessibility.title_with_data": "Дыяграма спажывання энергіі. {period}. Усяго: {total} кВт·г",
     "chart.print.header": "Дыяграма Спажывання Энергіі",
+    
+    // Card UI Text
+    "card.loading": "Загрузка даных спажывання...",
+    "card.error.configuration_required": "Патрабуецца канфігурацыя",
+    "card.error.unable_to_load": "Немагчыма загрузіць даныя",
+    "card.error.config_help": "Націсніце меню ⋮ у верхнім правым куце гэтай карткі і выберыце Рэдагаваць для налады.",
+    "card.button.retry": "Паспрабаваць зноў",
+    "card.button.previous": "← Папярэдні",
+    "card.button.next": "Наступны →",
+    "card.title.electricity": "Электрычнасць",
+    "card.heat_calendar.unavailable": "Каляндар цяпла недаступны",
+    "card.heat_calendar.unavailable_details": "Выгляд каляндара цяпла патрабуе даных спажывання. Калі ласка, пераканайцеся, што даныя даступныя для выбранага перыяду.",
+    "card.week_comparison.not_enabled": "Параўнанне тыдняў не ўключана",
+    "card.week_comparison.not_enabled_details": "Параўнанне тыдняў не ўключана ў канфігурацыі карткі. Калі ласка, адрэдагуйце картку і ўключыце 'Паказаць параўнанне тыдняў'.",
+    "card.week_comparison.no_data": "Даных параўнання тыдняў няма",
+    "card.tariff_comparison.loading": "Загрузка параўнання тарыфаў...",
+    "card.no_data": "Даных спажывання няма",
+    "card.stacked_area.unavailable": "Стопачная дыяграма недаступная",
+    "card.stacked_area.unavailable_details": "Стопачная дыяграма патрабуе даных разбіўкі па перыядах (P1/P2/P3). Гэтыя даныя могуць быць недаступныя для выбранага тарыфу або перыяду.",
+    
+    // Month names (short)
+    "card.month.jan": "студз",
+    "card.month.feb": "лют",
+    "card.month.mar": "сакав",
+    "card.month.apr": "крас",
+    "card.month.may": "май",
+    "card.month.jun": "чэрв",
+    "card.month.jul": "ліп",
+    "card.month.aug": "жнів",
+    "card.month.sep": "вер",
+    "card.month.oct": "кастр",
+    "card.month.nov": "ліст",
+    "card.month.dec": "снеж",
+    
+    // Day names (short)
+    "card.day.sun": "Нд",
+    "card.day.mon": "Пн",
+    "card.day.tue": "Аўт",
+    "card.day.wed": "Ср",
+    "card.day.thu": "Чцв",
+    "card.day.fri": "Пт",
+    "card.day.sat": "Сб",
   }
 };
 

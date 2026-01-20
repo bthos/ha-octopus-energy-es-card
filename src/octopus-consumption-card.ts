@@ -21,6 +21,7 @@ import { cardStyles } from "./styles";
 import { D3Chart } from "./charts";
 import type { ChartData, StackedData, AnimationConfig, ChartConfig } from "./charts";
 import { prepareChartData, calculatePoints, groupByWeeks, groupByMonths } from "./charts/chart-utils";
+import { localize } from "./localization";
 
 // Home Assistant types
 interface HomeAssistant {
@@ -67,6 +68,11 @@ export class OctopusConsumptionCard extends LitElement {
     navigate?: EventListener;
     resize?: EventListener;
   } = {};
+  
+  // Throttling for navigation
+  private _lastNavigationTime: number = 0;
+  private _navigationThrottleMs: number = 300; // Prevent rapid clicks
+  private _isNavigating: boolean = false;
 
   // Constants
   private static readonly SERVICE_TIMEOUT = 10000;
@@ -263,14 +269,17 @@ export class OctopusConsumptionCard extends LitElement {
     }
     
     // Handle hass updates (Home Assistant best practice: use strict equality for state changes)
+    // Throttle hass updates to prevent unnecessary re-renders
     if (changedProperties.has("hass")) {
       const oldHass = changedProperties.get("hass") as HomeAssistant | undefined;
       // Only react if hass actually changed (strict equality check)
       if (oldHass !== undefined && oldHass !== this.hass) {
         // Hass object changed - check if we need to reload data
         // Only reload if we have config but no data yet, or if critical entities changed
+        // Skip if navigation is in progress
         if (this.hass && 
             !this._loading && 
+            !this._isNavigating &&
             !this._error && 
             this._consumptionData.length === 0 && 
             this.config?.source_entry_id) {
@@ -278,6 +287,7 @@ export class OctopusConsumptionCard extends LitElement {
         }
       } else if (this.hass && 
                  !this._loading && 
+                 !this._isNavigating &&
                  !this._error && 
                  this._consumptionData.length === 0 && 
                  this.config?.source_entry_id) {
@@ -287,8 +297,10 @@ export class OctopusConsumptionCard extends LitElement {
     }
     
     // Handle period/date changes (internal state changes)
+    // Skip if navigation is already in progress
     if ((changedProperties.has("_currentPeriod") || changedProperties.has("_currentDate")) &&
         !this._loading &&
+        !this._isNavigating &&
         this.hass &&
         this.config?.source_entry_id &&
         !this._error) {
@@ -302,7 +314,8 @@ export class OctopusConsumptionCard extends LitElement {
                          oldDate !== undefined &&
                          oldDate.getTime() !== this._currentDate.getTime();
       
-      if (periodChanged || dateChanged) {
+      // Only load if this is a real change and not triggered by navigation
+      if ((periodChanged || dateChanged) && !this._isNavigating) {
         this._loadData();
       }
     }
@@ -888,11 +901,24 @@ export class OctopusConsumptionCard extends LitElement {
     return { startDate, endDate };
   }
 
+  /**
+   * Navigate to previous/next period
+   * Prevents rapid clicks and page refresh by throttling and direct state updates
+   */
   private _navigatePeriod(direction: "prev" | "next"): void {
+    // Throttle navigation to prevent rapid clicks
+    const now = Date.now();
+    if (this._isNavigating || (now - this._lastNavigationTime < this._navigationThrottleMs)) {
+      return;
+    }
+    
     // Prevent navigating to the future
     if (direction === "next" && this._wouldNavigateToFuture()) {
       return;
     }
+    
+    this._isNavigating = true;
+    this._lastNavigationTime = now;
     
     const change = direction === "prev" ? -1 : 1;
     
@@ -905,25 +931,50 @@ export class OctopusConsumptionCard extends LitElement {
       // Navigate by year for heat calendar year view
       this._currentDate.setFullYear(this._currentDate.getFullYear() + change);
       this._currentDate = new Date(this._currentDate);
-      this._loadData();
+    } else {
+      // Update date based on current period (direct state update)
+      if (this._currentPeriod === "day") {
+        this._currentDate.setDate(this._currentDate.getDate() + change);
+      } else if (this._currentPeriod === "week") {
+        this._currentDate.setDate(this._currentDate.getDate() + (change * 7));
+      } else if (this._currentPeriod === "month") {
+        this._currentDate.setMonth(this._currentDate.getMonth() + change);
+      }
+      this._currentDate = new Date(this._currentDate);
+    }
+    
+    // Load data asynchronously (fetch without page refresh)
+    this._loadData().finally(() => {
+      this._isNavigating = false;
+    });
+  }
+
+  /**
+   * Set period (day/week/month)
+   * Prevents rapid clicks and ensures smooth updates
+   */
+  private _setPeriod(period: "day" | "week" | "month"): void {
+    // Prevent redundant updates
+    if (this._currentPeriod === period || this._isNavigating) {
       return;
     }
     
-    if (this._currentPeriod === "day") {
-      this._currentDate.setDate(this._currentDate.getDate() + change);
-    } else if (this._currentPeriod === "week") {
-      this._currentDate.setDate(this._currentDate.getDate() + (change * 7));
-    } else if (this._currentPeriod === "month") {
-      this._currentDate.setMonth(this._currentDate.getMonth() + change);
+    // Throttle period changes
+    const now = Date.now();
+    if (now - this._lastNavigationTime < this._navigationThrottleMs) {
+      return;
     }
     
-    this._currentDate = new Date(this._currentDate);
-    this._loadData();
-  }
-
-  private _setPeriod(period: "day" | "week" | "month"): void {
+    this._isNavigating = true;
+    this._lastNavigationTime = now;
+    
+    // Update period directly (direct state update)
     this._currentPeriod = period;
-    this._loadData();
+    
+    // Load data asynchronously without page refresh
+    this._loadData().finally(() => {
+      this._isNavigating = false;
+    });
   }
 
   /**
@@ -1047,6 +1098,7 @@ export class OctopusConsumptionCard extends LitElement {
    * Render heat calendar (heatmap) visualization
    */
   private _renderHeatCalendar(): TemplateResult {
+    const language = this.hass?.language || 'en';
     const calendarData = this._getHeatCalendarData();
     const period = this.config.heat_calendar_period || "month";
     const isYearView = period === "year";
@@ -1054,9 +1106,9 @@ export class OctopusConsumptionCard extends LitElement {
     if (calendarData.length === 0) {
       return html`
         <div class="error-message">
-          <div class="error-title">Heat Calendar Unavailable</div>
+          <div class="error-title">${localize("card.heat_calendar.unavailable", language)}</div>
           <div class="error-details">
-            Daily breakdown data is not available. Please ensure tariff comparison is enabled or daily data is available from the service.
+            ${localize("card.heat_calendar.unavailable_details", language)}
           </div>
         </div>
       `;
@@ -1064,8 +1116,29 @@ export class OctopusConsumptionCard extends LitElement {
 
     // Group data by week and day
     const calendarMap = new Map<number, Map<number, HeatCalendarDay>>();
-    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const dayNames = [
+      localize("card.day.sun", language),
+      localize("card.day.mon", language),
+      localize("card.day.tue", language),
+      localize("card.day.wed", language),
+      localize("card.day.thu", language),
+      localize("card.day.fri", language),
+      localize("card.day.sat", language)
+    ];
+    const monthNames = [
+      localize("card.month.jan", language),
+      localize("card.month.feb", language),
+      localize("card.month.mar", language),
+      localize("card.month.apr", language),
+      localize("card.month.may", language),
+      localize("card.month.jun", language),
+      localize("card.month.jul", language),
+      localize("card.month.aug", language),
+      localize("card.month.sep", language),
+      localize("card.month.oct", language),
+      localize("card.month.nov", language),
+      localize("card.month.dec", language)
+    ];
     
     // Track month changes for year view
     const monthChanges = new Map<number, number>(); // week -> month
@@ -1211,8 +1284,9 @@ export class OctopusConsumptionCard extends LitElement {
    * Render week-over-week comparison
    */
   private _renderWeekComparison(): TemplateResult {
+    const language = this.hass?.language || 'en';
     if (!this._weekComparisonData || this._weekComparisonData.weeks.length === 0) {
-      return html`<div class="loading">No week comparison data available</div>`;
+      return html`<div class="loading">${localize("card.week_comparison.no_data", language)}</div>`;
     }
 
     const { weeks, comparisons } = this._weekComparisonData;
@@ -1562,11 +1636,13 @@ export class OctopusConsumptionCard extends LitElement {
   }
 
   protected render(): TemplateResult {
+    const language = this.hass?.language || 'en';
+    
     if (this._loading) {
       return html`
         <div class="loading">
           <ha-circular-progress indeterminate></ha-circular-progress>
-          <p>Loading consumption data...</p>
+          <p>${localize("card.loading", language)}</p>
         </div>
       `;
     }
@@ -1577,15 +1653,15 @@ export class OctopusConsumptionCard extends LitElement {
       return html`
         <div class="error-message">
           <ha-icon icon="${isConfigError ? "mdi:cog-outline" : "mdi:alert-circle"}" class="error-icon"></ha-icon>
-          <div class="error-title">${isConfigError ? "Configuration Required" : "Unable to Load Data"}</div>
+          <div class="error-title">${isConfigError ? localize("card.error.configuration_required", language) : localize("card.error.unable_to_load", language)}</div>
           <div class="error-details">${this._error}</div>
           ${isConfigError ? html`
             <div class="error-details" style="margin-top: 12px; font-size: 13px;">
-              Click the <strong>⋮</strong> menu in the top-right corner of this card and select <strong>Edit</strong> to configure it.
+              ${localize("card.error.config_help", language)}
             </div>
           ` : html`
             <button class="retry-button" @click=${this._loadData}>
-              Retry
+              ${localize("card.button.retry", language)}
             </button>
           `}
         </div>
@@ -1606,6 +1682,8 @@ export class OctopusConsumptionCard extends LitElement {
    * Render consumption view (time-series charts)
    */
   private _renderConsumptionView(): TemplateResult {
+    const language = this.hass?.language || 'en';
+    
     // Calculate total consumption for summary
     const totalConsumption = this._consumptionData.reduce((sum, d) => 
       sum + (d.consumption || d.value || 0), 0
@@ -1623,7 +1701,7 @@ export class OctopusConsumptionCard extends LitElement {
               this._setPeriod("day");
             }}
           >
-            Día
+            ${localize("editor.period_day", language)}
           </button>
           <button
             type="button"
@@ -1634,7 +1712,7 @@ export class OctopusConsumptionCard extends LitElement {
               this._setPeriod("week");
             }}
           >
-            Semana
+            ${localize("editor.period_week", language)}
           </button>
           <button
             type="button"
@@ -1645,7 +1723,7 @@ export class OctopusConsumptionCard extends LitElement {
               this._setPeriod("month");
             }}
           >
-            Mes
+            ${localize("editor.period_month", language)}
           </button>
           ${this.config.view === "heat-calendar" && this.config.heat_calendar_period === "year" ? html`
             <button
@@ -1667,7 +1745,7 @@ export class OctopusConsumptionCard extends LitElement {
               this._navigatePeriod("prev");
             }}
           >
-            ← Anterior
+            ${localize("card.button.previous", language)}
           </button>
           <button 
             type="button"
@@ -1680,7 +1758,7 @@ export class OctopusConsumptionCard extends LitElement {
             ?disabled=${this._wouldNavigateToFuture()}
             style=${this._wouldNavigateToFuture() ? "opacity: 0.5; cursor: not-allowed;" : ""}
           >
-            Siguiente →
+            ${localize("card.button.next", language)}
           </button>
         </div>
       ` : ""}
@@ -1690,7 +1768,7 @@ export class OctopusConsumptionCard extends LitElement {
           <div class="summary-header-top">
             <div class="summary-title-section">
               <ha-icon icon="mdi:lightning-bolt" class="summary-icon"></ha-icon>
-              <h3 class="summary-title">Electricidad</h3>
+              <h3 class="summary-title">${localize("card.title.electricity", language)}</h3>
             </div>
             <div class="summary-view-toggle">
               <ha-icon icon="mdi:chart-line" class="view-icon active"></ha-icon>
@@ -1715,6 +1793,7 @@ export class OctopusConsumptionCard extends LitElement {
    * Render heat calendar view
    */
   private _renderHeatCalendarView(): TemplateResult {
+    const language = this.hass?.language || 'en';
     return html`
       ${this.config.show_navigation !== false ? html`
         <div class="navigation-controls">
@@ -1727,7 +1806,9 @@ export class OctopusConsumptionCard extends LitElement {
               this._navigatePeriod("prev");
             }}
           >
-            ${this.config.heat_calendar_period === "year" ? "← Previous Year" : "← Previous Month"}
+            ${this.config.heat_calendar_period === "year" 
+              ? `${localize("card.button.previous", language)} ${localize("editor.heat_calendar_period_year", language)}`
+              : `${localize("card.button.previous", language)} ${localize("editor.heat_calendar_period_month", language)}`}
           </button>
           <button 
             type="button"
@@ -1740,7 +1821,9 @@ export class OctopusConsumptionCard extends LitElement {
             ?disabled=${this._wouldNavigateToFuture()}
             style=${this._wouldNavigateToFuture() ? "opacity: 0.5; cursor: not-allowed;" : ""}
           >
-            ${this.config.heat_calendar_period === "year" ? "Next Year →" : "Next Month →"}
+            ${this.config.heat_calendar_period === "year"
+              ? `${localize("editor.heat_calendar_period_year", language)} ${localize("card.button.next", language)}`
+              : `${localize("editor.heat_calendar_period_month", language)} ${localize("card.button.next", language)}`}
           </button>
         </div>
       ` : ""}
@@ -1755,12 +1838,13 @@ export class OctopusConsumptionCard extends LitElement {
    * Render week analysis view
    */
   private _renderWeekAnalysisView(): TemplateResult {
+    const language = this.hass?.language || 'en';
     if (!this.config.show_week_comparison) {
       return html`
         <div class="error-message">
-          <div class="error-title">Week Comparison Not Enabled</div>
+          <div class="error-title">${localize("card.week_comparison.not_enabled", language)}</div>
           <div class="error-details">
-            Please enable "Show Week Comparison" in the card configuration to use the Week Analysis view.
+            ${localize("card.week_comparison.not_enabled_details", language)}
           </div>
         </div>
       `;
@@ -1840,9 +1924,10 @@ export class OctopusConsumptionCard extends LitElement {
    * Render tariff comparison view
    */
   private _renderTariffComparisonView(): TemplateResult {
+    const language = this.hass?.language || 'en';
     return html`
       <div class="comparison-section">
-        <h3 class="comparison-title">Tariff Comparison</h3>
+        <h3 class="comparison-title">${localize("editor.tariff_comparison", language)}</h3>
         ${this._comparisonError ? html`
           <div class="comparison-error">
             <ha-icon icon="mdi:alert"></ha-icon>
@@ -1852,7 +1937,7 @@ export class OctopusConsumptionCard extends LitElement {
           ${this._renderComparison()}
           ${this.config.show_tariff_chart !== false ? this._renderTariffComparisonChart() : ""}
         ` : html`
-          <div class="loading">Loading tariff comparison...</div>
+          <div class="loading">${localize("card.tariff_comparison.loading", language)}</div>
         `}
       </div>
     `;
@@ -1862,9 +1947,23 @@ export class OctopusConsumptionCard extends LitElement {
    * Format date for display (Spanish locale)
    */
   private _formatDate(date: Date, period?: 'day' | 'week' | 'month' | 'year'): string {
+    const language = this.hass?.language || 'en';
     if (period === 'year') {
-      // For year view, show month abbreviation in Spanish
-      const monthNames = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+      // For year view, show month abbreviation using localized names
+      const monthNames = [
+        localize("card.month.jan", language),
+        localize("card.month.feb", language),
+        localize("card.month.mar", language),
+        localize("card.month.apr", language),
+        localize("card.month.may", language),
+        localize("card.month.jun", language),
+        localize("card.month.jul", language),
+        localize("card.month.aug", language),
+        localize("card.month.sep", language),
+        localize("card.month.oct", language),
+        localize("card.month.nov", language),
+        localize("card.month.dec", language)
+      ];
       return monthNames[date.getMonth()];
     }
     
@@ -1892,8 +1991,9 @@ export class OctopusConsumptionCard extends LitElement {
 
   private _renderChart(): TemplateResult {
     // Show loading indicator while fetching data
+    const language = this.hass?.language || 'en';
     if (this._loading) {
-      return html`<div class="loading">Loading consumption data...</div>`;
+      return html`<div class="loading">${localize("card.loading", language)}</div>`;
     }
 
     // Show "No consumption data" only if loading is complete, no error, and no data
@@ -1901,7 +2001,7 @@ export class OctopusConsumptionCard extends LitElement {
       const dateRange = this._formatDateRange();
       return html`
         <div class="loading">
-          <div>No consumption data available</div>
+          <div>${localize("card.no_data", language)}</div>
           <div style="margin-top: 8px; font-size: 12px; color: var(--secondary-text-color);">
             Period: ${dateRange}
           </div>
@@ -2101,13 +2201,13 @@ export class OctopusConsumptionCard extends LitElement {
             });
           } else {
             // Show error message in container
+            const language = this.hass?.language || 'en';
             const errorDiv = document.createElement('div');
             errorDiv.className = 'error-message';
             errorDiv.innerHTML = `
-              <div class="error-title">Stacked Area Chart Unavailable</div>
+              <div class="error-title">${localize("card.stacked_area.unavailable", language)}</div>
               <div class="error-details">
-                Period breakdown data (P1/P2/P3) is not available. 
-                Please ensure tariff comparison is enabled or period data is available from the service.
+                ${localize("card.stacked_area.unavailable_details", language)}
               </div>
             `;
             if (container.firstChild) {

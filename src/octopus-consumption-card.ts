@@ -60,6 +60,13 @@ export class OctopusConsumptionCard extends LitElement {
   @state() private _currentDate: Date = new Date();
   @state() private _weekComparisonData: WeekComparisonData | null = null;
   private _chartInstance: D3Chart | null = null;
+  
+  // Event handler references for proper cleanup (Home Assistant best practice)
+  private _chartEventHandlers: {
+    swipe?: EventListener;
+    navigate?: EventListener;
+    resize?: EventListener;
+  } = {};
 
   // Constants
   private static readonly SERVICE_TIMEOUT = 10000;
@@ -89,10 +96,16 @@ export class OctopusConsumptionCard extends LitElement {
 
   /**
    * Set the card configuration (required by Home Assistant)
+   * Home Assistant best practice: Throw error for invalid config to show error card
    */
   public setConfig(config: OctopusConsumptionCardConfig): void {
     if (!config) {
       throw new Error("Invalid configuration");
+    }
+
+    // Validate required fields (Home Assistant best practice: validate early)
+    if (!config.source_entry_id) {
+      throw new Error("Configuration incomplete. Please select your Octopus Energy tariff in the card editor.");
     }
 
     // Ensure view defaults to "consumption" if not specified
@@ -144,35 +157,52 @@ export class OctopusConsumptionCard extends LitElement {
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
-    // Cleanup chart instance
+    
+    // Cleanup chart instance (Home Assistant best practice: clean up resources)
     if (this._chartInstance) {
       this._chartInstance.destroy();
       this._chartInstance = null;
+    }
+    
+    // Remove event listeners to prevent memory leaks (Home Assistant best practice)
+    const container = this.shadowRoot?.querySelector('#chart-container') as HTMLElement;
+    if (container && this._chartEventHandlers) {
+      if (this._chartEventHandlers.swipe) {
+        container.removeEventListener('chart-swipe', this._chartEventHandlers.swipe);
+      }
+      if (this._chartEventHandlers.navigate) {
+        container.removeEventListener('chart-navigate', this._chartEventHandlers.navigate);
+      }
+      if (this._chartEventHandlers.resize) {
+        container.removeEventListener('chart-resize', this._chartEventHandlers.resize);
+      }
+      // Clear handlers
+      this._chartEventHandlers = {};
     }
   }
 
   /**
    * Setup event listeners for chart navigation (swipe gestures and keyboard)
+   * Home Assistant best practice: Store references for proper cleanup
    */
   private _setupChartNavigationListeners(): void {
-    // Use requestAnimationFrame to ensure DOM is ready
+    // Use requestAnimationFrame to ensure DOM is ready (Home Assistant best practice)
     requestAnimationFrame(() => {
       // Listen on the chart container (where D3Chart dispatches events)
       const container = this.shadowRoot?.querySelector('#chart-container') as HTMLElement;
       if (!container) return;
 
-      // Listen for swipe events from chart
-      container.addEventListener('chart-swipe', ((e: CustomEvent) => {
+      // Store handlers for cleanup (Home Assistant best practice: track listeners)
+      this._chartEventHandlers.swipe = ((e: CustomEvent) => {
         const { direction } = e.detail;
         if (direction === 'next') {
           this._navigatePeriod('next');
         } else if (direction === 'previous') {
           this._navigatePeriod('prev');
         }
-      }) as EventListener);
+      }) as EventListener;
 
-      // Listen for keyboard navigation events from chart
-      container.addEventListener('chart-navigate', ((e: CustomEvent) => {
+      this._chartEventHandlers.navigate = ((e: CustomEvent) => {
         const { direction } = e.detail;
         switch (direction) {
           case 'next':
@@ -194,23 +224,30 @@ export class OctopusConsumptionCard extends LitElement {
             this._loadData();
             break;
         }
-      }) as EventListener);
+      }) as EventListener;
 
-      // Listen for chart resize events
-      container.addEventListener('chart-resize', ((e: CustomEvent) => {
+      this._chartEventHandlers.resize = ((e: CustomEvent) => {
         const { width, height } = e.detail;
         if (this._chartInstance) {
           this._chartInstance.resize(width, height);
           // Re-render chart with new dimensions
           this._renderD3Chart();
         }
-      }) as EventListener);
+      }) as EventListener;
+
+      // Add event listeners
+      container.addEventListener('chart-swipe', this._chartEventHandlers.swipe);
+      container.addEventListener('chart-navigate', this._chartEventHandlers.navigate);
+      container.addEventListener('chart-resize', this._chartEventHandlers.resize);
     });
   }
 
   protected updated(changedProperties: PropertyValues): void {
     super.updated(changedProperties);
+    
+    // Handle config changes (Home Assistant best practice: validate and react to config)
     if (changedProperties.has("config")) {
+      const oldConfig = changedProperties.get("config") as OctopusConsumptionCardConfig | undefined;
       this._validateConfig();
       
       // Update state to match config changes
@@ -219,15 +256,37 @@ export class OctopusConsumptionCard extends LitElement {
       }
       
       // Only reload data if config actually changed (not just initial set)
-      if (changedProperties.get("config") !== undefined) {
+      // Use strict equality check as per Home Assistant Frontend best practices
+      if (oldConfig !== undefined && oldConfig !== this.config) {
         this._loadData();
       }
     }
     
-    // Ensure we load data when period or date changes
-    // Note: _navigatePeriod() and _setPeriod() already call _loadData() directly,
-    // but this check ensures data is loaded even if period/date changes through other means
-    // The !this._loading check prevents duplicate calls when _loadData() is already in progress
+    // Handle hass updates (Home Assistant best practice: use strict equality for state changes)
+    if (changedProperties.has("hass")) {
+      const oldHass = changedProperties.get("hass") as HomeAssistant | undefined;
+      // Only react if hass actually changed (strict equality check)
+      if (oldHass !== undefined && oldHass !== this.hass) {
+        // Hass object changed - check if we need to reload data
+        // Only reload if we have config but no data yet, or if critical entities changed
+        if (this.hass && 
+            !this._loading && 
+            !this._error && 
+            this._consumptionData.length === 0 && 
+            this.config?.source_entry_id) {
+          this._loadData();
+        }
+      } else if (this.hass && 
+                 !this._loading && 
+                 !this._error && 
+                 this._consumptionData.length === 0 && 
+                 this.config?.source_entry_id) {
+        // Initial hass assignment - load data if we have config
+        this._loadData();
+      }
+    }
+    
+    // Handle period/date changes (internal state changes)
     if ((changedProperties.has("_currentPeriod") || changedProperties.has("_currentDate")) &&
         !this._loading &&
         this.hass &&
@@ -248,27 +307,17 @@ export class OctopusConsumptionCard extends LitElement {
       }
     }
     
-    // Ensure we try to load data if hass becomes available and we don't have data yet
-    // This handles cases where hass might be set after config
-    if (changedProperties.has("hass") && 
-        this.hass && 
-        !this._loading && 
-        !this._error && 
-        this._consumptionData.length === 0 && 
-        this.config?.source_entry_id) {
-      this._loadData();
-    }
-    
-    // Render D3 chart when data or config changes
+    // Render D3 chart when data changes (separate concern from data loading)
     if (changedProperties.has("_consumptionData") || 
-        changedProperties.has("config") ||
-        changedProperties.has("_tariffCosts")) {
+        changedProperties.has("_tariffCosts") ||
+        (changedProperties.has("config") && this._consumptionData.length > 0)) {
       this._renderD3Chart();
     }
   }
 
   /**
    * Validates the card configuration
+   * Home Assistant best practice: Set error state for display, don't throw in lifecycle methods
    */
   private _validateConfig(): void {
     if (!this.config) {
@@ -277,11 +326,16 @@ export class OctopusConsumptionCard extends LitElement {
       return;
     }
 
-    // Require source_entry_id
+    // Require source_entry_id (Home Assistant best practice: clear error messages when valid)
     if (!this.config.source_entry_id) {
       this._error = "Configuration incomplete. Please edit this card and select your Octopus Energy tariff.";
       this._loading = false;
       return;
+    }
+
+    // Clear error if config is valid (Home Assistant best practice: update state only when changed)
+    if (this._error && this.config.source_entry_id) {
+      this._error = null;
     }
 
     const view = this.config.view || "consumption";
@@ -564,11 +618,16 @@ export class OctopusConsumptionCard extends LitElement {
       Logger.groupEnd();
     } catch (error) {
       Logger.groupError("Error loading data");
-      this._error = error instanceof Error ? error.message : String(error);
+      // Home Assistant best practice: Provide user-friendly error messages
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : String(error);
+      this._error = errorMessage || "Failed to load consumption data. Please try again.";
       Logger.error("Error loading data: ", this._extractErrorMessage(error));
       Logger.data("Error details", error);
       Logger.groupEnd();
     } finally {
+      // Home Assistant best practice: Always reset loading state
       this._loading = false;
     }
   }

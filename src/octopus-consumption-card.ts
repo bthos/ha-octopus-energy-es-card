@@ -18,7 +18,7 @@ import "./octopus-consumption-card-editor";
 import { OctopusConsumptionCardEditor } from "./octopus-consumption-card-editor";
 import { Logger } from "./logger";
 import { cardStyles } from "./styles";
-import { CanvasChart } from "./charts";
+import { D3Chart } from "./charts";
 import type { ChartData, StackedData, AnimationConfig, ChartConfig } from "./charts";
 import { prepareChartData, calculatePoints, groupByWeeks, groupByMonths } from "./charts/chart-utils";
 
@@ -54,7 +54,7 @@ export class OctopusConsumptionCard extends LitElement {
   @state() private _currentPeriod: "day" | "week" | "month" = "week";
   @state() private _currentDate: Date = new Date();
   @state() private _weekComparisonData: WeekComparisonData | null = null;
-  private _chartInstance: CanvasChart | null = null;
+  private _chartInstance: D3Chart | null = null;
 
   // Constants
   private static readonly SERVICE_TIMEOUT = 10000;
@@ -66,7 +66,7 @@ export class OctopusConsumptionCard extends LitElement {
 
   /**
    * Get computed color value from CSS variable
-   * Used to dynamically retrieve CSS variable values for Canvas chart rendering
+   * Used to dynamically retrieve CSS variable values for D3.js chart rendering
    */
   private _getComputedColor(cssVar: string, fallback: string): string {
     if (typeof window !== 'undefined' && this.shadowRoot) {
@@ -185,11 +185,11 @@ export class OctopusConsumptionCard extends LitElement {
       this._loadData();
     }
     
-    // Render canvas chart when data or config changes
+    // Render D3 chart when data or config changes
     if (changedProperties.has("_consumptionData") || 
         changedProperties.has("config") ||
         changedProperties.has("_tariffCosts")) {
-      this._renderCanvasChart();
+      this._renderD3Chart();
     }
   }
 
@@ -1707,21 +1707,19 @@ export class OctopusConsumptionCard extends LitElement {
       `;
     }
 
-    // Return canvas element - actual rendering happens in _renderCanvasChart
+    // Return SVG container - actual rendering happens in _renderD3Chart
     return html`
-      <canvas 
-        id="chart-canvas"
-        class="chart-canvas"
-        width="800" 
-        height="300">
-      </canvas>
+      <div 
+        id="chart-container"
+        class="chart-svg-container">
+      </div>
     `;
   }
 
-  private async _renderCanvasChart(): Promise<void> {
-    const canvas = this.shadowRoot?.querySelector('#chart-canvas') as HTMLCanvasElement;
-    // Only render if canvas exists, not loading, no error, and we have data
-    if (!canvas || this._loading || this._error || this._consumptionData.length === 0) {
+  private async _renderD3Chart(): Promise<void> {
+    const container = this.shadowRoot?.querySelector('#chart-container') as HTMLElement;
+    // Only render if container exists, not loading, no error, and we have data
+    if (!container || this._loading || this._error || this._consumptionData.length === 0) {
       return;
     }
 
@@ -1844,13 +1842,17 @@ export class OctopusConsumptionCard extends LitElement {
 
     // Create or update chart instance
     if (!this._chartInstance) {
-      this._chartInstance = new CanvasChart(canvas, {
+      // Clear container before creating new chart
+      container.innerHTML = '';
+      this._chartInstance = new D3Chart(container, {
         width,
         height,
         padding,
         colors
       });
     } else {
+      // Clear previous chart content and resize
+      this._chartInstance.clear();
       this._chartInstance.resize(width, height);
     }
 
@@ -1895,7 +1897,7 @@ export class OctopusConsumptionCard extends LitElement {
               interactive: true // Enable tooltips
             });
           } else {
-            // Show error message in canvas parent
+            // Show error message in container
             const errorDiv = document.createElement('div');
             errorDiv.className = 'error-message';
             errorDiv.innerHTML = `
@@ -1905,7 +1907,11 @@ export class OctopusConsumptionCard extends LitElement {
                 Please ensure tariff comparison is enabled or period data is available from the service.
               </div>
             `;
-            canvas.parentElement?.replaceChild(errorDiv, canvas);
+            if (container.firstChild) {
+              container.replaceChild(errorDiv, container.firstChild);
+            } else {
+              container.appendChild(errorDiv);
+            }
           }
           break;
       }
@@ -2237,7 +2243,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
   (window as any).OctopusConsumptionCard = OctopusConsumptionCard;
 
   // Styled console logs for DevTools (after registration)
-  const VERSION = '0.5.14';
+  const VERSION = '0.6.0';
   const isRegistered = !!customElements.get('octopus-consumption-card');
   
   // Branding header (keep styled for visual impact)

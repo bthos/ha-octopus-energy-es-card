@@ -1,5 +1,5 @@
 /**
- * Utility functions for Canvas Chart Library
+ * Utility functions for D3.js Chart Library
  */
 
 import type { DataPoint, ChartData, AxisLabel, GridLine, ChartConfig } from './chart-types';

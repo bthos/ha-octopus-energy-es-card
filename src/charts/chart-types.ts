@@ -1,5 +1,5 @@
 /**
- * Type definitions for Canvas Chart Library
+ * Type definitions for D3.js Chart Library
  */
 
 export interface ChartConfig {

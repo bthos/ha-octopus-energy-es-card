@@ -35,8 +35,10 @@ When you sign up using the button below, **you'll receive 50€ credit** on your
 
 ### 📊 Visualization Options
 - **Multiple Chart Types**: Line chart, bar chart, and **stacked area chart** for period distribution
+- **D3.js Powered**: Built with D3.js for smooth, interactive SVG-based charts matching Octopus Energy España dashboard
 - **Stacked Area Chart**: Visualize P1/P2/P3 consumption distribution over time with color-coded layers
 - **Moving Average**: Display trend lines with configurable moving average (2-30 days)
+- **Interactive Tooltips**: Hover over data points to see detailed consumption and date information
 - **Period Navigation**: Navigate between day/week/month periods with Previous/Next buttons
 
 ### 💰 Tariff Analysis

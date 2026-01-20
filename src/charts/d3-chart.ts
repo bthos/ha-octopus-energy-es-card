@@ -1,0 +1,291 @@
+/**
+ * Main D3.js Chart class
+ * Provides SVG-based chart rendering using D3.js for interactive data visualization
+ */
+
+import * as d3 from 'd3';
+import type {
+  ChartConfig,
+  ChartData,
+  DataPoint,
+  LineChartOptions,
+  BarChartOptions,
+  StackedData,
+  StackedAreaOptions
+} from './chart-types';
+import { renderD3BarChart } from './d3-bar-chart';
+import { renderD3LineChart } from './d3-line-chart';
+import { renderD3StackedAreaChart } from './d3-stacked-area-chart';
+
+export class D3Chart {
+  private container: HTMLElement;
+  private svg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
+  private config: ChartConfig;
+  private xScale: d3.ScaleBand<string> | d3.ScaleLinear<number, number> | null = null;
+  private yScale: d3.ScaleLinear<number, number> | null = null;
+  private hoveredPoint: DataPoint | null = null;
+  private tooltipElement: d3.Selection<SVGGElement, unknown, null, undefined> | null = null;
+  private currentDataPoints: DataPoint[] = [];
+  private currentBarWidth: number = 0;
+
+  constructor(container: HTMLElement, config: ChartConfig) {
+    this.container = container;
+    this.config = config;
+
+    // Create SVG element
+    this.svg = d3.select(container)
+      .append('svg')
+      .attr('class', 'chart-svg')
+      .attr('width', config.width)
+      .attr('height', config.height)
+      .attr('viewBox', `0 0 ${config.width} ${config.height}`)
+      .style('display', 'block');
+
+    // Create tooltip group
+    this._createTooltip();
+  }
+
+  /**
+   * Clear the SVG (remove all children except tooltip)
+   */
+  clear(): void {
+    this.svg.selectAll('g.chart-content, g.axis, g.grid, path.bar, path.line, path.area, circle.point, g.areas').remove();
+  }
+
+  /**
+   * Resize the chart
+   */
+  resize(width: number, height: number): void {
+    this.config.width = width;
+    this.config.height = height;
+    this.svg
+      .attr('width', width)
+      .attr('height', height)
+      .attr('viewBox', `0 0 ${width} ${height}`);
+    
+    // Re-render if we have data
+    if (this.currentDataPoints.length > 0) {
+      // Scales will be recalculated on next render
+      this.xScale = null;
+      this.yScale = null;
+    }
+  }
+
+  /**
+   * Get computed color from CSS variable
+   */
+  getComputedColor(cssVar: string, fallback: string): string {
+    if (typeof window === 'undefined') {
+      return fallback;
+    }
+
+    try {
+      const root = this.container.getRootNode() as ShadowRoot | Document;
+      const target = root instanceof ShadowRoot ? root.host : document.documentElement;
+      const style = getComputedStyle(target);
+      const value = style.getPropertyValue(cssVar).trim();
+      return value || fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
+  /**
+   * Create tooltip element
+   */
+  private _createTooltip(): void {
+    this.tooltipElement = this.svg
+      .append('g')
+      .attr('class', 'chart-tooltip')
+      .style('display', 'none')
+      .style('pointer-events', 'none');
+  }
+
+  /**
+   * Show tooltip
+   */
+  showTooltip(x: number, y: number, point: DataPoint): void {
+    if (!this.tooltipElement) return;
+
+    // Format value with Spanish locale (comma as decimal separator)
+    const valueStr = point.value.toLocaleString('es-ES', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+
+    // Format date as "8 ENE" (day + abbreviated month)
+    const date = point.timestamp ? new Date(point.timestamp) : null;
+    let dateStr = 'N/A';
+    if (date) {
+      const monthNames = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+      const day = date.getDate();
+      const month = monthNames[date.getMonth()];
+      dateStr = `${day} ${month}`;
+    }
+
+    // Create tooltip content
+    const tooltipContent = this.tooltipElement
+      .selectAll('g.tooltip-content')
+      .data([point])
+      .join('g')
+      .attr('class', 'tooltip-content')
+      .attr('transform', `translate(${x + 15}, ${y + 15})`);
+
+    // Background rectangle
+    tooltipContent
+      .selectAll('rect.tooltip-bg')
+      .data([point])
+      .join('rect')
+      .attr('class', 'tooltip-bg')
+      .attr('rx', 8)
+      .attr('ry', 8)
+      .attr('fill', 'rgba(40, 26, 61, 0.95)')
+      .attr('stroke', 'none');
+
+    // Value text (pink, larger)
+    tooltipContent
+      .selectAll('text.tooltip-value')
+      .data([point])
+      .join('text')
+      .attr('class', 'tooltip-value')
+      .attr('x', 12)
+      .attr('y', 20)
+      .attr('fill', '#ff69b4')
+      .attr('font-size', '16px')
+      .attr('font-weight', '600')
+      .attr('font-family', 'Roboto, sans-serif')
+      .text(`${valueStr} kWh`);
+
+    // Date text (white, smaller)
+    tooltipContent
+      .selectAll('text.tooltip-date')
+      .data([point])
+      .join('text')
+      .attr('class', 'tooltip-date')
+      .attr('x', 12)
+      .attr('y', 38)
+      .attr('fill', '#fff')
+      .attr('font-size', '13px')
+      .attr('font-weight', '500')
+      .attr('font-family', 'Roboto, sans-serif')
+      .text(dateStr);
+
+    // Update background size based on text content
+    const node = tooltipContent.node();
+    if (node && 'getBBox' in node) {
+      const bbox = (node as SVGGElement).getBBox();
+      tooltipContent.select('rect.tooltip-bg')
+        .attr('width', bbox.width + 24)
+        .attr('height', bbox.height + 16)
+        .attr('x', -12)
+        .attr('y', -8);
+    }
+
+    this.tooltipElement.style('display', 'block');
+  }
+
+  /**
+   * Hide tooltip
+   */
+  hideTooltip(): void {
+    if (this.tooltipElement) {
+      this.tooltipElement.style('display', 'none');
+    }
+  }
+
+  /**
+   * Render a bar chart
+   */
+  async renderBarChart(
+    data: ChartData,
+    options?: BarChartOptions
+  ): Promise<void> {
+    this.currentDataPoints = data.points;
+    await renderD3BarChart(
+      this.svg,
+      this.config,
+      data,
+      options || {},
+      {
+        xScale: this.xScale,
+        yScale: this.yScale,
+        setXScale: (scale) => { this.xScale = scale; },
+        setYScale: (scale) => { this.yScale = scale; },
+        hoveredPoint: this.hoveredPoint,
+        setHoveredPoint: (point) => { this.hoveredPoint = point; },
+        showTooltip: (x, y, point) => this.showTooltip(x, y, point),
+        hideTooltip: () => this.hideTooltip(),
+        setBarWidth: (width) => { this.currentBarWidth = width; }
+      }
+    );
+  }
+
+  /**
+   * Render a line chart
+   */
+  async renderLineChart(
+    data: ChartData,
+    options?: LineChartOptions
+  ): Promise<void> {
+    this.currentDataPoints = data.points;
+    await renderD3LineChart(
+      this.svg,
+      this.config,
+      data,
+      options || {},
+      {
+        xScale: this.xScale,
+        yScale: this.yScale,
+        setXScale: (scale) => { this.xScale = scale; },
+        setYScale: (scale) => { this.yScale = scale; },
+        hoveredPoint: this.hoveredPoint,
+        setHoveredPoint: (point) => { this.hoveredPoint = point; },
+        showTooltip: (x, y, point) => this.showTooltip(x, y, point),
+        hideTooltip: () => this.hideTooltip()
+      }
+    );
+  }
+
+  /**
+   * Render a stacked area chart
+   */
+  async renderStackedAreaChart(
+    stackedData: StackedData,
+    options?: StackedAreaOptions
+  ): Promise<void> {
+    // Use first layer points for hover detection
+    if (stackedData.layers.length > 0 && stackedData.timestamps) {
+      const firstLayer = stackedData.layers[0];
+      this.currentDataPoints = firstLayer.data.map((value, index) => ({
+        x: 0, // Will be calculated by scale
+        y: 0, // Will be calculated by scale
+        value: value,
+        timestamp: stackedData.timestamps?.[index]
+      }));
+    }
+    
+    await renderD3StackedAreaChart(
+      this.svg,
+      this.config,
+      stackedData,
+      options || {},
+      {
+        xScale: this.xScale,
+        yScale: this.yScale,
+        setXScale: (scale) => { this.xScale = scale; },
+        setYScale: (scale) => { this.yScale = scale; },
+        hoveredPoint: this.hoveredPoint,
+        setHoveredPoint: (point) => { this.hoveredPoint = point; },
+        showTooltip: (x, y, point) => this.showTooltip(x, y, point),
+        hideTooltip: () => this.hideTooltip()
+      }
+    );
+  }
+
+  /**
+   * Get SVG element (for external access if needed)
+   */
+  getSVG(): d3.Selection<SVGSVGElement, unknown, null, undefined> {
+    return this.svg;
+  }
+}

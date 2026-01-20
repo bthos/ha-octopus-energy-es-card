@@ -5,54 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.5.0] - 2026-01-16
-
-### Added
-- **Heat calendar year view**: Display consumption data for an entire year (365 days) in a calendar grid format
-  - Full year visualization with ISO week numbering
-  - Year navigation controls (Previous Year / Next Year buttons)
-  - Year summary statistics (total consumption, average daily consumption, total cost)
-  - Month separators/labels for better orientation in year view
-  - Optimized rendering for large datasets (52-53 weeks)
-  - Scrollable container for year view with responsive design
+## [0.6.0] - 2025-01-20
 
 ### Changed
-- Enhanced heat calendar to support both month and year periods
-- Improved date range handling for year view data fetching (automatic full year or partial year for current year)
-- Updated navigation labels to reflect year navigation when in year view mode
-- Improved data filtering and intensity threshold calculation for year view
-
-## [0.4.35] - 2026-01-12
+- **BREAKING**: Migrated from Canvas-based charts to D3.js SVG-based charts
+- Charts now use D3.js for rendering, matching the Octopus Energy España dashboard design
+- Improved chart interactivity with hover effects and tooltips
+- Better visual styling with rounded top corners on bar charts
+- Enhanced tooltip display with Spanish locale formatting
 
 ### Added
-- Initial release of Octopus Energy España Consumption Card
-- Consumption visualization for day/week/month periods
-- Period navigation with Previous/Next buttons
-- Tariff comparison with cost breakdown
-- Period breakdown (P1/P2/P3) visualization
-- Cost analysis with detailed breakdown
-- Best tariff highlighting
-- Savings calculation
-- Support for multiple tariff entry IDs
-- Chart type selection (line/bar)
-- Configuration options for customization
+- D3.js integration for all chart types (bar, line, stacked area)
+- Interactive tooltips showing consumption value and date on hover
+- Smooth hover transitions for chart elements
+- Better accessibility with SVG-based rendering
 
-### Changed
-- Improved error handling and user feedback
-- Enhanced documentation and examples
+### Removed
+- Canvas-based chart implementation (canvas-chart.ts, bar-chart.ts, line-chart.ts, stacked-area-chart.ts)
+- Chart renderer and animator utilities (chart-renderer.ts, chart-animator.ts)
 
-### Fixed
-- Fixed chart rendering issues
-- Improved data loading reliability
+### Technical
+- Updated dependencies: Added D3.js v7.8.5 and related modules
+- Refactored chart library to use D3.js scales, axes, and transitions
+- Improved code organization with separate D3 chart implementations
 
----
+## [0.5.14] - Previous version
 
-## [Unreleased]
-
-### Planned
-- Enhanced error messages
-- Additional customization options
-- Performance optimizations
-- Accessibility improvements
-
-[0.4.35]: https://github.com/bthos/ha-octopus-energy-es-card/releases/tag/v0.4.35
+Previous changelog entries...

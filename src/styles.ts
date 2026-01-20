@@ -54,11 +54,71 @@ export const cardStyles = css`
     width: 100%;
   }
 
-  .chart-canvas {
+  .chart-svg-container {
     width: 100%;
     height: 300px;
+    position: relative;
+  }
+
+  .chart-svg {
+    width: 100%;
+    height: 100%;
     display: block;
   }
+
+  .chart-bar {
+    fill: #8B5CF6;
+    transition: fill 0.2s ease;
+    cursor: pointer;
+  }
+
+  .chart-bar:hover {
+    fill: #ff69b4;
+  }
+
+  /* Path-based bars (for rounded top corners) */
+  path.bar {
+    fill: #8B5CF6;
+    transition: fill 0.2s ease;
+    cursor: pointer;
+  }
+
+  path.bar:hover {
+    fill: #ff69b4;
+  }
+
+  .chart-grid-line {
+    stroke: rgba(255, 255, 255, 0.2);
+    stroke-width: 1;
+  }
+
+  .chart-tooltip {
+    pointer-events: none;
+  }
+
+  .tooltip-content {
+    pointer-events: none;
+  }
+
+  .tooltip-bg {
+    fill: rgba(40, 26, 61, 0.95);
+    stroke: none;
+  }
+
+  .tooltip-value {
+    fill: #ff69b4;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: Roboto, sans-serif;
+  }
+
+  .tooltip-date {
+    fill: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: Roboto, sans-serif;
+  }
+
 
   .loading {
     text-align: center;

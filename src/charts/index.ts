@@ -1,11 +1,10 @@
 /**
- * Main export file for Canvas Chart Library
+ * Main export file for D3.js Chart Library
  * This allows the library to be reused in other projects
  */
 
-export { CanvasChart } from './canvas-chart';
-export { ChartAnimator } from './chart-animator';
-export { ChartRenderer } from './chart-renderer';
+// Export D3Chart as the main chart implementation
+export { D3Chart } from './d3-chart';
 
 export type {
   ChartConfig,

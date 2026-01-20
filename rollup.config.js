@@ -27,9 +27,15 @@ export default {
       preferBuiltins: false,
       // Do NOT include 'development' export condition to ensure production build
       // Omitting exportConditions defaults to production build
-      exportConditions: []
+      exportConditions: [],
+      // D3.js uses ES modules, so we need to resolve them properly
+      dedupe: ['d3', 'd3-scale', 'd3-axis', 'd3-shape', 'd3-selection', 'd3-transition', 'd3-time', 'd3-time-format']
     }),
-    commonjs(),
+    commonjs({
+      // D3.js modules are ES modules, but some might need commonjs conversion
+      include: ['node_modules/**'],
+      exclude: ['node_modules/d3*/**']
+    }),
     // Replace version placeholder with actual version from package.json
     {
       name: 'replace-version',

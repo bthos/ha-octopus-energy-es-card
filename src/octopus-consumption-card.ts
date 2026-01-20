@@ -1438,17 +1438,46 @@ export class OctopusConsumptionCard extends LitElement {
   }
 
   private _getHeatCalendarData(): HeatCalendarDay[] {
-    if (!this._tariffCosts || !this.config.source_entry_id) {
-      return [];
-    }
-
-    const tariffCost = this._tariffCosts[this.config.source_entry_id];
-    if (!tariffCost || !tariffCost.daily_breakdown || tariffCost.daily_breakdown.length === 0) {
-      return [];
-    }
-
     const period = this.config.heat_calendar_period || "month";
-    let dailyBreakdown = tariffCost.daily_breakdown;
+    let dailyBreakdown: Array<{ date: string; consumption: number; cost?: number }> = [];
+
+    // Try to use tariff costs daily breakdown first
+    if (this._tariffCosts && this.config.source_entry_id) {
+      const tariffCost = this._tariffCosts[this.config.source_entry_id];
+      if (tariffCost && tariffCost.daily_breakdown && tariffCost.daily_breakdown.length > 0) {
+        dailyBreakdown = tariffCost.daily_breakdown;
+      }
+    }
+
+    // Fallback to consumption data if daily breakdown is not available
+    if (dailyBreakdown.length === 0 && this._consumptionData && this._consumptionData.length > 0) {
+      // Group consumption data by day
+      const dailyMap = new Map<string, { consumption: number; cost: number }>();
+      
+      for (const point of this._consumptionData) {
+        // Use date field if available, otherwise extract from start_time
+        const dateStr = point.date || (point.start_time ? point.start_time.split('T')[0] : null);
+        if (!dateStr) continue;
+        
+        const consumption = point.consumption || point.value || 0;
+        const existing = dailyMap.get(dateStr) || { consumption: 0, cost: 0 };
+        dailyMap.set(dateStr, {
+          consumption: existing.consumption + consumption,
+          cost: existing.cost // Cost not available in consumption data
+        });
+      }
+      
+      // Convert map to array format
+      dailyBreakdown = Array.from(dailyMap.entries()).map(([date, data]) => ({
+        date,
+        consumption: data.consumption,
+        cost: data.cost
+      })).sort((a, b) => a.date.localeCompare(b.date));
+    }
+
+    if (dailyBreakdown.length === 0) {
+      return [];
+    }
     
     // Filter by year if year view is selected
     if (period === "year") {
@@ -1514,7 +1543,7 @@ export class OctopusConsumptionCard extends LitElement {
       result.push({
         date: day.date,
         consumption: day.consumption,
-        cost: day.cost,
+        cost: day.cost || 0,
         dayOfWeek,
         weekOfMonth,
         weekOfYear,
@@ -1532,17 +1561,65 @@ export class OctopusConsumptionCard extends LitElement {
    * @returns WeekComparisonData with week comparisons
    */
   private _calculateWeekComparison(): WeekComparisonData | null {
-    if (!this._tariffCosts || !this.config.source_entry_id) {
-      return null;
-    }
-
-    const tariffCost = this._tariffCosts[this.config.source_entry_id];
-    if (!tariffCost || !tariffCost.daily_breakdown || tariffCost.daily_breakdown.length === 0) {
-      return null;
-    }
-
     const comparisonCount = this.config.week_comparison_count || 2;
-    const dailyBreakdown = tariffCost.daily_breakdown;
+    let dailyBreakdown: Array<{ date: string; consumption: number; cost: number; p1_consumption?: number; p2_consumption?: number; p3_consumption?: number }> = [];
+    let tariffCost: any = null;
+
+    // Try to use tariff costs daily breakdown first
+    if (this._tariffCosts && this.config.source_entry_id) {
+      tariffCost = this._tariffCosts[this.config.source_entry_id];
+      if (tariffCost && tariffCost.daily_breakdown && tariffCost.daily_breakdown.length > 0) {
+        dailyBreakdown = tariffCost.daily_breakdown;
+      }
+    }
+
+    // Fallback to consumption data if daily breakdown is not available
+    if (dailyBreakdown.length === 0 && this._consumptionData && this._consumptionData.length > 0) {
+      // Group consumption data by day
+      const dailyMap = new Map<string, { 
+        consumption: number; 
+        cost: number;
+        p1_consumption: number;
+        p2_consumption: number;
+        p3_consumption: number;
+      }>();
+      
+      for (const point of this._consumptionData) {
+        // Use date field if available, otherwise extract from start_time
+        const dateStr = point.date || (point.start_time ? point.start_time.split('T')[0] : null);
+        if (!dateStr) continue;
+        
+        const consumption = point.consumption || point.value || 0;
+        const existing = dailyMap.get(dateStr) || { 
+          consumption: 0, 
+          cost: 0,
+          p1_consumption: 0,
+          p2_consumption: 0,
+          p3_consumption: 0
+        };
+        dailyMap.set(dateStr, {
+          consumption: existing.consumption + consumption,
+          cost: existing.cost, // Cost not available in consumption data
+          p1_consumption: existing.p1_consumption + (point.p1_consumption || 0),
+          p2_consumption: existing.p2_consumption + (point.p2_consumption || 0),
+          p3_consumption: existing.p3_consumption + (point.p3_consumption || 0)
+        });
+      }
+      
+      // Convert map to array format
+      dailyBreakdown = Array.from(dailyMap.entries()).map(([date, data]) => ({
+        date,
+        consumption: data.consumption,
+        cost: data.cost,
+        p1_consumption: data.p1_consumption,
+        p2_consumption: data.p2_consumption,
+        p3_consumption: data.p3_consumption
+      })).sort((a, b) => a.date.localeCompare(b.date));
+    }
+
+    if (dailyBreakdown.length === 0) {
+      return null;
+    }
 
     // Group days by week (Monday to Sunday)
     const weeks: Array<{
@@ -1588,10 +1665,16 @@ export class OctopusConsumptionCard extends LitElement {
 
       const week = weekMap.get(weekKey)!;
       week.consumption += day.consumption;
-      week.cost += day.cost;
+      week.cost += (day.cost || 0);
       
-      // Estimate period breakdown from percentages if available
-      if (tariffCost.period_breakdown) {
+      // Use period breakdown data if available
+      if (day.p1_consumption !== undefined && day.p2_consumption !== undefined && day.p3_consumption !== undefined) {
+        // Use actual P1/P2/P3 data from consumption data
+        week.periodBreakdown.p1_consumption += day.p1_consumption;
+        week.periodBreakdown.p2_consumption += day.p2_consumption;
+        week.periodBreakdown.p3_consumption += day.p3_consumption;
+      } else if (tariffCost && tariffCost.period_breakdown) {
+        // Estimate period breakdown from percentages if available
         const p1Pct = tariffCost.period_breakdown.p1_percentage / 100;
         const p2Pct = tariffCost.period_breakdown.p2_percentage / 100;
         const p3Pct = tariffCost.period_breakdown.p3_percentage / 100;
@@ -1599,6 +1682,7 @@ export class OctopusConsumptionCard extends LitElement {
         week.periodBreakdown.p2_consumption += day.consumption * p2Pct;
         week.periodBreakdown.p3_consumption += day.consumption * p3Pct;
       }
+      // If no period breakdown available, leave at 0
     }
 
     // Sort weeks by start date (most recent first)

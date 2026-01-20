@@ -391,18 +391,17 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
 
   private _handleTariffSelection(index: number, ev: CustomEvent): void {
     const selectedEntryId = ev.detail.value;
-    if (!this._config.tariff_entry_ids) {
-      this._config.tariff_entry_ids = [];
-    }
+    const currentTariffIds = this._config.tariff_entry_ids || [];
     
     // Update the array at the specific index
-    const newTariffIds = [...this._config.tariff_entry_ids];
+    const newTariffIds = [...currentTariffIds];
     
     // Ensure array is long enough
     while (newTariffIds.length <= index) {
       newTariffIds.push("");
     }
     
+    let updatedTariffIds: string[];
     if (selectedEntryId) {
       // Check if this entry ID is already used in another position
       const existingIndex = newTariffIds.findIndex((id, i) => i !== index && id === selectedEntryId);
@@ -413,27 +412,40 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
       
       newTariffIds[index] = selectedEntryId;
       // Remove empty entries and duplicates, but keep order
-      this._config.tariff_entry_ids = newTariffIds.filter((id, i, arr) => {
+      updatedTariffIds = newTariffIds.filter((id, i, arr) => {
         return id && arr.indexOf(id) === i;
       });
     } else {
       // Remove the entry at this index
       newTariffIds.splice(index, 1);
-      this._config.tariff_entry_ids = newTariffIds.filter(id => id);
+      updatedTariffIds = newTariffIds.filter(id => id);
     }
+    
+    // Create a new config object instead of mutating the existing one
+    this._config = {
+      ...this._config,
+      tariff_entry_ids: updatedTariffIds
+    };
     
     this.requestUpdate();
     this._fireConfigChanged();
   }
 
   private _removeTariff(index: number): void {
-    if (!this._config.tariff_entry_ids || index >= this._config.tariff_entry_ids.length) {
+    const currentTariffIds = this._config.tariff_entry_ids || [];
+    if (index >= currentTariffIds.length) {
       return;
     }
     
-    const newTariffIds = [...this._config.tariff_entry_ids];
+    const newTariffIds = [...currentTariffIds];
     newTariffIds.splice(index, 1);
-    this._config.tariff_entry_ids = newTariffIds.filter(id => id);
+    const updatedTariffIds = newTariffIds.filter(id => id);
+    
+    // Create a new config object instead of mutating the existing one
+    this._config = {
+      ...this._config,
+      tariff_entry_ids: updatedTariffIds
+    };
     
     this.requestUpdate();
     this._fireConfigChanged();

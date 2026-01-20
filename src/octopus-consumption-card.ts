@@ -872,10 +872,25 @@ export class OctopusConsumptionCard extends LitElement {
       );
 
       if (comparisonResult.success && comparisonResult.result) {
-        this._comparisonResult = comparisonResult.result;
+        const result = comparisonResult.result;
+        // Validate that result has required structure
+        if (result.tariffs && Array.isArray(result.tariffs) && result.tariffs.length > 0) {
+          this._comparisonResult = result;
+          this._comparisonError = null; // Clear any previous errors
+        } else {
+          // Result exists but tariffs array is missing or empty
+          const errorMsg = result.error || result.warning || "Tariff comparison returned no tariff data";
+          this._comparisonError = errorMsg;
+          this._comparisonResult = null;
+          Logger.groupError('Tariff comparison returned empty data');
+          Logger.warn('⚠ Tariff comparison result has no tariffs');
+          Logger.data('Result structure', result);
+          Logger.groupEnd();
+        }
       } else {
         const errorMsg = comparisonResult.error || "Failed to compare tariffs";
         this._comparisonError = errorMsg;
+        this._comparisonResult = null;
         Logger.groupError('Tariff comparison failed');
         Logger.warn('⚠ Tariff comparison failed: ', errorMsg);
         Logger.groupEnd();
@@ -2505,14 +2520,24 @@ export class OctopusConsumptionCard extends LitElement {
    */
   private _renderTariffComparisonView(): TemplateResult {
     const language = this.hass?.language || 'en';
+    
+    // Show loading state
+    if (this._loading) {
+      return html`
+        <div class="comparison-section">
+          <div class="loading">${localize("card.tariff_comparison.loading", language)}</div>
+        </div>
+      `;
+    }
+    
     return html`
       <div class="comparison-section">
         ${this._comparisonError ? html`
           <div class="comparison-error">
             <ha-icon icon="mdi:alert"></ha-icon>
-            ${this._comparisonError}
+            <span>${this._comparisonError}</span>
           </div>
-        ` : this._comparisonResult ? html`
+        ` : this._comparisonResult && this._comparisonResult.tariffs && this._comparisonResult.tariffs.length > 0 ? html`
           <div class="tariff-comparison-info">
             <ha-icon icon="mdi:information-outline"></ha-icon>
             <span>${localize("card.tariff_comparison.info", language)}</span>
@@ -2520,7 +2545,18 @@ export class OctopusConsumptionCard extends LitElement {
           ${this._renderComparison()}
           ${this.config.show_tariff_chart !== false ? this._renderTariffComparisonChart() : ""}
         ` : html`
-          <div class="loading">${localize("card.tariff_comparison.loading", language)}</div>
+          <div class="loading">
+            <p>No comparison data available</p>
+            ${this._comparisonResult ? html`
+              <p style="font-size: 12px; color: var(--secondary-text-color); margin-top: 8px;">
+                Service returned result but no tariff data found. Check that tariff_entry_ids are valid and contain data for the selected period.
+              </p>
+            ` : html`
+              <p style="font-size: 12px; color: var(--secondary-text-color); margin-top: 8px;">
+                Ensure tariff_entry_ids are configured in card settings.
+              </p>
+            `}
+          </div>
         `}
       </div>
     `;
@@ -2859,7 +2895,27 @@ export class OctopusConsumptionCard extends LitElement {
 
   private _renderComparison(): TemplateResult {
     if (!this._comparisonResult || !this._comparisonResult.tariffs || this._comparisonResult.tariffs.length === 0) {
-      return html`<p>No comparison data available</p>`;
+      const language = this.hass?.language || 'en';
+      // Show more informative message if we have error info
+      if (this._comparisonError) {
+        return html`
+          <div class="comparison-error">
+            <ha-icon icon="mdi:alert"></ha-icon>
+            <span>${this._comparisonError}</span>
+          </div>
+        `;
+      }
+      // Show generic message if no error but no data
+      return html`
+        <div class="loading">
+          <p>No comparison data available</p>
+          ${this._comparisonResult ? html`
+            <p style="font-size: 12px; color: var(--secondary-text-color); margin-top: 8px;">
+              Result received but contains no tariff data. Check service response structure.
+            </p>
+          ` : ''}
+        </div>
+      `;
     }
 
     const sortedTariffs = [...this._comparisonResult.tariffs].sort((a, b) => a.total_cost - b.total_cost);

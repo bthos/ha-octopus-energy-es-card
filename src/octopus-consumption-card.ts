@@ -953,19 +953,46 @@ export class OctopusConsumptionCard extends LitElement {
     }
     
     // For week-analysis view, fetch enough daily data for all weeks being compared
+    // Weeks are Monday to Sunday
     if (view === "week-analysis") {
       const comparisonCount = this.config.week_comparison_count || 2;
-      // Fetch daily data for comparisonCount weeks (each week is 7 days)
-      // Add a buffer of a few days to ensure we have complete weeks
-      const daysToFetch = (comparisonCount * 7) + 6; // +6 to ensure we have complete weeks
       
+      // Find Sunday of the week containing _currentDate
       let endDate = new Date(this._currentDate);
+      const dayOfWeek = endDate.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+      let daysToSunday: number;
+      if (dayOfWeek === 0) {
+        daysToSunday = 0; // Already Sunday
+      } else {
+        daysToSunday = 7 - dayOfWeek; // Days to get to Sunday
+      }
+      endDate.setDate(endDate.getDate() + daysToSunday);
       endDate.setHours(23, 59, 59, 999);
       endDate = this._adjustEndDateForLastDataDate(endDate);
       
+      // Find Monday of the first week (comparisonCount weeks back from endDate)
+      // Go back (comparisonCount - 1) full weeks, then find Monday of that week
       const startDate = new Date(endDate);
-      startDate.setDate(startDate.getDate() - (daysToFetch - 1)); // -1 because we include the end date
+      startDate.setDate(startDate.getDate() - ((comparisonCount - 1) * 7)); // Go back to Sunday of first week
+      // Now find Monday of that week
+      const firstWeekDayOfWeek = startDate.getDay();
+      let daysToMonday: number;
+      if (firstWeekDayOfWeek === 0) {
+        daysToMonday = -6; // If Sunday, go back 6 days to get Monday
+      } else {
+        daysToMonday = -(firstWeekDayOfWeek - 1); // Otherwise, go back (dayOfWeek - 1) days
+      }
+      startDate.setDate(startDate.getDate() + daysToMonday);
       startDate.setHours(0, 0, 0, 0);
+      
+      // Ensure startDate doesn't exceed last available date
+      if (this._lastDataDate) {
+        const lastDataDateObj = new Date(this._lastDataDate);
+        lastDataDateObj.setHours(0, 0, 0, 0);
+        if (startDate > lastDataDateObj) {
+          startDate.setTime(lastDataDateObj.getTime());
+        }
+      }
       
       return { startDate, endDate };
     }
@@ -991,8 +1018,38 @@ export class OctopusConsumptionCard extends LitElement {
         }
       }
     } else if (this._currentPeriod === "week") {
-      startDate.setDate(startDate.getDate() - 6); // Last 7 days
+      // Week view: Monday to Sunday
+      // Find Monday of the week containing endDate (which is based on _currentDate)
+      const dayOfWeek = endDate.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+      let daysToMonday: number;
+      if (dayOfWeek === 0) {
+        // If Sunday, go back 6 days to get Monday
+        daysToMonday = -6;
+      } else {
+        // Otherwise, go back (dayOfWeek - 1) days to get Monday
+        daysToMonday = -(dayOfWeek - 1);
+      }
+      
+      // Set startDate to Monday of the week
+      startDate.setDate(endDate.getDate() + daysToMonday);
       startDate.setHours(0, 0, 0, 0);
+      
+      // Set endDate to Sunday of the same week
+      endDate.setDate(startDate.getDate() + 6);
+      endDate.setHours(23, 59, 59, 999);
+      
+      // Adjust endDate if it exceeds last available data date
+      endDate = this._adjustEndDateForLastDataDate(endDate);
+      
+      // If endDate was adjusted backward, ensure startDate doesn't exceed it
+      if (this._lastDataDate) {
+        const lastDataDateObj = new Date(this._lastDataDate);
+        lastDataDateObj.setHours(0, 0, 0, 0);
+        if (startDate > lastDataDateObj) {
+          // If Monday is after last available date, move startDate to last available date
+          startDate.setTime(lastDataDateObj.getTime());
+        }
+      }
     } else if (this._currentPeriod === "month") {
       startDate.setDate(startDate.getDate() - 29); // Last 30 days
       startDate.setHours(0, 0, 0, 0);
@@ -1018,10 +1075,24 @@ export class OctopusConsumptionCard extends LitElement {
     // For week-analysis view, check if navigating by week would go into future
     const isWeekAnalysis = view === "week-analysis";
     if (isWeekAnalysis) {
-      const testDate = new Date(this._currentDate);
-      testDate.setDate(testDate.getDate() + 7); // Next week
-      const { endDate } = this._getDateRangeForDate(testDate);
-      return endDate > maxDate;
+      // Check if next week's Sunday would exceed maxDate
+      const dayOfWeek = this._currentDate.getDay();
+      let daysToSunday: number;
+      if (dayOfWeek === 0) {
+        daysToSunday = 0; // Already Sunday
+      } else {
+        daysToSunday = 7 - dayOfWeek; // Days to get to Sunday
+      }
+      
+      const currentSunday = new Date(this._currentDate);
+      currentSunday.setDate(this._currentDate.getDate() + daysToSunday);
+      
+      // Check next week's Sunday
+      const nextWeekSunday = new Date(currentSunday);
+      nextWeekSunday.setDate(currentSunday.getDate() + 7);
+      nextWeekSunday.setHours(23, 59, 59, 999);
+      
+      return nextWeekSunday > maxDate;
     }
     
     if (isHeatCalendarYear) {
@@ -1033,6 +1104,9 @@ export class OctopusConsumptionCard extends LitElement {
     const testDate = new Date(this._currentDate);
     if (this._currentPeriod === "day") {
       testDate.setDate(testDate.getDate() + 1);
+      // For day view, directly check if the next day exceeds maxDate
+      testDate.setHours(23, 59, 59, 999);
+      return testDate > maxDate;
     } else if (this._currentPeriod === "week") {
       testDate.setDate(testDate.getDate() + 7);
     } else if (this._currentPeriod === "month") {
@@ -1051,16 +1125,46 @@ export class OctopusConsumptionCard extends LitElement {
     const view = this.config.view;
     
     // For week-analysis view, calculate date range based on week_comparison_count
+    // Weeks are Monday to Sunday
     if (view === "week-analysis") {
       const comparisonCount = this.config.week_comparison_count || 2;
-      const daysToFetch = (comparisonCount * 7) + 6;
       
-      const endDate = new Date(date);
+      // Find Sunday of the week containing date parameter
+      let endDate = new Date(date);
+      const dayOfWeek = endDate.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+      let daysToSunday: number;
+      if (dayOfWeek === 0) {
+        daysToSunday = 0; // Already Sunday
+      } else {
+        daysToSunday = 7 - dayOfWeek; // Days to get to Sunday
+      }
+      endDate.setDate(endDate.getDate() + daysToSunday);
       endDate.setHours(23, 59, 59, 999);
+      endDate = this._adjustEndDateForLastDataDate(endDate);
       
+      // Find Monday of the first week (comparisonCount weeks back from endDate)
+      // Go back (comparisonCount - 1) full weeks, then find Monday of that week
       const startDate = new Date(endDate);
-      startDate.setDate(startDate.getDate() - (daysToFetch - 1));
+      startDate.setDate(startDate.getDate() - ((comparisonCount - 1) * 7)); // Go back to Sunday of first week
+      // Now find Monday of that week
+      const firstWeekDayOfWeek = startDate.getDay();
+      let daysToMonday: number;
+      if (firstWeekDayOfWeek === 0) {
+        daysToMonday = -6; // If Sunday, go back 6 days to get Monday
+      } else {
+        daysToMonday = -(firstWeekDayOfWeek - 1); // Otherwise, go back (dayOfWeek - 1) days
+      }
+      startDate.setDate(startDate.getDate() + daysToMonday);
       startDate.setHours(0, 0, 0, 0);
+      
+      // Ensure startDate doesn't exceed last available date
+      if (this._lastDataDate) {
+        const lastDataDateObj = new Date(this._lastDataDate);
+        lastDataDateObj.setHours(0, 0, 0, 0);
+        if (startDate > lastDataDateObj) {
+          startDate.setTime(lastDataDateObj.getTime());
+        }
+      }
       
       return { startDate, endDate };
     }
@@ -1130,8 +1234,38 @@ export class OctopusConsumptionCard extends LitElement {
         }
       }
     } else if (this._currentPeriod === "week") {
-      startDate.setDate(startDate.getDate() - 6);
+      // Week view: Monday to Sunday
+      // Find Monday of the week containing endDate (which is based on date parameter)
+      const dayOfWeek = endDate.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+      let daysToMonday: number;
+      if (dayOfWeek === 0) {
+        // If Sunday, go back 6 days to get Monday
+        daysToMonday = -6;
+      } else {
+        // Otherwise, go back (dayOfWeek - 1) days to get Monday
+        daysToMonday = -(dayOfWeek - 1);
+      }
+      
+      // Set startDate to Monday of the week
+      startDate.setDate(endDate.getDate() + daysToMonday);
       startDate.setHours(0, 0, 0, 0);
+      
+      // Set endDate to Sunday of the same week
+      endDate.setDate(startDate.getDate() + 6);
+      endDate.setHours(23, 59, 59, 999);
+      
+      // Adjust endDate if it exceeds last available data date
+      endDate = this._adjustEndDateForLastDataDate(endDate);
+      
+      // If endDate was adjusted backward, ensure startDate doesn't exceed it
+      if (this._lastDataDate) {
+        const lastDataDateObj = new Date(this._lastDataDate);
+        lastDataDateObj.setHours(0, 0, 0, 0);
+        if (startDate > lastDataDateObj) {
+          // If Monday is after last available date, move startDate to last available date
+          startDate.setTime(lastDataDateObj.getTime());
+        }
+      }
     } else if (this._currentPeriod === "month") {
       startDate.setDate(startDate.getDate() - 29);
       startDate.setHours(0, 0, 0, 0);
@@ -1170,9 +1304,39 @@ export class OctopusConsumptionCard extends LitElement {
     const isTariffComparison = view === "tariff-comparison";
     
     if (isWeekAnalysis) {
-      // Navigate by week for week analysis view
-      this._currentDate.setDate(this._currentDate.getDate() + (change * 7));
-      this._currentDate = new Date(this._currentDate);
+      // Navigate by week for week analysis view (Monday to Sunday weeks)
+      // Move to Sunday of current week, then add/subtract 7 days to get to next/previous week's Sunday
+      const dayOfWeek = this._currentDate.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+      let daysToSunday: number;
+      if (dayOfWeek === 0) {
+        daysToSunday = 0; // Already Sunday
+      } else {
+        daysToSunday = 7 - dayOfWeek; // Days to get to Sunday
+      }
+      
+      // Move to Sunday of current week
+      const currentSunday = new Date(this._currentDate);
+      currentSunday.setDate(this._currentDate.getDate() + daysToSunday);
+      
+      // Navigate to next/previous week's Sunday
+      currentSunday.setDate(currentSunday.getDate() + (change * 7));
+      this._currentDate = currentSunday;
+      
+      // Ensure _currentDate doesn't exceed last available data date
+      if (this._lastDataDate) {
+        const lastDataDateObj = new Date(this._lastDataDate);
+        lastDataDateObj.setHours(23, 59, 59, 999);
+        if (this._currentDate > lastDataDateObj) {
+          this._currentDate = new Date(lastDataDateObj);
+          // Ensure we're on Sunday of the week containing last available date
+          const lastDayOfWeek = this._currentDate.getDay();
+          if (lastDayOfWeek !== 0) {
+            // Move to Sunday of this week
+            const daysToSundayFromLast = 7 - lastDayOfWeek;
+            this._currentDate.setDate(this._currentDate.getDate() + daysToSundayFromLast);
+          }
+        }
+      }
     } else if (isHeatCalendarYear) {
       // Navigate by year for heat calendar year view
       this._currentDate.setFullYear(this._currentDate.getFullYear() + change);
@@ -1190,11 +1354,35 @@ export class OctopusConsumptionCard extends LitElement {
       if (this._currentPeriod === "day") {
         this._currentDate.setDate(this._currentDate.getDate() + change);
       } else if (this._currentPeriod === "week") {
+        // For week view, navigate by full weeks (7 days)
+        // _getDateRange() will automatically calculate Monday-Sunday for the week containing this date
         this._currentDate.setDate(this._currentDate.getDate() + (change * 7));
       } else if (this._currentPeriod === "month") {
         this._currentDate.setMonth(this._currentDate.getMonth() + change);
       }
       this._currentDate = new Date(this._currentDate);
+      
+      // For day view, ensure _currentDate doesn't exceed last available data date
+      if (this._currentPeriod === "day" && this._lastDataDate) {
+        const lastDataDateObj = new Date(this._lastDataDate);
+        lastDataDateObj.setHours(23, 59, 59, 999);
+        // If current date exceeds last available date, clamp it to last available date
+        if (this._currentDate > lastDataDateObj) {
+          this._currentDate = new Date(lastDataDateObj);
+          this._currentDate.setHours(0, 0, 0, 0);
+        }
+      }
+      
+      // For week view, ensure _currentDate doesn't exceed last available data date
+      // Note: _getDateRange() will handle adjusting the week range, but we should still limit _currentDate
+      if (this._currentPeriod === "week" && this._lastDataDate) {
+        const lastDataDateObj = new Date(this._lastDataDate);
+        lastDataDateObj.setHours(23, 59, 59, 999);
+        // If current date exceeds last available date, clamp it to last available date
+        if (this._currentDate > lastDataDateObj) {
+          this._currentDate = new Date(lastDataDateObj);
+        }
+      }
     }
     
     // Load data asynchronously (fetch without page refresh)
@@ -2941,7 +3129,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
   (window as any).OctopusConsumptionCard = OctopusConsumptionCard;
 
   // Styled console logs for DevTools (after registration)
-  const VERSION = '0.6.11';
+  const VERSION = '0.6.10';
   const isRegistered = !!customElements.get('octopus-consumption-card');
   
   // Branding header (keep styled for visual impact)

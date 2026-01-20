@@ -251,6 +251,24 @@ export const cardStyles = css`
     margin-bottom: 16px;
   }
 
+  .tariff-comparison-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    margin-bottom: 16px;
+    background: var(--info-color, rgba(33, 150, 243, 0.1));
+    border-left: 3px solid var(--info-color, #2196f3);
+    border-radius: 4px;
+    font-size: 14px;
+    color: var(--primary-text-color);
+  }
+
+  .tariff-comparison-info ha-icon {
+    color: var(--info-color, #2196f3);
+    flex-shrink: 0;
+  }
+
   .tariff-list {
     display: flex;
     flex-direction: column;
@@ -625,14 +643,29 @@ export const cardStyles = css`
     border: 1px solid var(--divider-color);
   }
 
+  .heat-calendar-legend-color.intensity-low {
+    background: var(--info-color, #2196f3);
+    opacity: 0.4;
+  }
+
+  .heat-calendar-legend-color.intensity-medium {
+    background: var(--success-color, #4caf50);
+    opacity: 0.6;
+  }
+
+  .heat-calendar-legend-color.intensity-high {
+    background: var(--error-color, #f44336);
+    opacity: 0.8;
+  }
+
   .heat-calendar-year-view {
-    max-height: 600px;
-    overflow-y: auto;
+    /* Remove max-height to allow card to expand naturally */
+    overflow-y: visible;
   }
 
   .heat-calendar-year-view .heat-calendar-grid {
-    max-height: 550px;
-    overflow-y: auto;
+    /* Remove max-height to avoid double scroll */
+    overflow-y: visible;
   }
 
   .heat-calendar-grid-year .heat-calendar-day {
@@ -676,6 +709,24 @@ export const cardStyles = css`
     padding: 4px 8px;
     background: var(--secondary-background-color);
     border-radius: 4px;
+  }
+
+  .heat-calendar-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    margin-top: 16px;
+    background: var(--info-color, rgba(33, 150, 243, 0.1));
+    border-left: 3px solid var(--info-color, #2196f3);
+    border-radius: 4px;
+    font-size: 14px;
+    color: var(--primary-text-color);
+  }
+
+  .heat-calendar-info ha-icon {
+    color: var(--info-color, #2196f3);
+    flex-shrink: 0;
   }
 
   .week-comparison-section {

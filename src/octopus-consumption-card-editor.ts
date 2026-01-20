@@ -71,7 +71,11 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
       show_period_distribution: config.show_period_distribution !== undefined ? config.show_period_distribution : false,
       show_moving_average: config.show_moving_average !== undefined ? config.show_moving_average : false,
       moving_average_days: config.moving_average_days || 7,
-      heat_calendar_period: config.heat_calendar_period || "month",
+      // Only set heat_calendar_period if view is heat-calendar, and ensure it's valid
+      heat_calendar_period: (config.view === "heat-calendar" && config.heat_calendar_period && 
+                             (config.heat_calendar_period === "month" || config.heat_calendar_period === "year"))
+        ? config.heat_calendar_period
+        : (config.view === "heat-calendar" ? "month" : config.heat_calendar_period),
       
       week_comparison_count: config.week_comparison_count || 2,
       show_cost_trend: config.show_cost_trend !== undefined ? config.show_cost_trend : false,
@@ -144,6 +148,17 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
     
     // Handle view change - rebuild schema if view changed
     const viewChanged = this._config.view !== newConfig.view;
+    
+    // Set default values for view-specific fields when switching views
+    if (viewChanged) {
+      if (newConfig.view === "heat-calendar") {
+        // Always set heat_calendar_period to "month" if not set or if it's an invalid value
+        if (!newConfig.heat_calendar_period || 
+            (newConfig.heat_calendar_period !== "month" && newConfig.heat_calendar_period !== "year")) {
+          newConfig.heat_calendar_period = "month";
+        }
+      }
+    }
     
     // Handle conditional fields
     if (newConfig.show_cost_on_chart === false) {
@@ -311,6 +326,7 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
       schema.push(
         {
           name: "heat_calendar_period",
+          default: this._config.heat_calendar_period || "month",
           selector: {
             select: {
               mode: "dropdown",

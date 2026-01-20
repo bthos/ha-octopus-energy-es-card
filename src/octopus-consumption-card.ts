@@ -138,6 +138,7 @@ export class OctopusConsumptionCard extends LitElement {
     // Base size: 1 for basic card
     // Add 1 if showing navigation controls
     // Add 1 if showing tariff comparison
+    // Add extra size for heat-calendar year view to avoid double scroll
     let size = 1;
     if (this.config && this.config.show_navigation !== false) {
       size += 1;
@@ -145,6 +146,10 @@ export class OctopusConsumptionCard extends LitElement {
     const view = this.config.view;
     if (this.config && view === "tariff-comparison") {
       size += 1;
+    }
+    // Heat calendar year view needs more space
+    if (this.config && view === "heat-calendar" && this.config.heat_calendar_period === "year") {
+      size += 3; // Add extra height for year view
     }
     return size;
   }
@@ -860,13 +865,13 @@ export class OctopusConsumptionCard extends LitElement {
       }
     }
     
-    // Tariff comparison always uses daily consumption data (last month)
+    // Tariff comparison always uses daily consumption data (last 365 days)
     if (view === "tariff-comparison") {
       const endDate = new Date(this._currentDate);
       endDate.setHours(23, 59, 59, 999);
       
       const startDate = new Date(endDate);
-      startDate.setDate(startDate.getDate() - 29); // Last 30 days (daily data)
+      startDate.setDate(startDate.getDate() - 364); // Last 365 days (daily data)
       startDate.setHours(0, 0, 0, 0);
       
       return { startDate, endDate };
@@ -1006,13 +1011,13 @@ export class OctopusConsumptionCard extends LitElement {
       }
     }
     
-    // Tariff comparison always uses daily consumption data (last month)
+    // Tariff comparison always uses daily consumption data (last 365 days)
     if (view === "tariff-comparison") {
       const endDate = new Date(date);
       endDate.setHours(23, 59, 59, 999);
       
       const startDate = new Date(endDate);
-      startDate.setDate(startDate.getDate() - 29); // Last 30 days (daily data)
+      startDate.setDate(startDate.getDate() - 364); // Last 365 days (daily data)
       startDate.setHours(0, 0, 0, 0);
       
       return { startDate, endDate };
@@ -1267,14 +1272,15 @@ export class OctopusConsumptionCard extends LitElement {
 
     // Group data by week and day
     const calendarMap = new Map<number, Map<number, HeatCalendarDay>>();
+    // Week starts with Monday (0 = Monday, 6 = Sunday)
     const dayNames = [
-      localize("card.day.sun", language),
       localize("card.day.mon", language),
       localize("card.day.tue", language),
       localize("card.day.wed", language),
       localize("card.day.thu", language),
       localize("card.day.fri", language),
-      localize("card.day.sat", language)
+      localize("card.day.sat", language),
+      localize("card.day.sun", language)
     ];
     const monthNames = [
       localize("card.month.jan", language),
@@ -1423,6 +1429,10 @@ export class OctopusConsumptionCard extends LitElement {
             <span>High</span>
           </div>
         </div>
+        <div class="heat-calendar-info">
+          <ha-icon icon="mdi:information-outline"></ha-icon>
+          <span>${localize("card.heat_calendar.intensity_info", language)}</span>
+        </div>
       </div>
     `;
   }
@@ -1443,10 +1453,14 @@ export class OctopusConsumptionCard extends LitElement {
         <div class="week-comparison-grid">
           ${weeks.map((week, index) => {
             const comparison = comparisons.find(c => c.weekIndex === index);
+            // Base week (index 0) is "Base Week", others are "Week -1", "Week -2", etc.
+            const weekLabel = index === 0 
+              ? localize("card.week_comparison.base_week", language)
+              : `Week -${index}`;
             return html`
               <div class="week-card">
                 <div class="week-card-header">
-                  Week ${weeks.length - index}
+                  ${weekLabel}
                   ${comparison ? html`
                     <span class="week-change ${comparison.consumptionChangePercent >= 0 ? 'positive' : 'negative'}">
                       ${comparison.consumptionChangePercent >= 0 ? '↑' : '↓'} ${Math.abs(comparison.consumptionChangePercent).toFixed(1)}%
@@ -1648,7 +1662,8 @@ export class OctopusConsumptionCard extends LitElement {
     
     for (const day of dailyBreakdown) {
       const date = new Date(day.date);
-      const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
+      // Convert to Monday-based week: 0 = Monday, 6 = Sunday
+      const dayOfWeek = date.getDay() === 0 ? 6 : date.getDay() - 1;
       const year = date.getFullYear();
       const month = date.getMonth(); // 0-11
       
@@ -1659,9 +1674,10 @@ export class OctopusConsumptionCard extends LitElement {
         // Calculate week of year (ISO standard, 0-based)
         weekOfYear = this._getISOWeekOfYear(date);
       } else {
-        // Calculate week of month (0-based)
+        // Calculate week of month (0-based, week starts with Monday)
         const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
-        const firstDayOfWeek = firstDay.getDay();
+        // Convert to Monday-based: 0 = Monday, 6 = Sunday
+        const firstDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
         const dayOfMonth = date.getDate();
         weekOfMonth = Math.floor((dayOfMonth + firstDayOfWeek - 1) / 7);
       }
@@ -2211,6 +2227,10 @@ export class OctopusConsumptionCard extends LitElement {
             ${this._comparisonError}
           </div>
         ` : this._comparisonResult ? html`
+          <div class="tariff-comparison-info">
+            <ha-icon icon="mdi:information-outline"></ha-icon>
+            <span>${localize("card.tariff_comparison.info", language)}</span>
+          </div>
           ${this._renderComparison()}
           ${this.config.show_tariff_chart !== false ? this._renderTariffComparisonChart() : ""}
         ` : html`

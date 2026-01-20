@@ -18,6 +18,9 @@ import "./octopus-consumption-card-editor";
 import { OctopusConsumptionCardEditor } from "./octopus-consumption-card-editor";
 import { Logger } from "./logger";
 import { cardStyles } from "./styles";
+import { CanvasChart } from "./charts";
+import type { ChartData, StackedData, AnimationConfig, ChartConfig } from "./charts";
+import { prepareChartData, calculatePoints } from "./charts/chart-utils";
 
 // Home Assistant types
 interface HomeAssistant {
@@ -51,6 +54,7 @@ export class OctopusConsumptionCard extends LitElement {
   @state() private _currentPeriod: "day" | "week" | "month" = "week";
   @state() private _currentDate: Date = new Date();
   @state() private _weekComparisonData: WeekComparisonData | null = null;
+  private _chartInstance: CanvasChart | null = null;
 
   // Constants
   private static readonly SERVICE_TIMEOUT = 10000;
@@ -62,7 +66,7 @@ export class OctopusConsumptionCard extends LitElement {
 
   /**
    * Get computed color value from CSS variable
-   * Helper for cases where direct CSS variable usage might not work in SVG fill attributes
+   * Used to dynamically retrieve CSS variable values for Canvas chart rendering
    */
   private _getComputedColor(cssVar: string, fallback: string): string {
     if (typeof window !== 'undefined' && this.shadowRoot) {
@@ -144,6 +148,13 @@ export class OctopusConsumptionCard extends LitElement {
       if (changedProperties.get("config") !== undefined) {
         this._loadData();
       }
+    }
+    
+    // Render canvas chart when data or config changes
+    if (changedProperties.has("_consumptionData") || 
+        changedProperties.has("config") ||
+        changedProperties.has("_tariffCosts")) {
+      this._renderCanvasChart();
     }
   }
 
@@ -1486,564 +1497,215 @@ export class OctopusConsumptionCard extends LitElement {
       return html`<div class="loading">No consumption data available</div>`;
     }
 
+    // Return canvas element - actual rendering happens in _renderCanvasChart
+    return html`
+      <canvas 
+        id="chart-canvas"
+        class="chart-canvas"
+        width="800" 
+        height="300">
+      </canvas>
+    `;
+  }
+
+  private async _renderCanvasChart(): Promise<void> {
+    const canvas = this.shadowRoot?.querySelector('#chart-canvas') as HTMLCanvasElement;
+    if (!canvas || this._consumptionData.length === 0) {
+      return;
+    }
+
     const chartType = this.config.chart_type || "line";
-    const data = this._consumptionData.map(d => d.consumption || d.value || 0);
-    const maxValue = Math.max(...data, 1);
-    const minValue = Math.min(...data, 0);
-    const range = maxValue - minValue || 1;
+    const width = 800;
+    const height = 300;
     
     // Prepare cost data if enabled
-    let costData: number[] = [];
-    let maxCost = 0;
-    let minCost = 0;
-    let costRange = 1;
-    
-    const costEnabled = this.config.show_cost_on_chart && 
+    let costData: ChartData | undefined;
+    const costEnabled = !!(this.config.show_cost_on_chart && 
                         this.config.selected_tariff_for_cost && 
-                        this._tariffCosts !== null;
+                        this._tariffCosts !== null);
     
     if (costEnabled && this._tariffCosts && this.config.selected_tariff_for_cost) {
       const tariffCost = this._tariffCosts[this.config.selected_tariff_for_cost];
       if (tariffCost) {
-        // Use hourly_breakdown for day/week, daily_breakdown for month
         const breakdown = this._currentPeriod === "month" 
           ? tariffCost.daily_breakdown 
           : tariffCost.hourly_breakdown;
         
         if (breakdown && breakdown.length > 0) {
-          costData = breakdown.map((item: { cost: number }) => item.cost);
+          const costValues = breakdown.map((item: { cost: number }) => item.cost);
+          const consumptionValues = this._consumptionData.map(d => d.consumption || d.value || 0);
           
-          // Validate that cost data length matches consumption data length
-          // If mismatch, log warning and disable cost display
-          if (costData.length !== data.length) {
-            Logger.warn(
-              `Cost data length (${costData.length}) does not match consumption data length (${data.length}). Cost display disabled.`
-            );
-            costData = [];
-          } else {
-            maxCost = Math.max(...costData, 0.01);
-            minCost = Math.min(...costData, 0);
-            costRange = maxCost - minCost || 1;
+          if (costValues.length === consumptionValues.length) {
+            const maxCost = Math.max(...costValues, 0.01);
+            const minCost = Math.min(...costValues, 0);
+            const timestamps = this._consumptionData.map(d => d.start_time || d.date || '');
+            const tempConfig: ChartConfig = {
+              width,
+              height,
+              padding: { top: 20, right: 60, bottom: 40, left: 60 },
+              colors: {} as any
+            };
+            
+            costData = {
+              points: calculatePoints(costValues, tempConfig, minCost, maxCost, timestamps),
+              minValue: minCost,
+              maxValue: maxCost,
+              range: maxCost - minCost || 1
+            };
           }
-        } else {
-          Logger.warn(`No breakdown data available for tariff ${this.config.selected_tariff_for_cost}. Cost display disabled.`);
         }
-      } else {
-        Logger.warn(`Tariff cost data not found for entry ID: ${this.config.selected_tariff_for_cost}. Cost display disabled.`);
       }
     }
-    
-    // Check if cost display should be shown (validate data availability and length match)
-    const showCost = costEnabled && 
-                     costData.length > 0 && 
-                     costData.length === data.length;
-    
-    const width = 800;
-    const height = 300;
-    const rightPadding = showCost ? 60 : 20;
+
+    const rightPadding = costData ? 60 : 20;
     const padding = { top: 20, right: rightPadding, bottom: 40, left: 60 };
-    const chartWidth = width - padding.left - padding.right;
-    const chartHeight = height - padding.top - padding.bottom;
-    
-    // Expanded dimensions for labels (add space for Y-axis labels on left and X-axis labels on bottom)
-    const expandedWidth = width + 80; // Extra space for Y-axis labels
-    const expandedHeight = height + 40; // Extra space for X-axis labels
-    const labelOffsetX = 80; // Offset for Y-axis labels
-    const labelOffsetY = 20; // Offset for X-axis labels
 
-    // Compute colors from CSS variables for SVG text elements
-    // This ensures text labels are visible even when CSS variables don't work in SVG fill attributes
-    const textColor = this._getComputedColor('--secondary-text-color', '#888');
-    const accentColor = this._getComputedColor('--accent-color', '#ff9800');
-    const infoColor = this._getComputedColor('--info-color', '#2196f3');
-    const errorColor = this._getComputedColor('--error-color', '#f44336');
-    const warningColor = this._getComputedColor('--warning-color', '#ff9800');
-    const successColor = this._getComputedColor('--success-color', '#4caf50');
-    const primaryColor = this._getComputedColor('--primary-color', '#03a9f4');
-    const cardBgColor = this._getComputedColor('--card-background-color', '#fff');
+    // Prepare chart data
+    const values = this._consumptionData.map(d => d.consumption || d.value || 0);
+    const timestamps = this._consumptionData.map(d => d.start_time || d.date || '');
+    const chartData: ChartData = prepareChartData(values, timestamps);
+    const tempConfig: ChartConfig = {
+      width,
+      height,
+      padding,
+      colors: {} as any
+    };
+    chartData.points = calculatePoints(
+      values,
+      tempConfig,
+      chartData.minValue,
+      chartData.maxValue,
+      timestamps
+    );
 
-    // Calculate x positions (with label offset)
-    const xStep = chartWidth / (data.length - 1 || 1);
-    const points: Array<{ x: number; y: number; value: number }> = data.map((value, index) => {
-      const x = padding.left + labelOffsetX + index * xStep;
-      const y = padding.top + chartHeight - ((value - minValue) / range) * chartHeight;
-      return { x, y, value };
-    });
+    // Get colors
+    const colors = {
+      text: this._getComputedColor('--secondary-text-color', '#888'),
+      accent: this._getComputedColor('--accent-color', '#ff9800'),
+      primary: this._getComputedColor('--primary-color', '#03a9f4'),
+      error: this._getComputedColor('--error-color', '#f44336'),
+      warning: this._getComputedColor('--warning-color', '#ff9800'),
+      success: this._getComputedColor('--success-color', '#4caf50'),
+      info: this._getComputedColor('--info-color', '#2196f3'),
+      background: this._getComputedColor('--card-background-color', '#fff'),
+      grid: this._getComputedColor('--divider-color', '#e0e0e0'),
+      axis: this._getComputedColor('--divider-color', '#e0e0e0')
+    };
 
-    // Generate path for line chart
-    const linePath = points.length > 0 
-      ? `M ${points[0].x} ${points[0].y} ${points.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ')}`
-      : '';
-
-    // Generate area path (line + bottom)
-    const areaPath = points.length > 0
-      ? `${linePath} L ${points[points.length - 1].x} ${height - padding.bottom} L ${points[0].x} ${height - padding.bottom} Z`
-      : '';
-
-    // Generate Y-axis labels for consumption (left axis)
-    const yAxisSteps = 5;
-    const yAxisLabels: Array<{ value: number; y: number }> = [];
-    if (chartHeight > 0 && !isNaN(range) && range > 0) {
-      for (let i = 0; i <= yAxisSteps; i++) {
-        const value = minValue + (range * i / yAxisSteps);
-        const y = padding.top + chartHeight - (i / yAxisSteps) * chartHeight;
-        yAxisLabels.push({ value, y });
-      }
-    } else {
-      Logger.warn(`Cannot generate Y-axis labels: chartHeight=${chartHeight}, range=${range}`);
-    }
-
-    // Generate cost points and Y-axis labels for cost (right axis) if enabled
-    let costPoints: Array<{ x: number; y: number; value: number }> = [];
-    let costLinePath = '';
-    let costYAxisLabels: Array<{ value: number; y: number }> = [];
-    
-    if (showCost && costData.length > 0 && costData.length === data.length) {
-      // Map cost data to chart points (align with consumption data)
-      // Use same xStep as consumption data to ensure alignment
-      costPoints = costData.map((cost, index) => {
-        const x = padding.left + labelOffsetX + index * xStep;
-        const y = padding.top + chartHeight - ((cost - minCost) / costRange) * chartHeight;
-        return { x, y, value: cost };
+    // Create or update chart instance
+    if (!this._chartInstance) {
+      this._chartInstance = new CanvasChart(canvas, {
+        width,
+        height,
+        padding,
+        colors
       });
-      
-      // Generate path for cost line (already includes labelOffsetX in costPoints)
-      if (costPoints.length > 0) {
-        costLinePath = `M ${costPoints[0].x} ${costPoints[0].y} ${costPoints.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ')}`;
-      }
-      
-      // Generate Y-axis labels for cost (right axis)
-      for (let i = 0; i <= yAxisSteps; i++) {
-        const value = minCost + (costRange * i / yAxisSteps);
-        const y = padding.top + chartHeight - (i / yAxisSteps) * chartHeight;
-        costYAxisLabels.push({ value, y });
-      }
-    }
-
-    // Generate X-axis labels (show first, middle, last)
-    const xAxisLabels: Array<{ label: string; x: number }> = [];
-    if (points.length > 0 && this._consumptionData.length > 0) {
-      const firstPoint = this._consumptionData[0];
-      const lastPoint = this._consumptionData[this._consumptionData.length - 1];
-      const midIndex = Math.floor(this._consumptionData.length / 2);
-      const midPoint = this._consumptionData[midIndex];
-
-      const formatDate = (dateStr: string) => {
-        try {
-          const date = new Date(dateStr);
-          return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        } catch {
-          return dateStr.split('T')[0];
-        }
-      };
-
-      if (firstPoint && (firstPoint.start_time || firstPoint.date)) {
-        xAxisLabels.push({ label: formatDate(firstPoint.start_time || firstPoint.date || ''), x: points[0].x });
-      }
-      if (midPoint && (midPoint.start_time || midPoint.date)) {
-        xAxisLabels.push({ label: formatDate(midPoint.start_time || midPoint.date || ''), x: points[midIndex]?.x || points[0].x });
-      }
-      if (lastPoint && (lastPoint.start_time || lastPoint.date)) {
-        xAxisLabels.push({ label: formatDate(lastPoint.start_time || lastPoint.date || ''), x: points[points.length - 1].x });
-      }
     } else {
-      Logger.warn(`Cannot generate X-axis labels: points.length=${points.length}, consumptionData.length=${this._consumptionData.length}`);
+      this._chartInstance.resize(width, height);
     }
 
-    if (chartType === "bar") {
-      return html`
-        <svg class="chart-svg" viewBox="0 0 ${expandedWidth} ${expandedHeight}" preserveAspectRatio="xMidYMid meet">
-          <!-- Grid lines -->
-          ${yAxisLabels.map(label => html`
-            <line class="chart-grid-line" 
-              x1="${padding.left + labelOffsetX}" y1="${label.y}" 
-              x2="${width - padding.right + labelOffsetX}" y2="${label.y}"/>
-          `)}
-          
-          <!-- Bars -->
-          ${points.map((point, index) => {
-            const barWidth = Math.max(xStep * 0.6, 2);
-            const barX = point.x - barWidth / 2;
-            const barBottom = height - padding.bottom;
-            const barTop = point.y;
-            const barHeight = Math.max(barBottom - barTop, 0);
-            return html`
-              <rect class="chart-bar"
-                x="${barX}" 
-                y="${barTop}" 
-                width="${barWidth}" 
-                height="${barHeight}"/>
+    // Animation config
+    const animationConfig: AnimationConfig = {
+      enabled: true,
+      duration: 800,
+      easing: 'easeOut'
+    };
+
+    // Render based on chart type
+    try {
+      switch (chartType) {
+        case 'line':
+          await this._chartInstance.renderLineChart(chartData, {
+            showArea: true,
+            showMovingAverage: !!this.config.show_moving_average,
+            movingAverageDays: this.config.moving_average_days || 7,
+            showCostAxis: !!(costEnabled && costData),
+            costData,
+            animation: animationConfig
+          });
+          break;
+        case 'bar':
+          await this._chartInstance.renderBarChart(chartData, {
+            showCostOverlay: !!(costEnabled && costData),
+            costData,
+            animation: animationConfig
+          });
+          break;
+        case 'stacked-area':
+          const stackedData = this._prepareStackedData();
+          if (stackedData) {
+            await this._chartInstance.renderStackedAreaChart(stackedData, {
+              animation: animationConfig
+            });
+          } else {
+            // Show error message in canvas parent
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.innerHTML = `
+              <div class="error-title">Stacked Area Chart Unavailable</div>
+              <div class="error-details">
+                Period breakdown data (P1/P2/P3) is not available. 
+                Please ensure tariff comparison is enabled or period data is available from the service.
+              </div>
             `;
-          })}
-          
-          <!-- Y-axis -->
-          <line class="chart-axis" 
-            x1="${padding.left + labelOffsetX}" y1="${padding.top}" 
-            x2="${padding.left + labelOffsetX}" y2="${height - padding.bottom}"/>
-          
-          <!-- X-axis -->
-          <line class="chart-axis" 
-            x1="${padding.left + labelOffsetX}" y1="${height - padding.bottom}" 
-            x2="${width - padding.right + labelOffsetX}" y2="${height - padding.bottom}"/>
-          
-          <!-- Y-axis labels (consumption - left) -->
-          ${yAxisLabels.map(label => html`
-            <text fill="${textColor}" x="${padding.left + labelOffsetX - 10}" y="${label.y + 4}" text-anchor="end" style="font-size: 12px;">
-              ${label.value.toFixed(1)} kWh
-            </text>
-          `)}
-          
-          <!-- Cost Y-axis labels (right) -->
-          ${showCost ? costYAxisLabels.map(label => html`
-            <text fill="${accentColor}" x="${width - padding.right + labelOffsetX + 10}" y="${label.y + 4}" text-anchor="start" style="font-size: 12px;">
-              €${label.value.toFixed(2)}
-            </text>
-          `) : ''}
-          
-          <!-- Cost Y-axis (right) -->
-          ${showCost ? html`
-            <line class="chart-axis" 
-              x1="${width - padding.right + labelOffsetX}" y1="${padding.top}" 
-              x2="${width - padding.right + labelOffsetX}" y2="${height - padding.bottom}"
-              stroke="${accentColor}" opacity="0.5"/>
-          ` : ''}
-          
-          <!-- Cost line overlay (for bar chart) -->
-          ${showCost && costLinePath ? html`
-            <path class="chart-line-cost" d="${costLinePath}"/>
-            ${costPoints.map(point => html`
-              <circle 
-                cx="${point.x}" 
-                cy="${point.y}" 
-                r="3" 
-                fill="${accentColor}"
-                stroke="${cardBgColor}"
-                stroke-width="2"/>
-            `)}
-          ` : ''}
-          
-          <!-- X-axis labels -->
-          ${xAxisLabels.map(label => html`
-            <text fill="${textColor}" x="${label.x}" y="${height - padding.bottom + labelOffsetY}" text-anchor="middle" style="font-size: 12px;">
-              ${label.label}
-            </text>
-          `)}
-          
-          <!-- Legend -->
-          ${showCost ? html`
-            <g>
-              <rect x="${width - padding.right + labelOffsetX - 100}" y="${padding.top + 5}" width="15" height="10" 
-                fill="${primaryColor}" opacity="0.7"/>
-              <text fill="${textColor}" x="${width - padding.right + labelOffsetX - 80}" y="${padding.top + 14}" font-size="11px">Consumption</text>
-              <line x1="${width - padding.right + labelOffsetX - 100}" y1="${padding.top + 25}" x2="${width - padding.right + labelOffsetX - 85}" y2="${padding.top + 25}" 
-                stroke="${accentColor}" stroke-width="2" stroke-dasharray="5,5"/>
-              <text fill="${accentColor}" x="${width - padding.right + labelOffsetX - 75}" y="${padding.top + 29}" font-size="11px">Cost</text>
-            </g>
-          ` : ''}
-        </svg>
-      `;
+            canvas.parentElement?.replaceChild(errorDiv, canvas);
+          }
+          break;
+      }
+    } catch (error) {
+      Logger.error('Error rendering chart: ', error instanceof Error ? error.message : String(error));
     }
+  }
 
-    // Stacked Area Chart
-    if (chartType === "stacked-area") {
-      // Extract period data from tariff costs
+  private _prepareStackedData(): StackedData | null {
       const periodData = this._extractPeriodData();
       
       if (!periodData || periodData.length === 0) {
-        return html`
-          <div class="error-message">
-            <div class="error-title">Stacked Area Chart Unavailable</div>
-            <div class="error-details">
-              Period breakdown data (P1/P2/P3) is not available. 
-              Please ensure tariff comparison is enabled or period data is available from the service.
-            </div>
-          </div>
-        `;
-      }
+      return null;
+    }
 
-      // Calculate stacked values
       const p1Data = periodData.map(d => d.p1 || 0);
       const p2Data = periodData.map(d => d.p2 || 0);
       const p3Data = periodData.map(d => d.p3 || 0);
       
-      // Calculate cumulative values for stacking
       const p3Cumulative = p3Data;
       const p2Cumulative = p3Data.map((p3, i) => p3 + (p2Data[i] || 0));
       const p1Cumulative = p2Cumulative.map((p2p3, i) => p2p3 + (p1Data[i] || 0));
       
       const maxStackedValue = Math.max(...p1Cumulative, 1);
-      const minStackedValue = 0; // Stacked charts always start at 0
+    const minStackedValue = 0;
       const stackedRange = maxStackedValue - minStackedValue || 1;
 
-      // Calculate xStep for stacked chart (based on periodData length, not consumption data)
-      const stackedXStep = chartWidth / (periodData.length - 1 || 1);
+    const errorColor = this._getComputedColor('--error-color', '#f44336');
+    const warningColor = this._getComputedColor('--warning-color', '#ff9800');
+    const successColor = this._getComputedColor('--success-color', '#4caf50');
 
-      // Generate stacked area paths
-      const generateStackedPath = (cumulativeData: number[], baseData: number[]) => {
-        if (cumulativeData.length === 0) return '';
-        
-        const topPoints = cumulativeData.map((value, index) => {
-          const x = padding.left + labelOffsetX + index * stackedXStep;
-          const y = padding.top + chartHeight - ((value - minStackedValue) / stackedRange) * chartHeight;
-          return { x, y };
-        });
-        
-        const bottomPoints = baseData.map((value, index) => {
-          const x = padding.left + labelOffsetX + index * stackedXStep;
-          const y = padding.top + chartHeight - ((value - minStackedValue) / stackedRange) * chartHeight;
-          return { x, y };
-        }).reverse();
-        
-        const topPath = topPoints.map((p, i) => i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`).join(' ');
-        const bottomPath = bottomPoints.map(p => `L ${p.x} ${p.y}`).join(' ');
-        
-        return `${topPath} ${bottomPath} Z`;
-      };
-
-      // Generate Y-axis labels for stacked chart
-      const stackedYAxisLabels: Array<{ value: number; y: number }> = [];
-      for (let i = 0; i <= yAxisSteps; i++) {
-        const value = minStackedValue + (stackedRange * i / yAxisSteps);
-        const y = padding.top + chartHeight - (i / yAxisSteps) * chartHeight;
-        stackedYAxisLabels.push({ value, y });
-      }
-
-      // Base line (zero)
-      const baseLineY = padding.top + chartHeight;
-      const zeroLine = new Array(periodData.length).fill(0);
-
-      // Generate paths for each period layer
-      const p3Path = generateStackedPath(p3Cumulative, zeroLine);
-      const p2Path = generateStackedPath(p2Cumulative, p3Cumulative);
-      const p1Path = generateStackedPath(p1Cumulative, p2Cumulative);
-      
-      // Generate X-axis labels for stacked chart
-      const stackedXAxisLabels: Array<{ label: string; x: number }> = [];
-      if (periodData.length > 0) {
-        const firstPoint = periodData[0];
-        const lastPoint = periodData[periodData.length - 1];
-        const midIndex = Math.floor(periodData.length / 2);
-        const midPoint = periodData[midIndex];
-
-        const formatDate = (dateStr: string) => {
-          try {
-            const date = new Date(dateStr);
-            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-          } catch {
-            return dateStr.split('T')[0];
-          }
-        };
-
-        if (firstPoint && firstPoint.timestamp) {
-          const firstX = padding.left + labelOffsetX;
-          stackedXAxisLabels.push({ label: formatDate(firstPoint.timestamp), x: firstX });
+    return {
+      layers: [
+        {
+          data: p3Data,
+          color: successColor,
+          opacity: 0.6,
+          label: 'P3 (Valley)'
+        },
+        {
+          data: p2Data,
+          color: warningColor,
+          opacity: 0.6,
+          label: 'P2 (Flat)'
+        },
+        {
+          data: p1Data,
+          color: errorColor,
+          opacity: 0.6,
+          label: 'P1 (Peak)'
         }
-        if (midPoint && midPoint.timestamp) {
-          const midX = padding.left + labelOffsetX + midIndex * stackedXStep;
-          stackedXAxisLabels.push({ label: formatDate(midPoint.timestamp), x: midX });
-        }
-        if (lastPoint && lastPoint.timestamp) {
-          const lastX = padding.left + labelOffsetX + (periodData.length - 1) * stackedXStep;
-          stackedXAxisLabels.push({ label: formatDate(lastPoint.timestamp), x: lastX });
-        }
-      }
-
-      return html`
-        <svg class="chart-svg" viewBox="0 0 ${expandedWidth} ${expandedHeight}" preserveAspectRatio="xMidYMid meet">
-          <!-- Grid lines -->
-          ${stackedYAxisLabels.map(label => html`
-            <line class="chart-grid-line" 
-              x1="${padding.left + labelOffsetX}" y1="${label.y}" 
-              x2="${width - padding.right + labelOffsetX}" y2="${label.y}"/>
-          `)}
-          
-          <!-- Stacked areas (bottom to top: P3, P2, P1) -->
-          <path class="chart-area-p3" d="${p3Path}"/>
-          <path class="chart-area-p2" d="${p2Path}"/>
-          <path class="chart-area-p1" d="${p1Path}"/>
-          
-          <!-- Y-axis -->
-          <line class="chart-axis" 
-            x1="${padding.left + labelOffsetX}" y1="${padding.top}" 
-            x2="${padding.left + labelOffsetX}" y2="${height - padding.bottom}"/>
-          
-          <!-- X-axis -->
-          <line class="chart-axis" 
-            x1="${padding.left + labelOffsetX}" y1="${height - padding.bottom}" 
-            x2="${width - padding.right + labelOffsetX}" y2="${height - padding.bottom}"/>
-          
-          <!-- Y-axis labels -->
-          ${stackedYAxisLabels.map(label => html`
-            <text fill="${textColor}" x="${padding.left + labelOffsetX - 10}" y="${label.y + 4}" text-anchor="end" style="font-size: 12px;">
-              ${label.value.toFixed(1)} kWh
-            </text>
-          `)}
-          
-          <!-- X-axis labels -->
-          ${stackedXAxisLabels.map(label => html`
-            <text fill="${textColor}" x="${label.x}" y="${height - padding.bottom + labelOffsetY}" text-anchor="middle" style="font-size: 12px;">
-              ${label.label}
-            </text>
-          `)}
-          
-          <!-- Legend -->
-          <g>
-            <rect x="${padding.left + labelOffsetX + 10}" y="${padding.top + 5}" width="12" height="12" 
-              fill="${errorColor}" opacity="0.6"/>
-            <text fill="${textColor}" x="${padding.left + labelOffsetX + 28}" y="${padding.top + 15}" font-size="11px">P1 (Peak)</text>
-            
-            <rect x="${padding.left + labelOffsetX + 100}" y="${padding.top + 5}" width="12" height="12" 
-              fill="${warningColor}" opacity="0.6"/>
-            <text fill="${textColor}" x="${padding.left + labelOffsetX + 118}" y="${padding.top + 15}" font-size="11px">P2 (Flat)</text>
-            
-            <rect x="${padding.left + labelOffsetX + 190}" y="${padding.top + 5}" width="12" height="12" 
-              fill="${successColor}" opacity="0.6"/>
-            <text fill="${textColor}" x="${padding.left + labelOffsetX + 208}" y="${padding.top + 15}" font-size="11px">P3 (Valley)</text>
-          </g>
-        </svg>
-      `;
-    }
-
-    // Line chart (default)
-    // Calculate moving average if enabled
-    let movingAvgPath = '';
-    if (this.config.show_moving_average) {
-      const windowSize = this.config.moving_average_days || 7;
-      const movingAvg = this._calculateMovingAverage(data, windowSize);
-      
-      const movingAvgPoints = movingAvg
-        .map((value, index) => {
-          if (value === null) return null;
-          const x = padding.left + labelOffsetX + index * xStep;
-          const y = padding.top + chartHeight - ((value - minValue) / range) * chartHeight;
-          return { x, y, value };
-        })
-        .filter((p): p is { x: number; y: number; value: number } => p !== null);
-      
-      if (movingAvgPoints.length > 0) {
-        movingAvgPath = `M ${movingAvgPoints[0].x} ${movingAvgPoints[0].y} ${movingAvgPoints.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ')}`;
-      }
-    }
-
-    // Calculate cost trend moving average if enabled
-    let costTrendAvgPath = '';
-    if (this.config.show_cost_trend && showCost && costData.length > 0) {
-      const windowSize = this.config.cost_moving_average_days || 30;
-      const costTrendAvg = this._calculateCostMovingAverage(costData, windowSize);
-      
-      const costTrendAvgPoints = costTrendAvg
-        .map((value, index) => {
-          if (value === null) return null;
-          const x = padding.left + labelOffsetX + index * xStep;
-          const y = padding.top + chartHeight - ((value - minCost) / costRange) * chartHeight;
-          return { x, y, value };
-        })
-        .filter((p): p is { x: number; y: number; value: number } => p !== null);
-      
-      if (costTrendAvgPoints.length > 0) {
-        costTrendAvgPath = `M ${costTrendAvgPoints[0].x} ${costTrendAvgPoints[0].y} ${costTrendAvgPoints.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ')}`;
-      }
-    }
-
-    return html`
-      <svg class="chart-svg" viewBox="0 0 ${expandedWidth} ${expandedHeight}" preserveAspectRatio="xMidYMid meet">
-        <!-- Grid lines -->
-        ${yAxisLabels.map(label => html`
-          <line class="chart-grid-line" 
-            x1="${padding.left + labelOffsetX}" y1="${label.y}" 
-            x2="${width - padding.right + labelOffsetX}" y2="${label.y}"/>
-        `)}
-        
-        <!-- Area under line -->
-        <path class="chart-area" d="${areaPath}"/>
-        
-        <!-- Line -->
-        <path class="chart-line" d="${linePath}"/>
-        
-        <!-- Moving average line -->
-        ${this.config.show_moving_average && movingAvgPath ? html`
-          <path class="chart-line-moving-avg" d="${movingAvgPath}"/>
-        ` : ''}
-        
-        <!-- Data points -->
-        ${points.map(point => html`
-          <circle 
-            cx="${point.x}" 
-            cy="${point.y}" 
-            r="3" 
-            fill="${primaryColor}"
-            stroke="${cardBgColor}"
-            stroke-width="2"/>
-        `)}
-        
-        <!-- Y-axis -->
-        <line class="chart-axis" 
-          x1="${padding.left + labelOffsetX}" y1="${padding.top}" 
-          x2="${padding.left + labelOffsetX}" y2="${height - padding.bottom}"/>
-        
-        <!-- X-axis -->
-        <line class="chart-axis" 
-          x1="${padding.left + labelOffsetX}" y1="${height - padding.bottom}" 
-          x2="${width - padding.right + labelOffsetX}" y2="${height - padding.bottom}"/>
-        
-        <!-- Y-axis labels (consumption - left) -->
-        ${yAxisLabels.map(label => html`
-          <text fill="${textColor}" x="${padding.left + labelOffsetX - 10}" y="${label.y + 4}" text-anchor="end" style="font-size: 12px;">
-            ${label.value.toFixed(1)} kWh
-          </text>
-        `)}
-        
-        <!-- Cost Y-axis labels (right) -->
-        ${showCost ? costYAxisLabels.map(label => html`
-            <text fill="${accentColor}" x="${width - padding.right + labelOffsetX + 10}" y="${label.y + 4}" text-anchor="start" style="font-size: 12px;">
-              €${label.value.toFixed(2)}
-            </text>
-          `) : ''}
-        
-        <!-- Cost Y-axis (right) -->
-        ${showCost ? html`
-          <line class="chart-axis" 
-            x1="${width - padding.right + labelOffsetX}" y1="${padding.top}" 
-            x2="${width - padding.right + labelOffsetX}" y2="${height - padding.bottom}"
-            stroke="${accentColor}" opacity="0.5"/>
-        ` : ''}
-        
-        <!-- X-axis labels -->
-        ${xAxisLabels.map(label => html`
-          <text fill="${textColor}" x="${label.x}" y="${height - padding.bottom + labelOffsetY}" text-anchor="middle" style="font-size: 12px;">
-            ${label.label}
-          </text>
-        `)}
-        
-        <!-- Legend -->
-        ${showCost || this.config.show_moving_average || this.config.show_cost_trend ? html`
-          <g>
-            ${showCost ? html`
-              <rect x="${width - padding.right + labelOffsetX - 120}" y="${padding.top + 5}" width="15" height="10" 
-                fill="${primaryColor}" opacity="0.7"/>
-              <text fill="${textColor}" x="${width - padding.right + labelOffsetX - 100}" y="${padding.top + 14}" font-size="11px">Consumption</text>
-              <line x1="${width - padding.right + labelOffsetX - 120}" y1="${padding.top + 25}" x2="${width - padding.right + labelOffsetX - 105}" y2="${padding.top + 25}" 
-                stroke="${accentColor}" stroke-width="2" stroke-dasharray="5,5"/>
-              <text fill="${accentColor}" x="${width - padding.right + labelOffsetX - 95}" y="${padding.top + 29}" font-size="11px">Cost</text>
-            ` : ''}
-            ${this.config.show_moving_average ? html`
-              <line x1="${padding.left + labelOffsetX + 10}" y1="${padding.top + 10}" x2="${padding.left + labelOffsetX + 25}" y2="${padding.top + 10}" 
-                stroke="${infoColor}" stroke-width="2" stroke-dasharray="3,3" opacity="0.8"/>
-              <text fill="${infoColor}" x="${padding.left + labelOffsetX + 30}" y="${padding.top + 14}" font-size="11px">
-                ${this.config.moving_average_days || 7}-day avg
-              </text>
-            ` : ''}
-            ${this.config.show_cost_trend && costTrendAvgPath ? html`
-              <line x1="${padding.left + labelOffsetX + 10}" y1="${padding.top + 30}" x2="${padding.left + labelOffsetX + 25}" y2="${padding.top + 30}" 
-                stroke="${accentColor}" stroke-width="2" stroke-dasharray="3,3" opacity="0.7"/>
-              <text fill="${accentColor}" x="${padding.left + labelOffsetX + 30}" y="${padding.top + 34}" font-size="11px">
-                ${this.config.cost_moving_average_days || 30}-day cost avg
-              </text>
-            ` : ''}
-          </g>
-        ` : ''}
-      </svg>
-    `;
+      ],
+      timestamps: periodData.map(d => d.timestamp),
+      minValue: minStackedValue,
+      maxValue: maxStackedValue,
+      range: stackedRange
+    };
   }
 
   private _renderComparison(): TemplateResult {

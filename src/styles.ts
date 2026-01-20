@@ -54,110 +54,10 @@ export const cardStyles = css`
     width: 100%;
   }
 
-  .chart-svg {
+  .chart-canvas {
     width: 100%;
     height: 300px;
     display: block;
-  }
-
-  .chart-line {
-    fill: none;
-    stroke: var(--primary-color, #03a9f4);
-    stroke-width: 2;
-  }
-
-  .chart-line-cost {
-    fill: none;
-    stroke: var(--accent-color, #ff9800);
-    stroke-width: 2;
-    stroke-dasharray: 5, 5;
-  }
-
-  .chart-line-moving-avg {
-    fill: none;
-    stroke: var(--info-color, #2196f3);
-    stroke-width: 2;
-    stroke-dasharray: 3, 3;
-    opacity: 0.8;
-  }
-
-  .chart-area {
-    fill: var(--primary-color, #03a9f4);
-    opacity: 0.2;
-  }
-
-  .chart-area-p1 {
-    fill: var(--error-color, #f44336);
-    opacity: 0.6;
-  }
-
-  .chart-area-p2 {
-    fill: var(--warning-color, #ff9800);
-    opacity: 0.6;
-  }
-
-  .chart-area-p3 {
-    fill: var(--success-color, #4caf50);
-    opacity: 0.6;
-  }
-
-  .chart-line-p1 {
-    stroke: var(--error-color, #f44336);
-    stroke-width: 1;
-    fill: none;
-  }
-
-  .chart-line-p2 {
-    stroke: var(--warning-color, #ff9800);
-    stroke-width: 1;
-    fill: none;
-  }
-
-  .chart-line-p3 {
-    stroke: var(--success-color, #4caf50);
-    stroke-width: 1;
-    fill: none;
-  }
-
-  .chart-bar {
-    fill: var(--primary-color, #03a9f4);
-    opacity: 0.7;
-  }
-
-  .chart-axis {
-    stroke: var(--divider-color, #e0e0e0);
-    stroke-width: 1;
-  }
-
-  .chart-text {
-    fill: var(--secondary-text-color, #888);
-    color: var(--secondary-text-color, #888);
-    font-size: 12px;
-    font-family: var(--mdc-typography-body1-font-family, Roboto, sans-serif);
-    pointer-events: none;
-    user-select: none;
-  }
-
-  .chart-text-axis-y {
-    fill: var(--secondary-text-color, #888);
-  }
-  
-  .chart-text-axis-x {
-    fill: var(--secondary-text-color, #888);
-  }
-  
-  .chart-text-cost {
-    fill: var(--accent-color, #ff9800);
-  }
-  
-  .chart-text-info {
-    fill: var(--info-color, #2196f3);
-  }
-
-  .chart-grid-line {
-    stroke: var(--divider-color, #e0e0e0);
-    stroke-width: 1;
-    stroke-dasharray: 2, 2;
   }
 
   .loading {
@@ -179,7 +79,7 @@ export const cardStyles = css`
     text-align: center;
     background: var(--card-background-color);
     border-radius: 8px;
-    border: 2px solid var(--error-color);
+    border: none;
   }
 
   .error-icon {

@@ -446,17 +446,30 @@ export class OctopusConsumptionCard extends LitElement {
    * Handles service call errors and converts them to user-friendly messages
    */
   private _handleServiceError(error: any, domain: string, service: string): Error {
+    // Special handling for get_last_data_date - it's optional and may not exist
+    const isOptionalService = service === OctopusConsumptionCard.SERVICE_GET_LAST_DATA_DATE;
+    
     if (error instanceof Error) {
       if (error.message.includes("timeout")) {
-        return new Error(`Service call timeout: ${domain}.${service} took longer than ${OctopusConsumptionCard.SERVICE_TIMEOUT}ms`);
+        const message = isOptionalService 
+          ? `Service call timeout: ${domain}.${service} (this service is optional and may not be available)`
+          : `Service call timeout: ${domain}.${service} took longer than ${OctopusConsumptionCard.SERVICE_TIMEOUT}ms`;
+        return new Error(message);
       }
-      if (error.message.includes("Service not found") || error.message.includes("not available")) {
+      if (error.message.includes("Service not found") || error.message.includes("not available") || error.message.includes("Unknown service")) {
+        if (isOptionalService) {
+          // For optional service, return a more informative error that won't break the app
+          return new Error(`Service ${domain}.${service} is not available (this is normal if integration version doesn't support it yet)`);
+        }
         return new Error(`Service ${domain}.${service} is not available. Please ensure the Octopus Energy España integration is installed and configured.`);
       }
       if ((error as any).code === 'service_validation_error') {
         return this._handleValidationError(error);
       }
-      return new Error(`Service call failed: ${domain}.${service} - ${error.message}`);
+      const message = isOptionalService && error.message.includes("not available")
+        ? `Service ${domain}.${service} is not available (this is normal if integration version doesn't support it yet)`
+        : `Service call failed: ${domain}.${service} - ${error.message}`;
+      return new Error(message);
     }
     
     if (error && typeof error === 'object') {
@@ -465,7 +478,10 @@ export class OctopusConsumptionCard extends LitElement {
         return this._handleValidationError(errorObj);
       }
       const message = errorObj.message || errorObj.translation_key || 'Unknown service error';
-      return new Error(`Service call failed: ${domain}.${service} - ${message}`);
+      const finalMessage = isOptionalService && (message.includes("not found") || message.includes("not available"))
+        ? `Service ${domain}.${service} is not available (this is normal if integration version doesn't support it yet)`
+        : `Service call failed: ${domain}.${service} - ${message}`;
+      return new Error(finalMessage);
     }
     
     return error instanceof Error ? error : new Error(String(error));
@@ -613,8 +629,15 @@ export class OctopusConsumptionCard extends LitElement {
     this._comparisonError = null;
 
     try {
-      // Fetch last available data date first
-      await this._fetchLastDataDate(entryId);
+      // Fetch last available data date first (non-blocking - if it fails, continue without it)
+      try {
+        await this._fetchLastDataDate(entryId);
+      } catch (lastDataDateError) {
+        // Non-critical error - log but don't block data loading
+        const errorMsg = lastDataDateError instanceof Error ? lastDataDateError.message : String(lastDataDateError);
+        Logger.warn('Failed to fetch last data date (continuing without it):', errorMsg);
+        this._lastDataDate = null;
+      }
       
       const { startDate, endDate } = this._getDateRange();
       this._validateDateRange(startDate, endDate);
@@ -708,21 +731,29 @@ export class OctopusConsumptionCard extends LitElement {
         }
       );
 
-      if (result.success && result.last_data_date) {
+      if (result && result.success && result.last_data_date) {
         this._lastDataDate = result.last_data_date;
         Logger.info('Last data date:', this._lastDataDate);
       } else {
         // If service doesn't support this or returns error, set to null
         this._lastDataDate = null;
-        if (result.error) {
+        if (result && result.error) {
           Logger.warn('Failed to fetch last data date:', result.error);
+        } else {
+          Logger.warn('Service get_last_data_date returned unsuccessful result or missing data');
         }
       }
     } catch (error) {
       // If service doesn't exist or fails, silently continue (non-critical)
       this._lastDataDate = null;
       const errorMsg = error instanceof Error ? error.message : String(error);
-      Logger.warn('Could not fetch last data date (service may not be available):', errorMsg);
+      
+      // Check if it's a service not found error (common case)
+      if (errorMsg.includes('not found') || errorMsg.includes('does not exist') || errorMsg.includes('Unknown service')) {
+        Logger.info('Service get_last_data_date is not available (this is normal if integration version is older)');
+      } else {
+        Logger.warn('Could not fetch last data date:', errorMsg);
+      }
     }
   }
 

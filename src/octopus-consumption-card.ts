@@ -822,6 +822,24 @@ export class OctopusConsumptionCard extends LitElement {
       return { startDate, endDate };
     }
     
+    // For week-analysis view, fetch enough daily data for all weeks being compared
+    if (view === "week-analysis" && this.config.show_week_comparison) {
+      const comparisonCount = this.config.week_comparison_count || 2;
+      // Fetch daily data for comparisonCount weeks (each week is 7 days)
+      // Add a buffer of a few days to ensure we have complete weeks
+      const daysToFetch = (comparisonCount * 7) + 6; // +6 to ensure we have complete weeks
+      
+      const endDate = new Date(this._currentDate);
+      endDate.setHours(23, 59, 59, 999);
+      
+      const startDate = new Date(endDate);
+      startDate.setDate(startDate.getDate() - (daysToFetch - 1)); // -1 because we include the end date
+      startDate.setHours(0, 0, 0, 0);
+      
+      return { startDate, endDate };
+    }
+
+    
     // Standard period-based date range
     const endDate = new Date(this._currentDate);
     endDate.setHours(23, 59, 59, 999);
@@ -852,6 +870,15 @@ export class OctopusConsumptionCard extends LitElement {
     const isHeatCalendarYear = view === "heat-calendar" && 
                                this.config.heat_calendar_period === "year";
     
+    // For week-analysis view, check if navigating by week would go into future
+    const isWeekAnalysis = view === "week-analysis" && this.config.show_week_comparison;
+    if (isWeekAnalysis) {
+      const testDate = new Date(this._currentDate);
+      testDate.setDate(testDate.getDate() + 7); // Next week
+      const { endDate } = this._getDateRangeForDate(testDate);
+      return endDate > now;
+    }
+    
     if (isHeatCalendarYear) {
       const nextYear = this._currentDate.getFullYear() + 1;
       return nextYear > now.getFullYear();
@@ -876,6 +903,22 @@ export class OctopusConsumptionCard extends LitElement {
    */
   private _getDateRangeForDate(date: Date): { startDate: Date; endDate: Date } {
     const view = this.config.view || "consumption";
+    
+    // For week-analysis view, calculate date range based on week_comparison_count
+    if (view === "week-analysis" && this.config.show_week_comparison) {
+      const comparisonCount = this.config.week_comparison_count || 2;
+      const daysToFetch = (comparisonCount * 7) + 6;
+      
+      const endDate = new Date(date);
+      endDate.setHours(23, 59, 59, 999);
+      
+      const startDate = new Date(endDate);
+      startDate.setDate(startDate.getDate() - (daysToFetch - 1));
+      startDate.setHours(0, 0, 0, 0);
+      
+      return { startDate, endDate };
+    }
+
     const isHeatCalendarYear = view === "heat-calendar" && 
                                this.config.heat_calendar_period === "year";
     
@@ -939,7 +982,13 @@ export class OctopusConsumptionCard extends LitElement {
     const isHeatCalendarYear = view === "heat-calendar" && 
                                this.config.heat_calendar_period === "year";
     
-    if (isHeatCalendarYear) {
+    // For week-analysis view, navigate by weeks
+    const isWeekAnalysis = view === "week-analysis" && this.config.show_week_comparison;
+    if (isWeekAnalysis) {
+      // Navigate by week for week analysis view
+      this._currentDate.setDate(this._currentDate.getDate() + (change * 7));
+      this._currentDate = new Date(this._currentDate);
+    } else if (isHeatCalendarYear) {
       // Navigate by year for heat calendar year view
       this._currentDate.setFullYear(this._currentDate.getFullYear() + change);
       this._currentDate = new Date(this._currentDate);
@@ -1795,50 +1844,6 @@ export class OctopusConsumptionCard extends LitElement {
     
     return html`
       ${this.config.show_navigation !== false ? html`
-        <div class="period-selector">
-          <button
-            type="button"
-            class="period-button ${this._currentPeriod === "day" ? "active" : ""}"
-            @click=${(e: Event) => {
-              e.preventDefault();
-              e.stopPropagation();
-              this._setPeriod("day");
-            }}
-          >
-            ${localize("editor.period_day", language)}
-          </button>
-          <button
-            type="button"
-            class="period-button ${this._currentPeriod === "week" ? "active" : ""}"
-            @click=${(e: Event) => {
-              e.preventDefault();
-              e.stopPropagation();
-              this._setPeriod("week");
-            }}
-          >
-            ${localize("editor.period_week", language)}
-          </button>
-          <button
-            type="button"
-            class="period-button ${this._currentPeriod === "month" ? "active" : ""}"
-            @click=${(e: Event) => {
-              e.preventDefault();
-              e.stopPropagation();
-              this._setPeriod("month");
-            }}
-          >
-            ${localize("editor.period_month", language)}
-          </button>
-          ${this.config.view === "heat-calendar" && this.config.heat_calendar_period === "year" ? html`
-            <button
-              class="period-button"
-              disabled
-            >
-              ${localize("editor.heat_calendar_period_year", language)}
-            </button>
-          ` : ""}
-        </div>
-
         <div class="navigation-controls">
           <button 
             type="button"
@@ -1956,42 +1961,6 @@ export class OctopusConsumptionCard extends LitElement {
 
     return html`
       ${this.config.show_navigation !== false ? html`
-        <div class="period-selector">
-          <button
-            type="button"
-            class="period-button ${this._currentPeriod === "day" ? "active" : ""}"
-            @click=${(e: Event) => {
-              e.preventDefault();
-              e.stopPropagation();
-              this._setPeriod("day");
-            }}
-          >
-            Day
-          </button>
-          <button
-            type="button"
-            class="period-button ${this._currentPeriod === "week" ? "active" : ""}"
-            @click=${(e: Event) => {
-              e.preventDefault();
-              e.stopPropagation();
-              this._setPeriod("week");
-            }}
-          >
-            Week
-          </button>
-          <button
-            type="button"
-            class="period-button ${this._currentPeriod === "month" ? "active" : ""}"
-            @click=${(e: Event) => {
-              e.preventDefault();
-              e.stopPropagation();
-              this._setPeriod("month");
-            }}
-          >
-            Month
-          </button>
-        </div>
-
         <div class="navigation-controls">
           <button 
             type="button"

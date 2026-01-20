@@ -92,6 +92,11 @@ export const translations: Record<string, Translations> = {
     "editor.show_tariff_chart_label": "Show Tariff Chart",
     "editor.show_tariff_chart_helper": "Display visual chart in tariff comparison section",
     
+    // Chart Accessibility
+    "chart.accessibility.title": "Energy consumption chart for selected period",
+    "chart.accessibility.title_with_data": "Energy consumption chart. {period}. Total: {total} kWh",
+    "chart.print.header": "Energy Consumption Chart",
+    
   },
   es: {
     // Basic Settings
@@ -177,6 +182,11 @@ export const translations: Record<string, Translations> = {
     "editor.show_tariff_chart_label": "Mostrar Gráfico de Tarifas",
     "editor.show_tariff_chart_helper": "Mostrar gráfico visual en la sección de comparación de tarifas",
     
+    // Chart Accessibility
+    "chart.accessibility.title": "Gráfico de consumo energético para el período seleccionado",
+    "chart.accessibility.title_with_data": "Gráfico de consumo energético. {period}. Total: {total} kWh",
+    "chart.print.header": "Gráfico de Consumo Energético",
+    
   },
   be: {
     // Basic Settings
@@ -261,6 +271,11 @@ export const translations: Record<string, Translations> = {
     // Tariff Chart Options
     "editor.show_tariff_chart_label": "Паказаць дыяграму тарыфаў",
     "editor.show_tariff_chart_helper": "Адлюстраваць візуальную дыяграму ў раздзеле параўнання тарыфаў",
+    
+    // Chart Accessibility
+    "chart.accessibility.title": "Дыяграма спажывання энергіі для выбранага перыяду",
+    "chart.accessibility.title_with_data": "Дыяграма спажывання энергіі. {period}. Усяго: {total} кВт·г",
+    "chart.print.header": "Дыяграма Спажывання Энергіі",
   }
 };
 
@@ -273,8 +288,26 @@ export function localize(key: string, language: string = "en"): string {
   
   if (!translation) {
     // Fallback: return the key without prefix
-    return key.replace("editor.", "").replace(/_/g, " ");
+    return key.replace("editor.", "").replace("chart.", "").replace(/_/g, " ");
   }
+  
+  return translation;
+}
+
+/**
+ * Get localized string with variable substitution
+ */
+export function localizeWithVars(
+  key: string, 
+  vars: Record<string, string>, 
+  language: string = "en"
+): string {
+  let translation = localize(key, language);
+  
+  // Replace variables in format {varName}
+  Object.entries(vars).forEach(([varName, value]) => {
+    translation = translation.replace(new RegExp(`\\{${varName}\\}`, 'g'), value);
+  });
   
   return translation;
 }

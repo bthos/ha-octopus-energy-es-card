@@ -16,6 +16,7 @@ import type {
 import { renderD3BarChart } from './d3-bar-chart';
 import { renderD3LineChart } from './d3-line-chart';
 import { renderD3StackedAreaChart } from './d3-stacked-area-chart';
+import { localize, localizeWithVars } from '../localization';
 
 export class D3Chart {
   private container: HTMLElement;
@@ -52,10 +53,11 @@ export class D3Chart {
       .style('display', 'block')
       .style('pointer-events', 'all'); // SVG interactive (Victory pattern)
 
-    // Add title element for screen readers
+    // Add title element for screen readers (localized)
+    const language = config.language || 'en';
     this.svg.append('title')
       .attr('id', `${this.chartId}-title`)
-      .text('Energy consumption chart for selected period');
+      .text(localize('chart.accessibility.title', language));
 
     // Create tooltip group
     this._createTooltip();
@@ -314,8 +316,19 @@ export class D3Chart {
    * Update chart title dynamically when data changes
    */
   updateTitle(period: string, total: number): void {
+    const language = this.config.language || 'en';
+    // Format total based on language locale
+    const locale = language === 'es' ? 'es-ES' : language === 'be' ? 'be-BY' : 'en-US';
+    const formattedTotal = total.toLocaleString(locale, { 
+      minimumFractionDigits: 2, 
+      maximumFractionDigits: 2 
+    });
+    
     this.svg.select('title')
-      .text(`Energy consumption chart. ${period}. Total: ${total.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kWh`);
+      .text(localizeWithVars('chart.accessibility.title_with_data', {
+        period,
+        total: formattedTotal
+      }, language));
   }
 
   /**

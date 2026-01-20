@@ -42,6 +42,11 @@ export class OctopusConsumptionCard extends LitElement {
   // Disable Lit dev mode warnings for this class
   static enabledWarnings: ('migration' | 'change-in-update')[] = [];
 
+  // Card name for Home Assistant editor (displays as "{cardName} card configuration")
+  static get cardName(): string {
+    return "Octopus Energy España Consumption";
+  }
+
   @property({ attribute: false }) public hass!: HomeAssistant;
   @property({ attribute: false }) public config!: OctopusConsumptionCardConfig;
 
@@ -1551,20 +1556,35 @@ export class OctopusConsumptionCard extends LitElement {
       ${this.config.show_navigation !== false ? html`
         <div class="period-selector">
           <button
+            type="button"
             class="period-button ${this._currentPeriod === "day" ? "active" : ""}"
-            @click=${() => this._setPeriod("day")}
+            @click=${(e: Event) => {
+              e.preventDefault();
+              e.stopPropagation();
+              this._setPeriod("day");
+            }}
           >
             Día
           </button>
           <button
+            type="button"
             class="period-button ${this._currentPeriod === "week" ? "active" : ""}"
-            @click=${() => this._setPeriod("week")}
+            @click=${(e: Event) => {
+              e.preventDefault();
+              e.stopPropagation();
+              this._setPeriod("week");
+            }}
           >
             Semana
           </button>
           <button
+            type="button"
             class="period-button ${this._currentPeriod === "month" ? "active" : ""}"
-            @click=${() => this._setPeriod("month")}
+            @click=${(e: Event) => {
+              e.preventDefault();
+              e.stopPropagation();
+              this._setPeriod("month");
+            }}
           >
             Mes
           </button>
@@ -1579,12 +1599,25 @@ export class OctopusConsumptionCard extends LitElement {
         </div>
 
         <div class="navigation-controls">
-          <button class="nav-button" @click=${() => this._navigatePeriod("prev")}>
+          <button 
+            type="button"
+            class="nav-button" 
+            @click=${(e: Event) => {
+              e.preventDefault();
+              e.stopPropagation();
+              this._navigatePeriod("prev");
+            }}
+          >
             ← Anterior
           </button>
           <button 
+            type="button"
             class="nav-button" 
-            @click=${() => this._navigatePeriod("next")}
+            @click=${(e: Event) => {
+              e.preventDefault();
+              e.stopPropagation();
+              this._navigatePeriod("next");
+            }}
             ?disabled=${this._wouldNavigateToFuture()}
             style=${this._wouldNavigateToFuture() ? "opacity: 0.5; cursor: not-allowed;" : ""}
           >
@@ -1626,12 +1659,25 @@ export class OctopusConsumptionCard extends LitElement {
     return html`
       ${this.config.show_navigation !== false ? html`
         <div class="navigation-controls">
-          <button class="nav-button" @click=${() => this._navigatePeriod("prev")}>
+          <button 
+            type="button"
+            class="nav-button" 
+            @click=${(e: Event) => {
+              e.preventDefault();
+              e.stopPropagation();
+              this._navigatePeriod("prev");
+            }}
+          >
             ${this.config.heat_calendar_period === "year" ? "← Previous Year" : "← Previous Month"}
           </button>
           <button 
+            type="button"
             class="nav-button" 
-            @click=${() => this._navigatePeriod("next")}
+            @click=${(e: Event) => {
+              e.preventDefault();
+              e.stopPropagation();
+              this._navigatePeriod("next");
+            }}
             ?disabled=${this._wouldNavigateToFuture()}
             style=${this._wouldNavigateToFuture() ? "opacity: 0.5; cursor: not-allowed;" : ""}
           >
@@ -1665,32 +1711,60 @@ export class OctopusConsumptionCard extends LitElement {
       ${this.config.show_navigation !== false ? html`
         <div class="period-selector">
           <button
+            type="button"
             class="period-button ${this._currentPeriod === "day" ? "active" : ""}"
-            @click=${() => this._setPeriod("day")}
+            @click=${(e: Event) => {
+              e.preventDefault();
+              e.stopPropagation();
+              this._setPeriod("day");
+            }}
           >
             Day
           </button>
           <button
+            type="button"
             class="period-button ${this._currentPeriod === "week" ? "active" : ""}"
-            @click=${() => this._setPeriod("week")}
+            @click=${(e: Event) => {
+              e.preventDefault();
+              e.stopPropagation();
+              this._setPeriod("week");
+            }}
           >
             Week
           </button>
           <button
+            type="button"
             class="period-button ${this._currentPeriod === "month" ? "active" : ""}"
-            @click=${() => this._setPeriod("month")}
+            @click=${(e: Event) => {
+              e.preventDefault();
+              e.stopPropagation();
+              this._setPeriod("month");
+            }}
           >
             Month
           </button>
         </div>
 
         <div class="navigation-controls">
-          <button class="nav-button" @click=${() => this._navigatePeriod("prev")}>
+          <button 
+            type="button"
+            class="nav-button" 
+            @click=${(e: Event) => {
+              e.preventDefault();
+              e.stopPropagation();
+              this._navigatePeriod("prev");
+            }}
+          >
             ← Previous
           </button>
           <button 
+            type="button"
             class="nav-button" 
-            @click=${() => this._navigatePeriod("next")}
+            @click=${(e: Event) => {
+              e.preventDefault();
+              e.stopPropagation();
+              this._navigatePeriod("next");
+            }}
             ?disabled=${this._wouldNavigateToFuture()}
             style=${this._wouldNavigateToFuture() ? "opacity: 0.5; cursor: not-allowed;" : ""}
           >
@@ -1917,7 +1991,8 @@ export class OctopusConsumptionCard extends LitElement {
         width,
         height,
         padding,
-        colors
+        colors,
+        language: this.hass?.language || 'en'
       });
     } else {
       // Clear previous chart content and resize
@@ -2298,7 +2373,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
     if (!alreadyAdded) {
       (window as any).customCards.push({
         type: 'custom:octopus-consumption-card',
-        name: 'Octopus Energy España Consumption Card',
+        name: 'Octopus Energy España Consumption',
         preview: false,
         description: 'Display consumption data and tariff comparisons for Octopus Energy España',
       });

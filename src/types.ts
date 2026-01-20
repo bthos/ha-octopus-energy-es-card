@@ -31,7 +31,7 @@ export interface OctopusConsumptionCardConfig {
   // Tariff comparison chart
   show_tariff_chart?: boolean; // Show visual chart in tariff comparison section
   // View selection
-  view?: "consumption" | "heat-calendar" | "week-analysis" | "tariff-comparison"; // Select which view to display
+  view: "consumption" | "heat-calendar" | "week-analysis" | "tariff-comparison"; // Select which view to display (required)
 }
 
 export interface ConsumptionDataPoint {

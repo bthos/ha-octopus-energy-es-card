@@ -60,6 +60,7 @@ export class OctopusConsumptionCard extends LitElement {
   @state() private _currentPeriod: "day" | "week" | "month" = "week";
   @state() private _currentDate: Date = new Date();
   @state() private _weekComparisonData: WeekComparisonData | null = null;
+  @state() private _showChartView: boolean = true; // true = chart, false = list
   private _chartInstance: D3Chart | null = null;
   private _hasInitialData = false; // Track if we have loaded data at least once
   private _hasAttemptedLoad = false; // Track if we have attempted to load data during initialization
@@ -116,17 +117,15 @@ export class OctopusConsumptionCard extends LitElement {
       throw new Error("Configuration incomplete. Please select your Octopus Energy tariff in the card editor.");
     }
 
-    // Ensure view defaults to "consumption" if not specified
-    const configWithDefaults = {
-      ...config,
-      view: config.view || "consumption",
-    };
+    if (!config.view) {
+      throw new Error("Configuration incomplete. Please select a view in the card editor.");
+    }
 
-    this.config = configWithDefaults;
+    this.config = config;
     
     // Initialize state from config if available
-    if (configWithDefaults.default_period) {
-      this._currentPeriod = configWithDefaults.default_period;
+    if (config.default_period) {
+      this._currentPeriod = config.default_period;
     }
   }
 
@@ -143,7 +142,7 @@ export class OctopusConsumptionCard extends LitElement {
     if (this.config && this.config.show_navigation !== false) {
       size += 1;
     }
-    const view = this.config?.view || "consumption";
+    const view = this.config.view;
     if (this.config && view === "tariff-comparison") {
       size += 1;
     }
@@ -365,7 +364,7 @@ export class OctopusConsumptionCard extends LitElement {
       this._error = null;
     }
 
-    const view = this.config.view || "consumption";
+    const view = this.config.view;
     // Check if tariff comparison is active (only for tariff-comparison view)
     if (view === "tariff-comparison" && (!this.config.tariff_entry_ids || this.config.tariff_entry_ids.length === 0)) {
       Logger.warn("Tariff comparison view is active but no tariff_entry_ids provided. Comparison will be disabled.");
@@ -611,7 +610,12 @@ export class OctopusConsumptionCard extends LitElement {
       this._validateDateRange(startDate, endDate);
 
       const dateRange = `${startDate.toISOString().split("T")[0]} → ${endDate.toISOString().split("T")[0]}`;
-      Logger.groupDataLoad(entryId, this._currentPeriod, dateRange);
+      // Log period info: use view-specific period for heat-calendar/tariff-comparison, otherwise use _currentPeriod
+      const view = this.config.view;
+      const logPeriod = (view === "heat-calendar" || view === "tariff-comparison" || view === "week-analysis")
+        ? "daily"
+        : this._currentPeriod;
+      Logger.groupDataLoad(entryId, logPeriod, dateRange);
 
       const consumptionResult = await this._fetchConsumptionData(entryId, startDate, endDate);
       this._consumptionData = consumptionResult.consumption_data || [];
@@ -625,8 +629,6 @@ export class OctopusConsumptionCard extends LitElement {
       }
 
       // Optimize data loading based on active view
-      const view = this.config.view || "consumption";
-
       // Fetch tariff comparison only if tariff-comparison view is active
       if (view === "tariff-comparison" && this.config.tariff_entry_ids?.length) {
         await this._fetchTariffComparison(entryId, startDate, endDate);
@@ -636,7 +638,7 @@ export class OctopusConsumptionCard extends LitElement {
       }
 
       // Only calculate week comparison if week-analysis view is active
-      if (view === "week-analysis" && this.config.show_week_comparison) {
+      if (view === "week-analysis") {
         this._weekComparisonData = this._calculateWeekComparison();
       } else {
         this._weekComparisonData = null;
@@ -693,15 +695,19 @@ export class OctopusConsumptionCard extends LitElement {
   ): Promise<FetchConsumptionResult> {
     // Determine granularity based on period and view
     // Day: hourly consumption
-    // Week: daily consumption (will be grouped by weeks)
-    // Month: daily consumption
-    // Year (heat calendar): daily consumption (will be aggregated by months)
-    const view = this.config.view || "consumption";
-    const isHeatCalendarYear = view === "heat-calendar" && 
-                               this.config.heat_calendar_period === "year";
-    const granularity = isHeatCalendarYear 
-      ? "daily" // Year view uses daily data, aggregated by months
-      : (this._currentPeriod === "day" ? "hourly" : "daily"); // Week and month use daily
+    // Determine granularity based on view:
+    // - heat-calendar: always daily (month or year view)
+    // - tariff-comparison: always daily
+    // - week-analysis: always daily
+    // - consumption: hourly for day period, daily for week/month periods
+    const view = this.config.view;
+    const isHeatCalendar = view === "heat-calendar";
+    const isTariffComparison = view === "tariff-comparison";
+    const isWeekAnalysis = view === "week-analysis";
+    
+    const granularity = (isHeatCalendar || isTariffComparison || isWeekAnalysis)
+      ? "daily" // These views always use daily consumption data
+      : (this._currentPeriod === "day" ? "hourly" : "daily"); // Consumption view: hourly for day, daily for week/month
     
     let rawResponse: any;
     try {
@@ -778,7 +784,8 @@ export class OctopusConsumptionCard extends LitElement {
     endDate: Date
   ): Promise<void> {
     try {
-      const period = this._currentPeriod === "day" ? "daily" : this._currentPeriod === "week" ? "weekly" : "monthly";
+      // Tariff comparison always uses daily period for calculations
+      const period = "daily";
       
       const comparisonResult = await this._callServiceWithTimeout<{ success: boolean; result?: ComparisonResult; error?: string }>(
         OctopusConsumptionCard.SERVICE_DOMAIN,
@@ -812,30 +819,61 @@ export class OctopusConsumptionCard extends LitElement {
   }
 
   private _getDateRange(): { startDate: Date; endDate: Date } {
-    // Check if heat calendar year view is requested
-    const view = this.config.view || "consumption";
-    const isHeatCalendarYear = view === "heat-calendar" && 
-                               this.config.heat_calendar_period === "year";
+    const view = this.config.view;
     
-    if (isHeatCalendarYear) {
-      // For year view, fetch full year of data
-      const selectedYear = this._currentDate.getFullYear();
-      const now = new Date();
-      const isCurrentYear = selectedYear === now.getFullYear();
+    // Heat calendar views always use daily consumption data
+    if (view === "heat-calendar") {
+      const isHeatCalendarYear = this.config.heat_calendar_period === "year";
       
-      const startDate = new Date(selectedYear, 0, 1); // January 1st
-      startDate.setHours(0, 0, 0, 0);
-      
-      const endDate = isCurrentYear 
-        ? new Date(now) // Today if current year
-        : new Date(selectedYear, 11, 31); // December 31st if past year
+      if (isHeatCalendarYear) {
+        // For year view, fetch full year of data
+        const selectedYear = this._currentDate.getFullYear();
+        const now = new Date();
+        const isCurrentYear = selectedYear === now.getFullYear();
+        
+        const startDate = new Date(selectedYear, 0, 1); // January 1st
+        startDate.setHours(0, 0, 0, 0);
+        
+        const endDate = isCurrentYear 
+          ? new Date(now) // Today if current year
+          : new Date(selectedYear, 11, 31); // December 31st if past year
+        endDate.setHours(23, 59, 59, 999);
+        
+        return { startDate, endDate };
+      } else {
+        // For month view, fetch full month of daily data
+        const selectedDate = new Date(this._currentDate);
+        const year = selectedDate.getFullYear();
+        const month = selectedDate.getMonth();
+        const now = new Date();
+        const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
+        
+        const startDate = new Date(year, month, 1); // First day of month
+        startDate.setHours(0, 0, 0, 0);
+        
+        const endDate = isCurrentMonth 
+          ? new Date(now) // Today if current month
+          : new Date(year, month + 1, 0); // Last day of month
+        endDate.setHours(23, 59, 59, 999);
+        
+        return { startDate, endDate };
+      }
+    }
+    
+    // Tariff comparison always uses daily consumption data (last month)
+    if (view === "tariff-comparison") {
+      const endDate = new Date(this._currentDate);
       endDate.setHours(23, 59, 59, 999);
+      
+      const startDate = new Date(endDate);
+      startDate.setDate(startDate.getDate() - 29); // Last 30 days (daily data)
+      startDate.setHours(0, 0, 0, 0);
       
       return { startDate, endDate };
     }
     
     // For week-analysis view, fetch enough daily data for all weeks being compared
-    if (view === "week-analysis" && this.config.show_week_comparison) {
+    if (view === "week-analysis") {
       const comparisonCount = this.config.week_comparison_count || 2;
       // Fetch daily data for comparisonCount weeks (each week is 7 days)
       // Add a buffer of a few days to ensure we have complete weeks
@@ -852,7 +890,7 @@ export class OctopusConsumptionCard extends LitElement {
     }
 
     
-    // Standard period-based date range
+    // Standard period-based date range (for consumption view only)
     const endDate = new Date(this._currentDate);
     endDate.setHours(23, 59, 59, 999);
     
@@ -878,12 +916,12 @@ export class OctopusConsumptionCard extends LitElement {
     const now = new Date();
     now.setHours(23, 59, 59, 999); // End of today
     
-    const view = this.config.view || "consumption";
+    const view = this.config.view;
     const isHeatCalendarYear = view === "heat-calendar" && 
                                this.config.heat_calendar_period === "year";
     
     // For week-analysis view, check if navigating by week would go into future
-    const isWeekAnalysis = view === "week-analysis" && this.config.show_week_comparison;
+    const isWeekAnalysis = view === "week-analysis";
     if (isWeekAnalysis) {
       const testDate = new Date(this._currentDate);
       testDate.setDate(testDate.getDate() + 7); // Next week
@@ -914,10 +952,10 @@ export class OctopusConsumptionCard extends LitElement {
    * Get date range for a specific date (used for future check)
    */
   private _getDateRangeForDate(date: Date): { startDate: Date; endDate: Date } {
-    const view = this.config.view || "consumption";
+    const view = this.config.view;
     
     // For week-analysis view, calculate date range based on week_comparison_count
-    if (view === "week-analysis" && this.config.show_week_comparison) {
+    if (view === "week-analysis") {
       const comparisonCount = this.config.week_comparison_count || 2;
       const daysToFetch = (comparisonCount * 7) + 6;
       
@@ -931,25 +969,56 @@ export class OctopusConsumptionCard extends LitElement {
       return { startDate, endDate };
     }
 
-    const isHeatCalendarYear = view === "heat-calendar" && 
-                               this.config.heat_calendar_period === "year";
+    // Heat calendar views always use daily consumption data
+    if (view === "heat-calendar") {
+      const isHeatCalendarYear = this.config.heat_calendar_period === "year";
+      
+      if (isHeatCalendarYear) {
+        const selectedYear = date.getFullYear();
+        const now = new Date();
+        const isCurrentYear = selectedYear === now.getFullYear();
+        
+        const startDate = new Date(selectedYear, 0, 1);
+        startDate.setHours(0, 0, 0, 0);
+        
+        const endDate = isCurrentYear 
+          ? new Date(now)
+          : new Date(selectedYear, 11, 31);
+        endDate.setHours(23, 59, 59, 999);
+        
+        return { startDate, endDate };
+      } else {
+        // For month view, fetch full month of daily data
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const now = new Date();
+        const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
+        
+        const startDate = new Date(year, month, 1); // First day of month
+        startDate.setHours(0, 0, 0, 0);
+        
+        const endDate = isCurrentMonth 
+          ? new Date(now) // Today if current month
+          : new Date(year, month + 1, 0); // Last day of month
+        endDate.setHours(23, 59, 59, 999);
+        
+        return { startDate, endDate };
+      }
+    }
     
-    if (isHeatCalendarYear) {
-      const selectedYear = date.getFullYear();
-      const now = new Date();
-      const isCurrentYear = selectedYear === now.getFullYear();
-      
-      const startDate = new Date(selectedYear, 0, 1);
-      startDate.setHours(0, 0, 0, 0);
-      
-      const endDate = isCurrentYear 
-        ? new Date(now)
-        : new Date(selectedYear, 11, 31);
+    // Tariff comparison always uses daily consumption data (last month)
+    if (view === "tariff-comparison") {
+      const endDate = new Date(date);
       endDate.setHours(23, 59, 59, 999);
+      
+      const startDate = new Date(endDate);
+      startDate.setDate(startDate.getDate() - 29); // Last 30 days (daily data)
+      startDate.setHours(0, 0, 0, 0);
       
       return { startDate, endDate };
     }
     
+    // Standard period-based date range (for consumption view only)
     const endDate = new Date(date);
     endDate.setHours(23, 59, 59, 999);
     
@@ -989,13 +1058,14 @@ export class OctopusConsumptionCard extends LitElement {
     
     const change = direction === "prev" ? -1 : 1;
     
-    // Check if heat calendar year view navigation is needed
-    const view = this.config.view || "consumption";
-    const isHeatCalendarYear = view === "heat-calendar" && 
-                               this.config.heat_calendar_period === "year";
+    // Handle navigation based on view type
+    const view = this.config.view;
+    const isHeatCalendar = view === "heat-calendar";
+    const isHeatCalendarYear = isHeatCalendar && this.config.heat_calendar_period === "year";
+    const isHeatCalendarMonth = isHeatCalendar && this.config.heat_calendar_period === "month";
+    const isWeekAnalysis = view === "week-analysis";
+    const isTariffComparison = view === "tariff-comparison";
     
-    // For week-analysis view, navigate by weeks
-    const isWeekAnalysis = view === "week-analysis" && this.config.show_week_comparison;
     if (isWeekAnalysis) {
       // Navigate by week for week analysis view
       this._currentDate.setDate(this._currentDate.getDate() + (change * 7));
@@ -1004,8 +1074,16 @@ export class OctopusConsumptionCard extends LitElement {
       // Navigate by year for heat calendar year view
       this._currentDate.setFullYear(this._currentDate.getFullYear() + change);
       this._currentDate = new Date(this._currentDate);
+    } else if (isHeatCalendarMonth) {
+      // Navigate by month for heat calendar month view (independent of _currentPeriod)
+      this._currentDate.setMonth(this._currentDate.getMonth() + change);
+      this._currentDate = new Date(this._currentDate);
+    } else if (isTariffComparison) {
+      // Navigate by month for tariff comparison view (independent of _currentPeriod)
+      this._currentDate.setMonth(this._currentDate.getMonth() + change);
+      this._currentDate = new Date(this._currentDate);
     } else {
-      // Update date based on current period (direct state update)
+      // Update date based on current period (for consumption view only)
       if (this._currentPeriod === "day") {
         this._currentDate.setDate(this._currentDate.getDate() + change);
       } else if (this._currentPeriod === "week") {
@@ -1285,10 +1363,6 @@ export class OctopusConsumptionCard extends LitElement {
 
     return html`
       <div class="heat-calendar-container ${isYearView ? 'heat-calendar-year-view' : ''}">
-        <div class="comparison-title">
-          Consumption Heat Calendar
-          ${isYearView && yearSummary ? html` - ${yearSummary.year}` : ''}
-        </div>
         ${isYearView && yearSummary ? html`
           <div class="heat-calendar-summary">
             <span>Total: ${yearSummary.totalConsumption.toFixed(1)} kWh</span>
@@ -1366,7 +1440,6 @@ export class OctopusConsumptionCard extends LitElement {
 
     return html`
       <div class="week-comparison-section">
-        <div class="comparison-title">Week-over-Week Comparison</div>
         <div class="week-comparison-grid">
           ${weeks.map((week, index) => {
             const comparison = comparisons.find(c => c.weekIndex === index);
@@ -1826,7 +1899,7 @@ export class OctopusConsumptionCard extends LitElement {
       `;
     }
 
-    const view = this.config.view || "consumption";
+    const view = this.config.view;
 
     return html`
       <div class="card-content-wrapper">
@@ -1892,8 +1965,24 @@ export class OctopusConsumptionCard extends LitElement {
               <h3 class="summary-title">${localize("card.title.electricity", language)}</h3>
             </div>
             <div class="summary-view-toggle">
-              <ha-icon icon="mdi:chart-line" class="view-icon active"></ha-icon>
-              <ha-icon icon="mdi:view-list" class="view-icon"></ha-icon>
+              <ha-icon 
+                icon="mdi:chart-line" 
+                class="view-icon ${this._showChartView ? 'active' : ''}"
+                @click=${(e: Event) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  this._showChartView = true;
+                }}
+              ></ha-icon>
+              <ha-icon 
+                icon="mdi:view-list" 
+                class="view-icon ${!this._showChartView ? 'active' : ''}"
+                @click=${(e: Event) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  this._showChartView = false;
+                }}
+              ></ha-icon>
             </div>
           </div>
           <div class="summary-date-range">${this._formatDateRange()}</div>
@@ -1904,8 +1993,123 @@ export class OctopusConsumptionCard extends LitElement {
         </div>
       ` : ""}
 
-      <div class="chart-container">
-        ${this._renderChart()}
+      ${this._showChartView ? html`
+        <div class="chart-container">
+          ${this._renderChart()}
+        </div>
+      ` : html`
+        <div class="consumption-list-container">
+          ${this._renderConsumptionList()}
+        </div>
+      `}
+    `;
+  }
+
+  /**
+   * Render consumption list view (table format)
+   */
+  private _renderConsumptionList(): TemplateResult {
+    const language = this.hass?.language || 'en';
+    
+    if (this._loading) {
+      return html`<div class="loading">${localize("card.loading", language)}</div>`;
+    }
+
+    if (!this._loading && !this._error && this._consumptionData.length === 0) {
+      const dateRange = this._formatDateRange();
+      return html`
+        <div class="loading">
+          <div>${localize("card.no_data", language)}</div>
+          <div style="margin-top: 8px; font-size: 12px; color: var(--secondary-text-color);">
+            Period: ${dateRange}
+          </div>
+        </div>
+      `;
+    }
+
+    if (this._error) {
+      return html`
+        <div class="error-message">
+          <div class="error-title">${localize("card.error.unable_to_load", language)}</div>
+          <div class="error-details">${this._error}</div>
+        </div>
+      `;
+    }
+
+    // Format data for display
+    const formattedData = this._consumptionData.map(point => {
+      const date = new Date(point.start_time || point.date || '');
+      const consumption = point.consumption || point.value || 0;
+      const period = point.period || null;
+      
+      // Format date based on current period
+      let dateStr = '';
+      if (this._currentPeriod === 'day') {
+        dateStr = date.toLocaleTimeString('es-ES', { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        });
+      } else if (this._currentPeriod === 'week') {
+        dateStr = date.toLocaleDateString('es-ES', { 
+          weekday: 'short',
+          day: 'numeric',
+          month: 'short'
+        });
+      } else {
+        dateStr = date.toLocaleDateString('es-ES', { 
+          day: 'numeric',
+          month: 'short'
+        });
+      }
+
+      return {
+        date,
+        dateStr,
+        consumption,
+        period,
+        p1: point.p1_consumption,
+        p2: point.p2_consumption,
+        p3: point.p3_consumption
+      };
+    });
+
+    // Check if we have period breakdown data
+    const hasPeriodBreakdown = formattedData.some(d => d.p1 !== undefined || d.p2 !== undefined || d.p3 !== undefined);
+
+    return html`
+      <div class="consumption-list">
+        <table class="consumption-table">
+          <thead>
+            <tr>
+              <th>${this._currentPeriod === 'day' ? 'Time' : 'Date'}</th>
+              ${hasPeriodBreakdown ? html`
+                <th>P1</th>
+                <th>P2</th>
+                <th>P3</th>
+              ` : ''}
+              <th>Total (kWh)</th>
+              ${hasPeriodBreakdown ? '' : html`
+                <th>Period</th>
+              `}
+            </tr>
+          </thead>
+          <tbody>
+            ${formattedData.map(item => html`
+              <tr>
+                <td>${item.dateStr}</td>
+                ${hasPeriodBreakdown ? html`
+                  <td>${item.p1 !== undefined ? item.p1.toFixed(2) : '-'}</td>
+                  <td>${item.p2 !== undefined ? item.p2.toFixed(2) : '-'}</td>
+                  <td>${item.p3 !== undefined ? item.p3.toFixed(2) : '-'}</td>
+                ` : ''}
+                <td class="consumption-value">${item.consumption.toFixed(2)}</td>
+                ${hasPeriodBreakdown ? '' : html`
+                  <td>${item.period || '-'}</td>
+                `}
+              </tr>
+            `)}
+          </tbody>
+        </table>
       </div>
     `;
   }
@@ -1960,17 +2164,6 @@ export class OctopusConsumptionCard extends LitElement {
    */
   private _renderWeekAnalysisView(): TemplateResult {
     const language = this.hass?.language || 'en';
-    if (!this.config.show_week_comparison) {
-      return html`
-        <div class="error-message">
-          <div class="error-title">${localize("card.week_comparison.not_enabled", language)}</div>
-          <div class="error-details">
-            ${localize("card.week_comparison.not_enabled_details", language)}
-          </div>
-        </div>
-      `;
-    }
-
     return html`
       ${this.config.show_navigation !== false ? html`
         <div class="navigation-controls">
@@ -2012,7 +2205,6 @@ export class OctopusConsumptionCard extends LitElement {
     const language = this.hass?.language || 'en';
     return html`
       <div class="comparison-section">
-        <h3 class="comparison-title">${localize("editor.tariff_comparison", language)}</h3>
         ${this._comparisonError ? html`
           <div class="comparison-error">
             <ha-icon icon="mdi:alert"></ha-icon>
@@ -2121,7 +2313,7 @@ export class OctopusConsumptionCard extends LitElement {
     // Group data based on period type
     // Week: group daily data by weeks
     // Year (heat calendar): group daily data by months
-    const view = this.config.view || "consumption";
+    const view = this.config.view;
     const isHeatCalendarYear = view === "heat-calendar" && 
                                this.config.heat_calendar_period === "year";
     
@@ -2545,7 +2737,7 @@ export class OctopusConsumptionCard extends LitElement {
       show_moving_average: false,
       moving_average_days: 7,
       heat_calendar_period: "month",
-      show_week_comparison: false,
+      
       week_comparison_count: 2,
       show_cost_trend: false,
       cost_moving_average_days: 30,

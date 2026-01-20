@@ -511,6 +511,49 @@ export const cardStyles = css`
     color: var(--text-primary-color);
   }
 
+  .consumption-list-container {
+    margin-top: 16px;
+  }
+
+  .consumption-list {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .consumption-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  .consumption-table thead {
+    background: var(--secondary-background-color);
+    border-bottom: 2px solid var(--divider-color);
+  }
+
+  .consumption-table th {
+    padding: 12px 8px;
+    text-align: left;
+    font-weight: 500;
+    color: var(--primary-text-color);
+    white-space: nowrap;
+  }
+
+  .consumption-table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--divider-color);
+    color: var(--primary-text-color);
+  }
+
+  .consumption-table tbody tr:hover {
+    background: var(--secondary-background-color);
+  }
+
+  .consumption-table .consumption-value {
+    font-weight: 600;
+    color: var(--primary-color);
+  }
+
   .heat-calendar-container {
     margin-top: 24px;
   }

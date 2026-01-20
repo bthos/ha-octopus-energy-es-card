@@ -46,7 +46,7 @@ export const translations: Record<string, Translations> = {
     // View Selection
     "editor.view_label": "View",
     "editor.view_helper": "Select which view to display",
-    "editor.view_consumption": "Consumption Overview",
+    "editor.view_consumption": "Consumption",
     "editor.view_heat_calendar": "Heat Calendar",
     "editor.view_week_analysis": "Week Analysis",
     "editor.view_tariff_comparison": "Tariff Comparison",

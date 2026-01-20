@@ -72,7 +72,7 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
       show_moving_average: config.show_moving_average !== undefined ? config.show_moving_average : false,
       moving_average_days: config.moving_average_days || 7,
       heat_calendar_period: config.heat_calendar_period || "month",
-      show_week_comparison: config.show_week_comparison !== undefined ? config.show_week_comparison : false,
+      
       week_comparison_count: config.week_comparison_count || 2,
       show_cost_trend: config.show_cost_trend !== undefined ? config.show_cost_trend : false,
       cost_moving_average_days: config.cost_moving_average_days || 30,
@@ -177,7 +177,7 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
 
 
   private _buildSchema(): any[] {
-    const view = this._config.view || "consumption";
+    const view = this._config.view;
     const schema: any[] = [
       {
         name: "view",
@@ -331,9 +331,13 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
     } else if (view === "week-analysis") {
       schema.push(
         {
-          name: "show_week_comparison",
+          name: "week_comparison_count",
           selector: {
-            boolean: {},
+            number: {
+              min: 2,
+              max: 8,
+              mode: "box",
+            },
           },
         },
         {
@@ -343,19 +347,6 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
           },
         }
       );
-
-      if (this._config.show_week_comparison) {
-        schema.push({
-          name: "week_comparison_count",
-          selector: {
-            number: {
-              min: 2,
-              max: 8,
-              mode: "box",
-            },
-          },
-        });
-      }
     } else if (view === "tariff-comparison") {
       // tariff_entry_ids is handled by custom UI, not in schema
       schema.push({
@@ -497,7 +488,7 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
     }
 
     const schema = this._buildSchema();
-    const view = this._config.view || "consumption";
+    const view = this._config.view;
 
     return html`
       <div class="card-config">

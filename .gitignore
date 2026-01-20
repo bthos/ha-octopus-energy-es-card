@@ -41,6 +41,7 @@ scripts/deploy/.env
 .cache/
 
 # Planning documents
+.hypothesis/
 plans/
 
 # Test coverage (if tests are added in future)

@@ -132,6 +132,75 @@ export class OctopusConsumptionCard extends LitElement {
     if (!this._error) {
       this._loadData();
     }
+    
+    // Add event listeners for chart navigation (swipe and keyboard)
+    this._setupChartNavigationListeners();
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    // Cleanup chart instance
+    if (this._chartInstance) {
+      this._chartInstance.destroy();
+      this._chartInstance = null;
+    }
+  }
+
+  /**
+   * Setup event listeners for chart navigation (swipe gestures and keyboard)
+   */
+  private _setupChartNavigationListeners(): void {
+    // Use requestAnimationFrame to ensure DOM is ready
+    requestAnimationFrame(() => {
+      // Listen on the chart container (where D3Chart dispatches events)
+      const container = this.shadowRoot?.querySelector('#chart-container') as HTMLElement;
+      if (!container) return;
+
+      // Listen for swipe events from chart
+      container.addEventListener('chart-swipe', ((e: CustomEvent) => {
+        const { direction } = e.detail;
+        if (direction === 'next') {
+          this._navigatePeriod('next');
+        } else if (direction === 'previous') {
+          this._navigatePeriod('prev');
+        }
+      }) as EventListener);
+
+      // Listen for keyboard navigation events from chart
+      container.addEventListener('chart-navigate', ((e: CustomEvent) => {
+        const { direction } = e.detail;
+        switch (direction) {
+          case 'next':
+            this._navigatePeriod('next');
+            break;
+          case 'previous':
+            this._navigatePeriod('prev');
+            break;
+          case 'first':
+            // Navigate to earliest available date
+            const earliestDate = new Date();
+            earliestDate.setFullYear(earliestDate.getFullYear() - 1); // Go back 1 year
+            this._currentDate = earliestDate;
+            this._loadData();
+            break;
+          case 'last':
+            // Navigate to latest available date (today)
+            this._currentDate = new Date();
+            this._loadData();
+            break;
+        }
+      }) as EventListener);
+
+      // Listen for chart resize events
+      container.addEventListener('chart-resize', ((e: CustomEvent) => {
+        const { width, height } = e.detail;
+        if (this._chartInstance) {
+          this._chartInstance.resize(width, height);
+          // Re-render chart with new dimensions
+          this._renderD3Chart();
+        }
+      }) as EventListener);
+    });
   }
 
   protected updated(changedProperties: PropertyValues): void {

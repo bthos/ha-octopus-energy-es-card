@@ -52,18 +52,47 @@ export const cardStyles = css`
     min-height: 300px;
     position: relative;
     width: 100%;
+    /* Victory.js-inspired touch optimization */
+    touch-action: auto; /* Allow browser pan/zoom */
+    -webkit-tap-highlight-color: transparent; /* No iOS tap flash */
+    -webkit-touch-callout: none; /* No iOS callout on long press */
+    user-select: none; /* Prevent text selection */
   }
 
   .chart-svg-container {
     width: 100%;
     height: 300px;
     position: relative;
+    /* Pointer events structure (Victory pattern) */
+    pointer-events: none; /* Container non-interactive */
   }
 
   .chart-svg {
     width: 100%;
     height: 100%;
     display: block;
+    pointer-events: all; /* SVG interactive */
+  }
+
+  /* Mobile-specific optimizations */
+  @media (hover: none) and (pointer: coarse) {
+    .chart-container {
+      touch-action: pan-y pinch-zoom; /* Allow vertical scroll + pinch zoom */
+    }
+
+    /* Increase touch target sizes on mobile */
+    .chart-bar,
+    .chart-point,
+    path.bar,
+    circle.point {
+      min-width: 44px;
+      min-height: 44px;
+    }
+  }
+
+  /* Disable pointer events during animations */
+  .chart-animating {
+    pointer-events: none;
   }
 
   .chart-bar {
@@ -725,6 +754,45 @@ export const cardStyles = css`
 
   .tooltip.visible {
     display: block;
+  }
+
+  /* Print optimization */
+  @media print {
+    .chart-container {
+      break-inside: avoid; /* Don't split chart across pages */
+      page-break-inside: avoid;
+    }
+
+    /* Hide interactive elements */
+    .chart-navigation,
+    .chart-controls,
+    .period-selector {
+      display: none !important;
+    }
+
+    /* Expand to full width */
+    .chart-container {
+      width: 100% !important;
+      max-width: none !important;
+    }
+
+    /* Ensure colors are visible in print */
+    .chart-bar,
+    .chart-line,
+    path.bar,
+    path.line {
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+
+    /* Add page header for context */
+    .chart-container::before {
+      content: "Energy Consumption Chart";
+      display: block;
+      font-size: 14pt;
+      font-weight: bold;
+      margin-bottom: 10pt;
+    }
   }
 `;
 

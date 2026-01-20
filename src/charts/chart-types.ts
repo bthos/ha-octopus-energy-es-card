@@ -10,6 +10,16 @@ export interface ChartConfig {
   fontFamily?: string;
 }
 
+export interface ChartGradient {
+  enabled: boolean;
+  id?: string;
+  stops: Array<{ offset: string; color: string }>;
+  x1?: string;
+  y1?: string;
+  x2?: string;
+  y2?: string;
+}
+
 export interface ChartColors {
   text: string;
   accent: string;
@@ -22,6 +32,7 @@ export interface ChartColors {
   background: string;
   grid: string;
   axis: string;
+  gradient?: ChartGradient; // Optional Octopus-style gradient
 }
 
 export interface DataPoint {

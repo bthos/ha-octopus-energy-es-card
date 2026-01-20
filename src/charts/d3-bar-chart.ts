@@ -162,6 +162,40 @@ export async function renderD3BarChart(
     .attr('stroke', config.colors.axis)
     .attr('opacity', 0.2);
 
+  // Create gradient if enabled (Octopus Energy pink gradient pattern)
+  const useGradient = config.colors.gradient?.enabled ?? false;
+  if (useGradient) {
+    const defs = svg.select('defs').empty() 
+      ? svg.append('defs') 
+      : svg.select('defs');
+
+    // Remove existing gradient if present
+    defs.select('#octopus-pink-gradient').remove();
+
+    // Use custom gradient config or default Octopus Energy pink gradient
+    const gradientConfig = config.colors.gradient;
+    const gradientId = gradientConfig.id || 'octopus-pink-gradient';
+    const stops = gradientConfig.stops || [
+      { offset: '0%', color: '#F050F8' }, // Bright pink (top)
+      { offset: '100%', color: '#FA98FF' } // Light pink (bottom)
+    ];
+
+    // Create linear gradient (top to bottom by default)
+    const gradient = defs.append('linearGradient')
+      .attr('id', gradientId)
+      .attr('x1', gradientConfig.x1 || '0%')
+      .attr('y1', gradientConfig.y1 || '0%')
+      .attr('x2', gradientConfig.x2 || '0%')
+      .attr('y2', gradientConfig.y2 || '100%');
+
+    // Add gradient stops
+    stops.forEach(stop => {
+      gradient.append('stop')
+        .attr('offset', stop.offset)
+        .attr('stop-color', stop.color);
+    });
+  }
+
   // Draw bars with rounded top corners
   const barsGroup = contentGroup.append('g').attr('class', 'bars');
 
@@ -203,7 +237,7 @@ export async function renderD3BarChart(
         ? (xScale as d3.ScaleBand<string>).bandwidth()
         : barWidth;
       const barHeight = chartHeight - barY;
-      const cornerRadius = Math.min(currentBarWidth * 0.15, 4); // Rounded top corners like Octopus Energy
+      const cornerRadius = 8; // Fixed 8px like Octopus Energy (Victory.js pattern)
       return createRoundedRectPath(barX, barY, currentBarWidth, barHeight, cornerRadius);
     })
     .attr('fill', d => {
@@ -212,6 +246,11 @@ export async function renderD3BarChart(
           context.hoveredPoint.timestamp === d.timestamp &&
           context.hoveredPoint.value === d.value) {
         return config.colors.hover || '#ff69b4';
+      }
+      // Use gradient if enabled, otherwise use theme color
+      if (useGradient) {
+        const gradientId = config.colors.gradient?.id || 'octopus-pink-gradient';
+        return `url(#${gradientId})`;
       }
       return config.colors.primary;
     })
@@ -235,7 +274,7 @@ export async function renderD3BarChart(
       // Restore original color
       d3.select(this)
         .transition()
-        .duration(200)
+        .duration(150) // Match Victory.js tooltip fade timing
         .attr('fill', config.colors.primary);
 
       context.hideTooltip();
@@ -251,7 +290,7 @@ export async function renderD3BarChart(
   // Handle animations if enabled
   const animConfig = options.animation;
   if (animConfig?.enabled) {
-    const duration = animConfig.duration || 800;
+    const duration = animConfig.duration || 2000; // Match Victory.js timing (2000ms)
     bars
       .attr('d', (d, i) => {
         const barX = period === 'month' || period === 'week'
@@ -262,12 +301,12 @@ export async function renderD3BarChart(
           ? (xScale as d3.ScaleBand<string>).bandwidth()
           : barWidth;
         const barHeight = 0; // Start with zero height
-        const cornerRadius = Math.min(currentBarWidth * 0.15, 4);
+        const cornerRadius = 8; // Fixed 8px like Octopus Energy
         return createRoundedRectPath(barX, barY, currentBarWidth, barHeight, cornerRadius);
       })
       .transition()
       .duration(duration)
-      .delay((d, i) => (animConfig.delay || 0) + i * duration / data.points.length)
+      .delay((d, i) => (animConfig.delay || 0) + i * 50) // Fixed 50ms per bar (Victory.js pattern)
       .ease(d3.easeExpOut)
       .attr('d', (d, i) => {
         const barX = period === 'month' || period === 'week'
@@ -278,7 +317,7 @@ export async function renderD3BarChart(
           ? (xScale as d3.ScaleBand<string>).bandwidth()
           : barWidth;
         const barHeight = chartHeight - barY;
-        const cornerRadius = Math.min(currentBarWidth * 0.15, 4);
+        const cornerRadius = 8; // Fixed 8px like Octopus Energy
         return createRoundedRectPath(barX, barY, currentBarWidth, barHeight, cornerRadius);
       });
   }

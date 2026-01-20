@@ -27,22 +27,43 @@ export class D3Chart {
   private tooltipElement: d3.Selection<SVGGElement, unknown, null, undefined> | null = null;
   private currentDataPoints: DataPoint[] = [];
   private currentBarWidth: number = 0;
+  private chartId: string;
+  private _resizeTimeout: number | null = null;
+  private _resizeObserver: ResizeObserver | null = null;
 
   constructor(container: HTMLElement, config: ChartConfig) {
     this.container = container;
     this.config = config;
 
-    // Create SVG element
+    // Generate unique ID for ARIA linkage
+    this.chartId = `chart-${Math.random().toString(36).substring(2, 9)}`;
+
+    // Create SVG element with accessibility attributes (Victory.js pattern)
     this.svg = d3.select(container)
       .append('svg')
       .attr('class', 'chart-svg')
       .attr('width', config.width)
       .attr('height', config.height)
       .attr('viewBox', `0 0 ${config.width} ${config.height}`)
-      .style('display', 'block');
+      .attr('role', 'img') // Identify as image for screen readers
+      .attr('aria-labelledby', `${this.chartId}-title`) // Link to title element
+      .attr('aria-live', 'polite') // Announce dynamic updates
+      .attr('tabindex', '0') // Make keyboard-focusable
+      .style('display', 'block')
+      .style('pointer-events', 'all'); // SVG interactive (Victory pattern)
+
+    // Add title element for screen readers
+    this.svg.append('title')
+      .attr('id', `${this.chartId}-title`)
+      .text('Energy consumption chart for selected period');
 
     // Create tooltip group
     this._createTooltip();
+
+    // Add keyboard and touch support
+    this._addKeyboardSupport();
+    this._addTouchSupport();
+    this._addResizeSupport();
   }
 
   /**
@@ -287,5 +308,169 @@ export class D3Chart {
    */
   getSVG(): d3.Selection<SVGSVGElement, unknown, null, undefined> {
     return this.svg;
+  }
+
+  /**
+   * Update chart title dynamically when data changes
+   */
+  updateTitle(period: string, total: number): void {
+    this.svg.select('title')
+      .text(`Energy consumption chart. ${period}. Total: ${total.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kWh`);
+  }
+
+  /**
+   * Enable keyboard navigation for chart elements
+   */
+  private _addKeyboardSupport(): void {
+    this.svg.on('keydown', (event: KeyboardEvent) => {
+      const key = event.key;
+      
+      switch (key) {
+        case 'ArrowLeft':
+          // Navigate to previous period
+          event.preventDefault();
+          this.container.dispatchEvent(new CustomEvent('chart-navigate', {
+            detail: { direction: 'previous' }
+          }));
+          break;
+          
+        case 'ArrowRight':
+          // Navigate to next period
+          event.preventDefault();
+          this.container.dispatchEvent(new CustomEvent('chart-navigate', {
+            detail: { direction: 'next' }
+          }));
+          break;
+          
+        case 'Home':
+          // Go to first data point
+          event.preventDefault();
+          this.container.dispatchEvent(new CustomEvent('chart-navigate', {
+            detail: { direction: 'first' }
+          }));
+          break;
+          
+        case 'End':
+          // Go to last data point
+          event.preventDefault();
+          this.container.dispatchEvent(new CustomEvent('chart-navigate', {
+            detail: { direction: 'last' }
+          }));
+          break;
+      }
+    });
+  }
+
+  /**
+   * Add touch event support for mobile devices
+   * Implements swipe gestures for period navigation
+   */
+  private _addTouchSupport(): void {
+    // Check if touch is supported
+    if (typeof window === 'undefined' || !('ontouchstart' in window)) {
+      return;
+    }
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTime = 0;
+
+    this.container.addEventListener('touchstart', (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        touchStartTime = Date.now();
+      }
+    }, { passive: true });
+
+    this.container.addEventListener('touchmove', (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        const deltaX = e.touches[0].clientX - touchStartX;
+        const deltaY = e.touches[0].clientY - touchStartY;
+        
+        // Swipe detection criteria:
+        // - Horizontal movement > 50px
+        // - Vertical movement < 30px (to allow vertical scrolling)
+        // - Duration < 300ms (quick swipe)
+        const duration = Date.now() - touchStartTime;
+        
+        if (Math.abs(deltaX) > 50 && Math.abs(deltaY) < 30 && duration < 300) {
+          // Prevent default to stop scrolling during swipe
+          e.preventDefault();
+          
+          // Determine swipe direction
+          const direction = deltaX > 0 ? 'previous' : 'next';
+          
+          // Dispatch custom event for period navigation
+          this.container.dispatchEvent(new CustomEvent('chart-swipe', {
+            detail: { direction, deltaX, deltaY }
+          }));
+          
+          // Reset touch tracking
+          touchStartX = e.touches[0].clientX;
+          touchStartY = e.touches[0].clientY;
+          touchStartTime = Date.now();
+        }
+      }
+    });
+
+    // Optional: Add touch end handler for cleanup
+    this.container.addEventListener('touchend', () => {
+      touchStartX = 0;
+      touchStartY = 0;
+      touchStartTime = 0;
+    }, { passive: true });
+  }
+
+  /**
+   * Add responsive resize handling with debounce
+   */
+  private _addResizeSupport(): void {
+    if (typeof window === 'undefined' || typeof ResizeObserver === 'undefined') {
+      return;
+    }
+
+    // Use ResizeObserver for better performance than window.resize
+    this._resizeObserver = new ResizeObserver((entries) => {
+      // Debounce resize events (250ms delay like Octopus)
+      if (this._resizeTimeout !== null) {
+        window.clearTimeout(this._resizeTimeout);
+      }
+
+      this._resizeTimeout = window.setTimeout(() => {
+        for (const entry of entries) {
+          const { width, height } = entry.contentRect;
+          
+          // Only redraw if size actually changed
+          if (width !== this.config.width || height !== this.config.height) {
+            this.config.width = width;
+            this.config.height = height;
+            
+            // Dispatch event for redraw
+            this.container.dispatchEvent(new CustomEvent('chart-resize', {
+              detail: { width, height }
+            }));
+          }
+        }
+      }, 250); // 250ms debounce (Octopus uses ~200-300ms)
+    });
+
+    // Observe container size changes
+    this._resizeObserver.observe(this.container);
+  }
+
+  /**
+   * Cleanup method for removing event listeners and observers
+   */
+  destroy(): void {
+    if (this._resizeObserver) {
+      this._resizeObserver.disconnect();
+      this._resizeObserver = null;
+    }
+    
+    if (this._resizeTimeout !== null) {
+      window.clearTimeout(this._resizeTimeout);
+      this._resizeTimeout = null;
+    }
   }
 }

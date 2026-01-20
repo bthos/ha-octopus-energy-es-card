@@ -270,7 +270,7 @@ export async function renderD3LineChart(
       context.setHoveredPoint(d);
       d3.select(this)
         .transition()
-        .duration(200)
+        .duration(150) // Match Victory.js tooltip fade timing
         .attr('r', 6)
         .attr('fill', config.colors.hover || '#ff69b4');
       
@@ -301,7 +301,7 @@ export async function renderD3LineChart(
       .attr('stroke-dasharray', `${totalLength} ${totalLength}`)
       .attr('stroke-dashoffset', totalLength)
       .transition()
-      .duration(options.animation.duration || 800)
+      .duration(options.animation.duration || 2000) // Match Victory.js timing (2000ms)
       .ease(d3.easeExpOut)
       .attr('stroke-dashoffset', 0);
   }

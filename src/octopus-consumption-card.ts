@@ -61,6 +61,7 @@ export class OctopusConsumptionCard extends LitElement {
   @state() private _currentDate: Date = new Date();
   @state() private _weekComparisonData: WeekComparisonData | null = null;
   @state() private _showChartView: boolean = true; // true = chart, false = list
+  @state() private _lastDataDate: string | null = null; // Last date with available data (YYYY-MM-DD)
   private _chartInstance: D3Chart | null = null;
   private _hasInitialData = false; // Track if we have loaded data at least once
   private _hasAttemptedLoad = false; // Track if we have attempted to load data during initialization
@@ -82,6 +83,7 @@ export class OctopusConsumptionCard extends LitElement {
   private static readonly SERVICE_DOMAIN = "octopus_energy_es";
   private static readonly SERVICE_FETCH_CONSUMPTION = "fetch_consumption";
   private static readonly SERVICE_COMPARE_TARIFFS = "compare_tariffs";
+  private static readonly SERVICE_GET_LAST_DATA_DATE = "get_last_data_date";
 
   static styles = cardStyles;
 
@@ -611,6 +613,9 @@ export class OctopusConsumptionCard extends LitElement {
     this._comparisonError = null;
 
     try {
+      // Fetch last available data date first
+      await this._fetchLastDataDate(entryId);
+      
       const { startDate, endDate } = this._getDateRange();
       this._validateDateRange(startDate, endDate);
 
@@ -687,6 +692,37 @@ export class OctopusConsumptionCard extends LitElement {
     
     if (startDate > endDate) {
       throw new Error(`Invalid date range: start date is after end date.`);
+    }
+  }
+
+  /**
+   * Fetches the last date with available data from the service
+   */
+  private async _fetchLastDataDate(entryId: string): Promise<void> {
+    try {
+      const result = await this._callServiceWithTimeout<{ success: boolean; last_data_date?: string; error?: string }>(
+        OctopusConsumptionCard.SERVICE_DOMAIN,
+        OctopusConsumptionCard.SERVICE_GET_LAST_DATA_DATE,
+        {
+          entry_id: entryId,
+        }
+      );
+
+      if (result.success && result.last_data_date) {
+        this._lastDataDate = result.last_data_date;
+        Logger.info('Last data date:', this._lastDataDate);
+      } else {
+        // If service doesn't support this or returns error, set to null
+        this._lastDataDate = null;
+        if (result.error) {
+          Logger.warn('Failed to fetch last data date:', result.error);
+        }
+      }
+    } catch (error) {
+      // If service doesn't exist or fails, silently continue (non-critical)
+      this._lastDataDate = null;
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      Logger.warn('Could not fetch last data date (service may not be available):', errorMsg);
     }
   }
 
@@ -823,6 +859,19 @@ export class OctopusConsumptionCard extends LitElement {
     }
   }
 
+  /**
+   * Adjust end date to not exceed last available data date
+   */
+  private _adjustEndDateForLastDataDate(endDate: Date): Date {
+    if (this._lastDataDate) {
+      const lastDataDateObj = new Date(this._lastDataDate);
+      lastDataDateObj.setHours(23, 59, 59, 999);
+      // Use the earlier of the two dates
+      return endDate > lastDataDateObj ? lastDataDateObj : endDate;
+    }
+    return endDate;
+  }
+
   private _getDateRange(): { startDate: Date; endDate: Date } {
     const view = this.config.view;
     
@@ -837,8 +886,9 @@ export class OctopusConsumptionCard extends LitElement {
         const startDate = new Date(selectedYear, 0, 1); // January 1st
         startDate.setHours(0, 0, 0, 0);
         
-        const endDate = new Date(selectedYear, 11, 31); // December 31st
+        let endDate = new Date(selectedYear, 11, 31); // December 31st
         endDate.setHours(23, 59, 59, 999);
+        endDate = this._adjustEndDateForLastDataDate(endDate);
         
         return { startDate, endDate };
       } else {
@@ -850,8 +900,9 @@ export class OctopusConsumptionCard extends LitElement {
         const startDate = new Date(year, month, 1); // First day of month
         startDate.setHours(0, 0, 0, 0);
         
-        const endDate = new Date(year, month + 1, 0); // Last day of month
+        let endDate = new Date(year, month + 1, 0); // Last day of month
         endDate.setHours(23, 59, 59, 999);
+        endDate = this._adjustEndDateForLastDataDate(endDate);
         
         return { startDate, endDate };
       }
@@ -859,8 +910,9 @@ export class OctopusConsumptionCard extends LitElement {
     
     // Tariff comparison always uses daily consumption data (last 365 days)
     if (view === "tariff-comparison") {
-      const endDate = new Date(this._currentDate);
+      let endDate = new Date(this._currentDate);
       endDate.setHours(23, 59, 59, 999);
+      endDate = this._adjustEndDateForLastDataDate(endDate);
       
       const startDate = new Date(endDate);
       startDate.setDate(startDate.getDate() - 364); // Last 365 days (daily data)
@@ -876,8 +928,9 @@ export class OctopusConsumptionCard extends LitElement {
       // Add a buffer of a few days to ensure we have complete weeks
       const daysToFetch = (comparisonCount * 7) + 6; // +6 to ensure we have complete weeks
       
-      const endDate = new Date(this._currentDate);
+      let endDate = new Date(this._currentDate);
       endDate.setHours(23, 59, 59, 999);
+      endDate = this._adjustEndDateForLastDataDate(endDate);
       
       const startDate = new Date(endDate);
       startDate.setDate(startDate.getDate() - (daysToFetch - 1)); // -1 because we include the end date
@@ -888,13 +941,24 @@ export class OctopusConsumptionCard extends LitElement {
 
     
     // Standard period-based date range (for consumption view only)
-    const endDate = new Date(this._currentDate);
+    let endDate = new Date(this._currentDate);
     endDate.setHours(23, 59, 59, 999);
+    endDate = this._adjustEndDateForLastDataDate(endDate);
     
     const startDate = new Date(endDate);
     
     if (this._currentPeriod === "day") {
+      // For day view, startDate should be the beginning of the same day as endDate
+      // If endDate was adjusted to last available date, startDate will also be that day
       startDate.setHours(0, 0, 0, 0);
+      // Ensure startDate doesn't exceed last available date (shouldn't happen, but double-check)
+      if (this._lastDataDate) {
+        const lastDataDateObj = new Date(this._lastDataDate);
+        lastDataDateObj.setHours(0, 0, 0, 0);
+        if (startDate > lastDataDateObj) {
+          startDate.setTime(lastDataDateObj.getTime());
+        }
+      }
     } else if (this._currentPeriod === "week") {
       startDate.setDate(startDate.getDate() - 6); // Last 7 days
       startDate.setHours(0, 0, 0, 0);
@@ -910,8 +974,11 @@ export class OctopusConsumptionCard extends LitElement {
    * Check if navigating "next" would go into the future
    */
   private _wouldNavigateToFuture(): boolean {
-    const now = new Date();
-    now.setHours(23, 59, 59, 999); // End of today
+    // Use last available data date if available, otherwise use current date
+    const maxDate = this._lastDataDate 
+      ? new Date(this._lastDataDate)
+      : new Date();
+    maxDate.setHours(23, 59, 59, 999);
     
     const view = this.config.view;
     const isHeatCalendarYear = view === "heat-calendar" && 
@@ -923,12 +990,13 @@ export class OctopusConsumptionCard extends LitElement {
       const testDate = new Date(this._currentDate);
       testDate.setDate(testDate.getDate() + 7); // Next week
       const { endDate } = this._getDateRangeForDate(testDate);
-      return endDate > now;
+      return endDate > maxDate;
     }
     
     if (isHeatCalendarYear) {
       const nextYear = this._currentDate.getFullYear() + 1;
-      return nextYear > now.getFullYear();
+      const maxYear = maxDate.getFullYear();
+      return nextYear > maxYear;
     }
     
     const testDate = new Date(this._currentDate);
@@ -942,7 +1010,7 @@ export class OctopusConsumptionCard extends LitElement {
     
     // Check if the end date of the next period would be in the future
     const { endDate } = this._getDateRangeForDate(testDate);
-    return endDate > now;
+    return endDate > maxDate;
   }
 
   /**
@@ -977,8 +1045,9 @@ export class OctopusConsumptionCard extends LitElement {
         const startDate = new Date(selectedYear, 0, 1); // January 1st
         startDate.setHours(0, 0, 0, 0);
         
-        const endDate = new Date(selectedYear, 11, 31); // December 31st
+        let endDate = new Date(selectedYear, 11, 31); // December 31st
         endDate.setHours(23, 59, 59, 999);
+        endDate = this._adjustEndDateForLastDataDate(endDate);
         
         return { startDate, endDate };
       } else {
@@ -989,8 +1058,9 @@ export class OctopusConsumptionCard extends LitElement {
         const startDate = new Date(year, month, 1); // First day of month
         startDate.setHours(0, 0, 0, 0);
         
-        const endDate = new Date(year, month + 1, 0); // Last day of month
+        let endDate = new Date(year, month + 1, 0); // Last day of month
         endDate.setHours(23, 59, 59, 999);
+        endDate = this._adjustEndDateForLastDataDate(endDate);
         
         return { startDate, endDate };
       }
@@ -998,8 +1068,9 @@ export class OctopusConsumptionCard extends LitElement {
     
     // Tariff comparison always uses daily consumption data (last 365 days)
     if (view === "tariff-comparison") {
-      const endDate = new Date(date);
+      let endDate = new Date(date);
       endDate.setHours(23, 59, 59, 999);
+      endDate = this._adjustEndDateForLastDataDate(endDate);
       
       const startDate = new Date(endDate);
       startDate.setDate(startDate.getDate() - 364); // Last 365 days (daily data)
@@ -1009,13 +1080,24 @@ export class OctopusConsumptionCard extends LitElement {
     }
     
     // Standard period-based date range (for consumption view only)
-    const endDate = new Date(date);
+    let endDate = new Date(date);
     endDate.setHours(23, 59, 59, 999);
+    endDate = this._adjustEndDateForLastDataDate(endDate);
     
     const startDate = new Date(endDate);
     
     if (this._currentPeriod === "day") {
+      // For day view, startDate should be the beginning of the same day as endDate
+      // If endDate was adjusted to last available date, startDate will also be that day
       startDate.setHours(0, 0, 0, 0);
+      // Ensure startDate doesn't exceed last available date (shouldn't happen, but double-check)
+      if (this._lastDataDate) {
+        const lastDataDateObj = new Date(this._lastDataDate);
+        lastDataDateObj.setHours(0, 0, 0, 0);
+        if (startDate > lastDataDateObj) {
+          startDate.setTime(lastDataDateObj.getTime());
+        }
+      }
     } else if (this._currentPeriod === "week") {
       startDate.setDate(startDate.getDate() - 6);
       startDate.setHours(0, 0, 0, 0);

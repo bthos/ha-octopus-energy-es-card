@@ -164,7 +164,7 @@ export async function renderD3BarChart(
 
   // Create gradient if enabled (Octopus Energy pink gradient pattern)
   const useGradient = config.colors.gradient?.enabled ?? false;
-  if (useGradient) {
+  if (useGradient && config.colors.gradient) {
     const defs = svg.select('defs').empty() 
       ? svg.append('defs') 
       : svg.select('defs');

@@ -1850,10 +1850,8 @@ export class OctopusConsumptionCard extends LitElement {
         <div class="week-comparison-grid">
           ${weeks.map((week, index) => {
             const comparison = comparisons.find(c => c.weekIndex === index);
-            // Base week (index 0) is "Base Week", others are "Week -1", "Week -2", etc.
-            const weekLabel = index === 0 
-              ? localize("card.week_comparison.base_week", language)
-              : `Week -${index}`;
+            // Use actual period as label
+            const weekLabel = `${week.weekStart} - ${week.weekEnd}`;
             
             // Calculate forecast for incomplete weeks
             const isIncomplete = !week.isComplete;
@@ -1870,7 +1868,7 @@ export class OctopusConsumptionCard extends LitElement {
               <div class="week-card ${isIncomplete ? 'week-card-incomplete' : ''}">
                 <div class="week-card-header">
                   <div class="week-card-header-title">
-                    ${weekLabel}
+                    <span class="week-period-date">${weekLabel}</span>
                     ${isIncomplete ? html`
                       <span class="week-incomplete-badge">${localize("card.week_comparison.incomplete", language)}</span>
                     ` : ''}
@@ -1907,10 +1905,6 @@ export class OctopusConsumptionCard extends LitElement {
                         <div class="week-forecast">${localize("card.week_comparison.forecast", language)}: €${forecastCost.toFixed(2)}</div>
                       ` : ''}
                     </div>
-                  </div>
-                  <div class="week-metric">
-                    <span class="week-metric-label">${localize("card.week_comparison.period", language)}:</span>
-                    <span class="week-metric-value week-period-date">${week.weekStart} - ${week.weekEnd}</span>
                   </div>
                 </div>
               </div>

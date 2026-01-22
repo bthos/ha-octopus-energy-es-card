@@ -72,7 +72,7 @@ export class D3Chart {
    * Clear the SVG (remove all children except tooltip)
    */
   clear(): void {
-    this.svg.selectAll('g.chart-content, g.axis, g.grid, path.bar, path.line, path.area, circle.point, g.areas').remove();
+    this.svg.selectAll('g.chart-content, g.axis, g.grid, path.bar, path.line, path.area, circle.point, g.areas, text.y-axis-label').remove();
   }
 
   /**
@@ -146,15 +146,15 @@ export class D3Chart {
       dateStr = `${day} ${month}`;
     }
 
-    // Create tooltip content
+    // Create tooltip content group (temporarily positioned off-screen to measure)
     const tooltipContent = this.tooltipElement
       .selectAll('g.tooltip-content')
       .data([point])
       .join('g')
       .attr('class', 'tooltip-content')
-      .attr('transform', `translate(${x + 15}, ${y + 15})`);
+      .attr('transform', 'translate(-10000, -10000)'); // Off-screen for measurement
 
-    // Background rectangle
+    // Background rectangle (will be sized after text is rendered)
     tooltipContent
       .selectAll('rect.tooltip-bg')
       .data([point])
@@ -162,7 +162,7 @@ export class D3Chart {
       .attr('class', 'tooltip-bg')
       .attr('rx', 8)
       .attr('ry', 8)
-      .attr('fill', 'rgba(40, 26, 61, 0.95)')
+      .attr('fill', 'rgba(40, 26, 61, 0.98)') // Increased opacity from 0.95 to 0.98
       .attr('stroke', 'none');
 
     // Value text (pink, larger)
@@ -193,15 +193,41 @@ export class D3Chart {
       .attr('font-family', 'Roboto, sans-serif')
       .text(dateStr);
 
-    // Update background size based on text content
+    // Calculate background size based on text content
     const node = tooltipContent.node();
     if (node && 'getBBox' in node) {
       const bbox = (node as SVGGElement).getBBox();
+      const paddingX = 24;
+      const paddingY = 16;
+      const tooltipWidth = bbox.width + paddingX;
+      const tooltipHeight = bbox.height + paddingY;
+      
+      // Update background rectangle with calculated size
       tooltipContent.select('rect.tooltip-bg')
-        .attr('width', bbox.width + 24)
-        .attr('height', bbox.height + 16)
+        .attr('width', tooltipWidth)
+        .attr('height', tooltipHeight)
         .attr('x', -12)
         .attr('y', -8);
+
+      // Position tooltip above the cursor point
+      // Offset: 15px horizontal, tooltip height + 10px vertical above cursor
+      const offsetX = 15;
+      const offsetY = tooltipHeight + 10; // Position above cursor with 10px gap
+      
+      // Ensure tooltip doesn't go off-screen horizontally
+      const svgWidth = this.config.width;
+      const tooltipX = x + offsetX + tooltipWidth > svgWidth 
+        ? x - tooltipWidth - offsetX // Position to the left if it would overflow
+        : x + offsetX;
+      
+      // Position tooltip above cursor (y decreases upward in SVG)
+      const tooltipY = y - offsetY;
+      
+      // Update transform with calculated position
+      tooltipContent.attr('transform', `translate(${tooltipX}, ${tooltipY})`);
+    } else {
+      // Fallback positioning if measurement fails
+      tooltipContent.attr('transform', `translate(${x + 15}, ${y - 60})`);
     }
 
     this.tooltipElement.style('display', 'block');

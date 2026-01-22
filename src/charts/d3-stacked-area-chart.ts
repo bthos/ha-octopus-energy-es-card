@@ -137,7 +137,7 @@ export async function renderD3StackedAreaChart(
 
   const yAxis = d3.axisLeft(yScale)
     .ticks(5)
-    .tickFormat(d => `${d} kWh`);
+    .tickFormat(d => String(d));
 
   yAxisGroup.call(yAxis)
     .selectAll('text')
@@ -149,6 +149,18 @@ export async function renderD3StackedAreaChart(
   yAxisGroup.selectAll('line, path')
     .attr('stroke', config.colors.axis)
     .attr('opacity', 0.2);
+
+  // Add "kWh" label above Y-axis (once)
+  svg.append('text')
+    .attr('class', 'y-axis-label')
+    .attr('x', padding.left - 10)
+    .attr('y', padding.top - 10)
+    .attr('text-anchor', 'end')
+    .attr('fill', config.colors.text)
+    .attr('font-size', '13px')
+    .attr('font-family', config.fontFamily || 'Roboto, sans-serif')
+    .attr('opacity', 0.9)
+    .text('kWh');
 
   // Prepare stacked data using d3.stack
   // Create data array for stacking - each element is an array of values for all layers at that timestamp

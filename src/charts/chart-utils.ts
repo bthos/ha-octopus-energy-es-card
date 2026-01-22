@@ -162,11 +162,10 @@ export function formatDate(dateStr: string, period?: 'day' | 'week' | 'month' | 
       const weekStart = getWeekStart(date);
       return `Week ${getISOWeekNumber(weekStart)}`;
     } else if (period === 'month') {
-      // Format as day number + abbreviated month (e.g., "8 ENE") - matching Octopus Energy España
-      const monthNames = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
-      const day = date.getDate();
-      const month = monthNames[date.getMonth()];
-      return `${day} ${month}`;
+      // Format as DD/MM (e.g., "08/01" for January 8th)
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      return `${day}/${month}`;
     } else if (period === 'year') {
       // Format as abbreviated month name in Spanish (e.g., "ene", "feb", "mar") - matching Octopus Energy España
       const monthNames = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];

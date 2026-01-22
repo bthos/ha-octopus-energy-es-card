@@ -133,7 +133,7 @@ export async function renderD3LineChart(
 
   const yAxis = d3.axisLeft(yScale)
     .ticks(5)
-    .tickFormat(d => `${d} kWh`);
+    .tickFormat(d => String(d));
 
   yAxisGroup.call(yAxis)
     .selectAll('text')
@@ -145,6 +145,18 @@ export async function renderD3LineChart(
   yAxisGroup.selectAll('line, path')
     .attr('stroke', config.colors.axis)
     .attr('opacity', 0.2);
+
+  // Add "kWh" label above Y-axis (once)
+  svg.append('text')
+    .attr('class', 'y-axis-label')
+    .attr('x', padding.left - 10)
+    .attr('y', padding.top - 10)
+    .attr('text-anchor', 'end')
+    .attr('fill', config.colors.text)
+    .attr('font-size', '13px')
+    .attr('font-family', config.fontFamily || 'Roboto, sans-serif')
+    .attr('opacity', 0.9)
+    .text('kWh');
 
   // Create line generator
   const line = d3.line<DataPoint>()

@@ -1753,7 +1753,10 @@ export class OctopusConsumptionCard extends LitElement {
                     class="heat-calendar-day intensity-${day.intensity}"
                     title="${tooltip}"
                   >
-                    ${isYearView ? '' : dayNum}
+                    ${isYearView ? '' : html`
+                      <div style="font-weight: 600; margin-bottom: 2px;">${dayNum}</div>
+                      <div style="font-size: 10px; opacity: 0.9;">${day.consumption.toFixed(1)} kWh</div>
+                    `}
                   </div>
                 `;
               })}

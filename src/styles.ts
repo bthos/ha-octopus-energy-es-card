@@ -586,6 +586,7 @@ export const cardStyles = css`
     aspect-ratio: 1;
     border-radius: 4px;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     font-size: 11px;

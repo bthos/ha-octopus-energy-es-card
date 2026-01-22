@@ -2830,16 +2830,17 @@ export class OctopusConsumptionCard extends LitElement {
           : tariffCost.daily_breakdown;
         
         if (breakdown && breakdown.length > 0) {
-          // Sort cost breakdown data by date to ensure correct order (especially for week view: Monday to Sunday)
+          // Sort cost breakdown data by date/hour to ensure correct order (especially for week view: Monday to Sunday)
           const sortedBreakdown = [...breakdown].sort((a, b) => {
-            const dateA = a.timestamp || a.date || '';
-            const dateB = b.timestamp || b.date || '';
+            // For hourly_breakdown, use 'hour' field; for daily_breakdown, use 'date' field
+            const dateA = ('hour' in a ? a.hour : 'date' in a ? a.date : '') || '';
+            const dateB = ('hour' in b ? b.hour : 'date' in b ? b.date : '') || '';
             return dateA.localeCompare(dateB);
           });
           
-          let costValues = sortedBreakdown.map((item: { cost: number }) => item.cost);
-          let costTimestamps = sortedBreakdown.map((item: { timestamp?: string; date?: string }) => 
-            item.timestamp || item.date || ''
+          let costValues = sortedBreakdown.map((item) => item.cost);
+          let costTimestamps = sortedBreakdown.map((item) => 
+            ('hour' in item ? item.hour : 'date' in item ? item.date : '') || ''
           );
           
           // Note: Week view shows individual days, so no grouping needed for cost data
@@ -2872,7 +2873,7 @@ export class OctopusConsumptionCard extends LitElement {
             const tempConfig: ChartConfig = {
               width,
               height,
-              padding: { top: 20, right: 60, bottom: 40, left: 60 },
+              padding: { top: 10, right: 60, bottom: 10, left: 60 },
               colors: {} as any
             };
             
@@ -2888,7 +2889,7 @@ export class OctopusConsumptionCard extends LitElement {
     }
 
     const rightPadding = costData ? 60 : 20;
-    const padding = { top: 20, right: rightPadding, bottom: 40, left: 60 };
+    const padding = { top: 10, right: rightPadding, bottom: 10, left: 60 };
     
     const chartData: ChartData = prepareChartData(values, timestamps);
     const tempConfig: ChartConfig = {

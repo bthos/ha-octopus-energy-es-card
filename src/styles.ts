@@ -631,10 +631,9 @@ export const cardStyles = css`
   }
 
   .heat-calendar-legend-label {
-    font-weight: 500;
-    font-size: 14px;
+    font-size: 12px;
     color: var(--primary-text-color);
-    margin-right: 8px;
+    margin-right: 4px;
   }
 
   .heat-calendar-legend-item {

@@ -19,7 +19,7 @@ export interface OctopusConsumptionCardConfig {
   // Advanced visualization options
   show_period_distribution?: boolean; // Show P1/P2/P3 breakdown on chart
   show_moving_average?: boolean; // Show moving average trend line
-  moving_average_days?: number; // Days for moving average (default: 7)
+  moving_average_days?: number; // Periods for moving average: hours for day view, days for week/month views (default: 7)
   // Heat calendar visualization
   heat_calendar_period?: "month" | "year"; // Period for heat calendar
   // Week comparison
@@ -27,7 +27,7 @@ export interface OctopusConsumptionCardConfig {
   week_comparison_count?: number; // Number of weeks to compare (default: 2)
   // Cost trend analysis
   show_cost_trend?: boolean; // Show cost trend with moving average
-  cost_moving_average_days?: number; // Days for cost moving average (default: 30)
+  cost_moving_average_days?: number; // Periods for cost moving average: hours for day view, days for week/month views (default: 30)
   // Tariff comparison chart
   show_tariff_chart?: boolean; // Show visual chart in tariff comparison section
   // View selection

@@ -62,8 +62,8 @@ export const translations: Record<string, Translations> = {
     "editor.show_period_distribution_helper": "Show P1/P2/P3 consumption breakdown on chart",
     "editor.show_moving_average_label": "Show Moving Average",
     "editor.show_moving_average_helper": "Display trend line with moving average",
-    "editor.moving_average_days_label": "Moving Average Days",
-    "editor.moving_average_days_helper": "Number of days for moving average calculation (default: 7)",
+    "editor.moving_average_days_label": "Moving Average Period",
+    "editor.moving_average_days_helper": "Number of periods for moving average calculation. Hours for day view, days for week/month views (default: 7)",
     
     // Period Options
     "editor.period_day": "Day",
@@ -85,8 +85,8 @@ export const translations: Record<string, Translations> = {
     // Cost Trend Options
     "editor.show_cost_trend_label": "Show Cost Trend",
     "editor.show_cost_trend_helper": "Display cost trend with moving average",
-    "editor.cost_moving_average_days_label": "Cost Moving Average Days",
-    "editor.cost_moving_average_days_helper": "Number of days for cost moving average (default: 30)",
+    "editor.cost_moving_average_days_label": "Cost Moving Average Period",
+    "editor.cost_moving_average_days_helper": "Number of periods for cost moving average. Hours for day view, days for week/month views (default: 30)",
     
     // Tariff Chart Options
     "editor.show_tariff_chart_label": "Show Tariff Chart",
@@ -222,8 +222,8 @@ export const translations: Record<string, Translations> = {
     "editor.show_period_distribution_helper": "Mostrar desglose de consumo P1/P2/P3 en el gráfico",
     "editor.show_moving_average_label": "Mostrar Media Móvil",
     "editor.show_moving_average_helper": "Mostrar línea de tendencia con media móvil",
-    "editor.moving_average_days_label": "Días de Media Móvil",
-    "editor.moving_average_days_helper": "Número de días para el cálculo de la media móvil (predeterminado: 7)",
+    "editor.moving_average_days_label": "Período de Media Móvil",
+    "editor.moving_average_days_helper": "Número de períodos para el cálculo de la media móvil. Horas para vista diaria, días para vistas semanales/mensuales (predeterminado: 7)",
     
     // Period Options
     "editor.period_day": "Día",
@@ -245,8 +245,8 @@ export const translations: Record<string, Translations> = {
     // Cost Trend Options
     "editor.show_cost_trend_label": "Mostrar Tendencia de Costes",
     "editor.show_cost_trend_helper": "Mostrar tendencia de costes con media móvil",
-    "editor.cost_moving_average_days_label": "Días de Media Móvil de Costes",
-    "editor.cost_moving_average_days_helper": "Número de días para la media móvil de costes (predeterminado: 30)",
+    "editor.cost_moving_average_days_label": "Período de Media Móvil de Costes",
+    "editor.cost_moving_average_days_helper": "Número de períodos para la media móvil de costes. Horas para vista diaria, días para vistas semanales/mensuales (predeterminado: 30)",
     
     // Tariff Chart Options
     "editor.show_tariff_chart_label": "Mostrar Gráfico de Tarifas",
@@ -382,8 +382,8 @@ export const translations: Record<string, Translations> = {
     "editor.show_period_distribution_helper": "Паказаць разбіўку спажывання P1/P2/P3 на дыяграме",
     "editor.show_moving_average_label": "Паказаць рухомае сярэдняе",
     "editor.show_moving_average_helper": "Паказаць лінію трэнду з рухомым сярэднім",
-    "editor.moving_average_days_label": "Дні рухомага сярэдняга",
-    "editor.moving_average_days_helper": "Колькасць дзён для разліку рухомага сярэдняга (па змаўчанні: 7)",
+    "editor.moving_average_days_label": "Перыяд рухомага сярэдняга",
+    "editor.moving_average_days_helper": "Колькасць перыядаў для разліку рухомага сярэдняга. Гадзіны для дзённага выгляду, дні для тыднёвых/месячных выглядаў (па змаўчанні: 7)",
     
     // Period Options
     "editor.period_day": "Дзень",
@@ -405,8 +405,8 @@ export const translations: Record<string, Translations> = {
     // Cost Trend Options
     "editor.show_cost_trend_label": "Паказаць трэнд кошту",
     "editor.show_cost_trend_helper": "Адлюстраваць трэнд кошту з рухомым сярэднім",
-    "editor.cost_moving_average_days_label": "Дні рухомага сярэдняга кошту",
-    "editor.cost_moving_average_days_helper": "Колькасць дзён для рухомага сярэдняга кошту (па змаўчанні: 30)",
+    "editor.cost_moving_average_days_label": "Перыяд рухомага сярэдняга кошту",
+    "editor.cost_moving_average_days_helper": "Колькасць перыядаў для рухомага сярэдняга кошту. Гадзіны для дзённага выгляду, дні для тыднёвых/месячных выглядаў (па змаўчанні: 30)",
     
     // Tariff Chart Options
     "editor.show_tariff_chart_label": "Паказаць дыяграму тарыфаў",

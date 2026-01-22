@@ -37,7 +37,7 @@ When you sign up using the button below, **you'll receive 50€ credit** on your
 - **Multiple Chart Types**: Line chart, bar chart, and **stacked area chart** for period distribution
 - **D3.js Powered**: Built with D3.js for smooth, interactive SVG-based charts matching Octopus Energy España dashboard
 - **Stacked Area Chart**: Visualize P1/P2/P3 consumption distribution over time with color-coded layers
-- **Moving Average**: Display trend lines with configurable moving average (2-30 days)
+- **Moving Average**: Display trend lines with configurable moving average (hours for day view, days for week/month views, 2-30 periods)
 - **Interactive Tooltips**: Hover over data points to see detailed consumption and date information
 - **Period Navigation**: Navigate between day/week/month periods with Previous/Next buttons
 
@@ -166,7 +166,7 @@ consumption_sensor: "sensor.octopus_energy_es_daily_consumption"  # Optional ove
 | `show_navigation` | boolean | ❌ No | `true` | Show Previous/Next navigation buttons to move between periods |
 | `show_period_distribution` | boolean | ❌ No | `false` | Show P1/P2/P3 consumption breakdown on chart (works with stacked-area chart type) |
 | `show_moving_average` | boolean | ❌ No | `false` | Display trend line with moving average calculation |
-| `moving_average_days` | number | ❌ No | `7` | Number of days for moving average calculation (2-30) |
+| `moving_average_days` | number | ❌ No | `7` | Number of periods for moving average calculation. Hours for day view, days for week/month views (2-30) |
 | `consumption_sensor` | string | ❌ No | - | Optional: Manually specify a consumption sensor entity ID to override integration's automatic data fetching |
 
 #### Configuration Notes

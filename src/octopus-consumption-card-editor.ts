@@ -264,7 +264,7 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
         }
       );
 
-      // Add moving average days if enabled
+      // Add moving average period if enabled
       if (this._config.show_moving_average) {
         schema.push({
           name: "moving_average_days",

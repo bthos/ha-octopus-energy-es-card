@@ -2822,6 +2822,12 @@ export class OctopusConsumptionCard extends LitElement {
       const fullWeekTimestamps: string[] = [];
       const fullWeekValues: number[] = [];
       
+      // Normalize timestamps to date-only format for comparison
+      const normalizedTimestamps = timestamps.map(ts => {
+        // Extract date part from ISO string (e.g., "2025-01-20T00:00:00+01:00" -> "2025-01-20")
+        return ts.split('T')[0];
+      });
+      
       // Generate all 7 days of the week (Monday to Sunday)
       for (let i = 0; i < 7; i++) {
         const dayDate = new Date(startDate);
@@ -2830,7 +2836,7 @@ export class OctopusConsumptionCard extends LitElement {
         fullWeekTimestamps.push(dayTimestamp);
         
         // Find corresponding value or use 0 if no data
-        const dataIndex = timestamps.indexOf(dayTimestamp);
+        const dataIndex = normalizedTimestamps.indexOf(dayTimestamp);
         fullWeekValues.push(dataIndex >= 0 ? values[dataIndex] : 0);
       }
       
@@ -2874,6 +2880,12 @@ export class OctopusConsumptionCard extends LitElement {
             const fullWeekCostTimestamps: string[] = [];
             const fullWeekCostValues: number[] = [];
             
+            // Normalize cost timestamps to date-only format for comparison
+            const normalizedCostTimestamps = costTimestamps.map(ts => {
+              // Extract date part from ISO string or use as-is if already date-only
+              return ts.split('T')[0];
+            });
+            
             // Generate all 7 days of the week (Monday to Sunday)
             for (let i = 0; i < 7; i++) {
               const dayDate = new Date(startDate);
@@ -2882,7 +2894,7 @@ export class OctopusConsumptionCard extends LitElement {
               fullWeekCostTimestamps.push(dayTimestamp);
               
               // Find corresponding cost value or use 0 if no data
-              const costIndex = costTimestamps.indexOf(dayTimestamp);
+              const costIndex = normalizedCostTimestamps.indexOf(dayTimestamp);
               fullWeekCostValues.push(costIndex >= 0 ? costValues[costIndex] : 0);
             }
             

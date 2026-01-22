@@ -1764,22 +1764,21 @@ export class OctopusConsumptionCard extends LitElement {
           })}
         </div>
         <div class="heat-calendar-legend">
-          <div class="heat-calendar-legend-item">
+          <div class="heat-calendar-legend-label">
+            ${localize("card.heat_calendar.intensity_label", language)}:
+          </div>
+          <div class="heat-calendar-legend-item" title="${localize("card.heat_calendar.intensity_low_tooltip", language)}">
             <div class="heat-calendar-legend-color intensity-low"></div>
             <span>Low</span>
           </div>
-          <div class="heat-calendar-legend-item">
+          <div class="heat-calendar-legend-item" title="${localize("card.heat_calendar.intensity_medium_tooltip", language)}">
             <div class="heat-calendar-legend-color intensity-medium"></div>
             <span>Medium</span>
           </div>
-          <div class="heat-calendar-legend-item">
+          <div class="heat-calendar-legend-item" title="${localize("card.heat_calendar.intensity_high_tooltip", language)}">
             <div class="heat-calendar-legend-color intensity-high"></div>
             <span>High</span>
           </div>
-        </div>
-        <div class="heat-calendar-info">
-          <ha-icon icon="mdi:information-outline"></ha-icon>
-          <span>${localize("card.heat_calendar.intensity_info", language)}</span>
         </div>
       </div>
     `;

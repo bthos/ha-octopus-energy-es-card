@@ -630,10 +630,18 @@ export const cardStyles = css`
     align-items: center;
   }
 
+  .heat-calendar-legend-label {
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--primary-text-color);
+    margin-right: 8px;
+  }
+
   .heat-calendar-legend-item {
     display: flex;
     align-items: center;
     gap: 8px;
+    cursor: help;
   }
 
   .heat-calendar-legend-color {

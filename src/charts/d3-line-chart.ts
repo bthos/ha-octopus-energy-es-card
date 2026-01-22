@@ -96,26 +96,43 @@ export async function renderD3LineChart(
   // Draw moving average if enabled
   if (options.showMovingAverage && options.movingAverageDays) {
     const movingAvg = calculateMovingAverage(values, options.movingAverageDays);
-    const movingAvgPoints: DataPoint[] = movingAvg.map((value, i) => ({
-      x: 0,
-      y: 0,
-      value: value || 0,
-      timestamp: timestamps[i]
-    }));
+    // Filter out null values and create points starting from windowSize - 1 position
+    // This ensures moving average starts at the correct offset without zero values at the beginning
+    const movingAvgPoints: DataPoint[] = [];
+    const windowSize = options.movingAverageDays;
+    
+    for (let i = windowSize - 1; i < movingAvg.length; i++) {
+      const value = movingAvg[i];
+      if (value !== null) {
+        movingAvgPoints.push({
+          x: 0,
+          y: 0,
+          value: value,
+          timestamp: timestamps[i]
+        });
+      }
+    }
 
-    const movingAvgLine = d3.line<DataPoint>()
-      .x((d, i) => getXCoordinate(xScale, d.timestamp, i, period))
-      .y(d => yScale(d.value))
-      .curve(d3.curveMonotoneX);
+    if (movingAvgPoints.length > 0) {
+      const movingAvgLine = d3.line<DataPoint>()
+        .x((d, i) => {
+          // Find the original index in timestamps array for correct X position
+          const timestamp = d.timestamp || '';
+          const originalIndex = timestamps.indexOf(timestamp);
+          return getXCoordinate(xScale, timestamp, originalIndex, period);
+        })
+        .y(d => yScale(d.value))
+        .curve(d3.curveMonotoneX);
 
-    contentGroup.append('path')
-      .datum(movingAvgPoints)
-      .attr('class', 'line moving-average')
-      .attr('d', movingAvgLine)
-      .attr('fill', 'none')
-      .attr('stroke', config.colors.accent)
-      .attr('stroke-width', 2)
-      .attr('stroke-dasharray', '5,5');
+      contentGroup.append('path')
+        .datum(movingAvgPoints)
+        .attr('class', 'line moving-average')
+        .attr('d', movingAvgLine)
+        .attr('fill', 'none')
+        .attr('stroke', config.colors.accent)
+        .attr('stroke-width', 2)
+        .attr('stroke-dasharray', '5,5');
+    }
   }
 
   // Draw data points

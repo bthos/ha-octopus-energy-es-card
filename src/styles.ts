@@ -784,6 +784,14 @@ export const cardStyles = css`
     color: var(--primary-text-color);
   }
 
+  .week-period-date {
+    font-size: 13px;
+    font-weight: 400;
+    font-family: var(--code-font-family, 'Courier New', monospace);
+    color: var(--secondary-text-color);
+    letter-spacing: 0.5px;
+  }
+
   .week-change {
     display: inline-block;
     padding: 2px 8px;

@@ -1005,7 +1005,7 @@ export class OctopusConsumptionCard extends LitElement {
     if (view === "week-analysis") {
       const comparisonCount = this.config.week_comparison_count || 2;
       
-      // Find Sunday of the week containing _currentDate
+      // Find Sunday of the week containing _currentDate (end of last week to compare)
       let endDate = new Date(this._currentDate);
       const dayOfWeek = endDate.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
       let daysToSunday: number;
@@ -1019,10 +1019,10 @@ export class OctopusConsumptionCard extends LitElement {
       endDate = this._adjustEndDateForLastDataDate(endDate);
       
       // Find Monday of the first week (comparisonCount weeks back from endDate)
-      // Go back (comparisonCount - 1) full weeks, then find Monday of that week
+      // Go back (comparisonCount - 1) full weeks from Sunday, then find Monday of that week
       const startDate = new Date(endDate);
       startDate.setDate(startDate.getDate() - ((comparisonCount - 1) * 7)); // Go back to Sunday of first week
-      // Now find Monday of that week
+      // Now find Monday of that week (go back 6 days from Sunday)
       const firstWeekDayOfWeek = startDate.getDay();
       let daysToMonday: number;
       if (firstWeekDayOfWeek === 0) {
@@ -1875,7 +1875,7 @@ export class OctopusConsumptionCard extends LitElement {
                   </div>
                   <div class="week-metric">
                     <span class="week-metric-label">Period:</span>
-                    <span class="week-metric-value">${week.weekStart} - ${week.weekEnd}</span>
+                    <span class="week-metric-value week-period-date">${week.weekStart} - ${week.weekEnd}</span>
                   </div>
                 </div>
               </div>
@@ -2214,10 +2214,18 @@ export class OctopusConsumptionCard extends LitElement {
     
     for (const day of dailyBreakdown) {
       const date = new Date(day.date);
-      // Get Monday of the week
+      // Get Monday of the week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
       const dayOfWeek = date.getDay();
-      const diff = date.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Adjust to Monday
-      const monday = new Date(date.setDate(diff));
+      let daysToMonday: number;
+      if (dayOfWeek === 0) {
+        // If Sunday, go back 6 days to get Monday
+        daysToMonday = -6;
+      } else {
+        // Otherwise, go back (dayOfWeek - 1) days to get Monday
+        daysToMonday = -(dayOfWeek - 1);
+      }
+      const monday = new Date(date);
+      monday.setDate(date.getDate() + daysToMonday);
       monday.setHours(0, 0, 0, 0);
       
       const weekKey = monday.toISOString().split("T")[0];

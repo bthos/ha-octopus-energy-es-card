@@ -1121,11 +1121,13 @@ export class OctopusConsumptionCard extends LitElement {
     maxDate.setHours(23, 59, 59, 999);
     
     const view = this.config.view;
-    const isHeatCalendarYear = view === "heat-calendar" && 
-                               this.config.heat_calendar_period === "year";
+    const isHeatCalendar = view === "heat-calendar";
+    const isHeatCalendarYear = isHeatCalendar && this.config.heat_calendar_period === "year";
+    const isHeatCalendarMonth = isHeatCalendar && this.config.heat_calendar_period === "month";
+    const isWeekAnalysis = view === "week-analysis";
+    const isTariffComparison = view === "tariff-comparison";
     
     // For week-analysis view, check if navigating by week would go into future
-    const isWeekAnalysis = view === "week-analysis";
     if (isWeekAnalysis) {
       // Check if next week's Sunday would exceed maxDate
       const dayOfWeek = this._currentDate.getDay();
@@ -1147,12 +1149,31 @@ export class OctopusConsumptionCard extends LitElement {
       return nextWeekSunday > maxDate;
     }
     
+    // For heat calendar year view, check if next year would exceed maxDate
     if (isHeatCalendarYear) {
       const nextYear = this._currentDate.getFullYear() + 1;
       const maxYear = maxDate.getFullYear();
       return nextYear > maxYear;
     }
     
+    // For heat calendar month view, check if next month would exceed maxDate
+    if (isHeatCalendarMonth) {
+      const testDate = new Date(this._currentDate);
+      testDate.setMonth(testDate.getMonth() + 1);
+      // Check if the end date of the next month would be in the future
+      const { endDate } = this._getDateRangeForDate(testDate);
+      return endDate > maxDate;
+    }
+    
+    // For tariff comparison view, check if next month would exceed maxDate
+    if (isTariffComparison) {
+      const testDate = new Date(this._currentDate);
+      testDate.setMonth(testDate.getMonth() + 1);
+      testDate.setHours(23, 59, 59, 999);
+      return testDate > maxDate;
+    }
+    
+    // For consumption view, check based on current period
     const testDate = new Date(this._currentDate);
     if (this._currentPeriod === "day") {
       testDate.setDate(testDate.getDate() + 1);
@@ -1160,6 +1181,28 @@ export class OctopusConsumptionCard extends LitElement {
       testDate.setHours(23, 59, 59, 999);
       return testDate > maxDate;
     } else if (this._currentPeriod === "week") {
+      // For week view, check if the next week's Monday would exceed maxDate
+      // Calculate next week's Monday
+      const dayOfWeek = this._currentDate.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+      let daysToNextMonday: number;
+      if (dayOfWeek === 0) {
+        // If Sunday, next Monday is tomorrow (1 day)
+        daysToNextMonday = 1;
+      } else {
+        // Otherwise, next Monday is (8 - dayOfWeek) days away
+        daysToNextMonday = 8 - dayOfWeek;
+      }
+      
+      const nextWeekMonday = new Date(this._currentDate);
+      nextWeekMonday.setDate(this._currentDate.getDate() + daysToNextMonday);
+      nextWeekMonday.setHours(0, 0, 0, 0);
+      
+      // Check if next week's Monday exceeds maxDate
+      if (nextWeekMonday > maxDate) {
+        return true;
+      }
+      
+      // Also check if the end date of the next week would exceed maxDate
       testDate.setDate(testDate.getDate() + 7);
     } else if (this._currentPeriod === "month") {
       testDate.setMonth(testDate.getMonth() + 1);

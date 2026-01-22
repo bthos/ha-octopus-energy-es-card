@@ -3107,6 +3107,8 @@ export class OctopusConsumptionCard extends LitElement {
           await this._chartInstance.renderBarChart(chartData, {
             showCostOverlay: !!(costEnabled && costData),
             costData,
+            showMovingAverage: !!this.config.show_moving_average,
+            movingAverageDays: this.config.moving_average_days || 7,
             animation: animationConfig,
             period: this._currentPeriod,
             interactive: true // Enable tooltips

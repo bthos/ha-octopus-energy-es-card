@@ -87,6 +87,8 @@ export interface BarChartOptions extends ChartOptions {
   showCostOverlay?: boolean;
   costData?: ChartData;
   barWidth?: number;
+  showMovingAverage?: boolean;
+  movingAverageDays?: number;
 }
 
 export interface StackedAreaOptions extends ChartOptions {

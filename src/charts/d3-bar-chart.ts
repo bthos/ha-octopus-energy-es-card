@@ -10,7 +10,7 @@ import type {
   DataPoint,
   D3ChartContext
 } from './chart-types';
-import { formatTooltipText } from './chart-utils';
+import { formatTooltipText, calculateMovingAverage } from './chart-utils';
 import {
   getChartDimensions,
   createXScale,
@@ -20,6 +20,7 @@ import {
   createXAxis,
   createYAxis,
   addYAxisLabel,
+  getXCoordinate,
   CHART_CONSTANTS
 } from './chart-render-utils';
 
@@ -34,7 +35,7 @@ export async function renderD3BarChart(
   const { chartWidth, chartHeight } = getChartDimensions(config);
 
   // Clear previous content
-  svg.selectAll('g.chart-content, g.axis, g.grid, path.bar').remove();
+  svg.selectAll('g.chart-content, g.axis, g.grid, path.bar, path.moving-average').remove();
 
   // Create main content group
   const contentGroup = createContentGroup(svg, padding);
@@ -181,6 +182,48 @@ export async function renderD3BarChart(
     });
 
   bars.exit().remove();
+
+  // Draw moving average if enabled
+  if (options.showMovingAverage && options.movingAverageDays) {
+    const movingAvg = calculateMovingAverage(values, options.movingAverageDays);
+    // Filter out null values and create points starting from windowSize - 1 position
+    // This ensures moving average starts at the correct offset without zero values at the beginning
+    const movingAvgPoints: DataPoint[] = [];
+    const windowSize = options.movingAverageDays;
+    
+    for (let i = windowSize - 1; i < movingAvg.length; i++) {
+      const value = movingAvg[i];
+      if (value !== null) {
+        movingAvgPoints.push({
+          x: 0,
+          y: 0,
+          value: value,
+          timestamp: timestamps[i]
+        });
+      }
+    }
+
+    if (movingAvgPoints.length > 0) {
+      const movingAvgLine = d3.line<DataPoint>()
+        .x((d, i) => {
+          // Find the original index in timestamps array for correct X position
+          const timestamp = d.timestamp || '';
+          const originalIndex = timestamps.indexOf(timestamp);
+          return getXCoordinate(xScale, timestamp, originalIndex, period);
+        })
+        .y(d => yScale(d.value))
+        .curve(d3.curveMonotoneX);
+
+      contentGroup.append('path')
+        .datum(movingAvgPoints)
+        .attr('class', 'line moving-average')
+        .attr('d', movingAvgLine)
+        .attr('fill', 'none')
+        .attr('stroke', config.colors.accent)
+        .attr('stroke-width', 2)
+        .attr('stroke-dasharray', '5,5');
+    }
+  }
 
   // Handle animations if enabled
   if (options.animation?.enabled) {

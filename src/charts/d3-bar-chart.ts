@@ -208,27 +208,23 @@ export async function renderD3BarChart(
     });
   }
 
-  // Draw bars with rounded top corners
+  // Draw bars with sharp corners (no rounding)
   const barsGroup = contentGroup.append('g').attr('class', 'bars');
 
-  // Helper function to create rounded rectangle path (top corners only)
-  const createRoundedRectPath = (
+  // Helper function to create rectangle path (no rounded corners)
+  const createRectPath = (
     x: number,
     y: number,
     width: number,
-    height: number,
-    radius: number
+    height: number
   ): string => {
     const topY = y;
     const bottomY = y + height;
     return `
-      M ${x + radius},${topY}
-      L ${x + width - radius},${topY}
-      Q ${x + width},${topY} ${x + width},${topY + radius}
+      M ${x},${topY}
+      L ${x + width},${topY}
       L ${x + width},${bottomY}
       L ${x},${bottomY}
-      L ${x},${topY + radius}
-      Q ${x},${topY} ${x + radius},${topY}
       Z
     `;
   };
@@ -249,8 +245,7 @@ export async function renderD3BarChart(
         ? (xScale as d3.ScaleBand<string>).bandwidth()
         : barWidth;
       const barHeight = chartHeight - barY;
-      const cornerRadius = 8; // Fixed 8px like Octopus Energy (Victory.js pattern)
-      return createRoundedRectPath(barX, barY, currentBarWidth, barHeight, cornerRadius);
+      return createRectPath(barX, barY, currentBarWidth, barHeight);
     })
     .attr('fill', d => {
       // Use hover color if this is the hovered point
@@ -313,8 +308,7 @@ export async function renderD3BarChart(
           ? (xScale as d3.ScaleBand<string>).bandwidth()
           : barWidth;
         const barHeight = 0; // Start with zero height
-        const cornerRadius = 8; // Fixed 8px like Octopus Energy
-        return createRoundedRectPath(barX, barY, currentBarWidth, barHeight, cornerRadius);
+        return createRectPath(barX, barY, currentBarWidth, barHeight);
       })
       .transition()
       .duration(duration)
@@ -329,8 +323,7 @@ export async function renderD3BarChart(
           ? (xScale as d3.ScaleBand<string>).bandwidth()
           : barWidth;
         const barHeight = chartHeight - barY;
-        const cornerRadius = 8; // Fixed 8px like Octopus Energy
-        return createRoundedRectPath(barX, barY, currentBarWidth, barHeight, cornerRadius);
+        return createRectPath(barX, barY, currentBarWidth, barHeight);
       });
   }
 }

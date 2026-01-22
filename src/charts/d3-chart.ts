@@ -25,7 +25,6 @@ export class D3Chart {
   private xScale: d3.ScaleBand<string> | d3.ScaleLinear<number, number> | null = null;
   private yScale: d3.ScaleLinear<number, number> | null = null;
   private hoveredPoint: DataPoint | null = null;
-  private tooltipElement: d3.Selection<SVGGElement, unknown, null, undefined> | null = null;
   private currentDataPoints: DataPoint[] = [];
   private currentBarWidth: number = 0;
   private chartId: string;
@@ -59,8 +58,6 @@ export class D3Chart {
       .attr('id', `${this.chartId}-title`)
       .text(localize('chart.accessibility.title', language));
 
-    // Create tooltip group
-    this._createTooltip();
 
     // Add keyboard and touch support
     this._addKeyboardSupport();
@@ -113,150 +110,6 @@ export class D3Chart {
     }
   }
 
-  /**
-   * Create tooltip element
-   */
-  private _createTooltip(): void {
-    this.tooltipElement = this.svg
-      .append('g')
-      .attr('class', 'chart-tooltip')
-      .style('display', 'none')
-      .style('pointer-events', 'none');
-  }
-
-  /**
-   * Show tooltip
-   */
-  showTooltip(x: number, y: number, point: DataPoint): void {
-    if (!this.tooltipElement) return;
-
-    // Format value with locale
-    const language = this.config.language || 'en';
-    const locale = language === 'es' ? 'es-ES' : language === 'be' ? 'be-BY' : 'en-US';
-    const valueStr = point.value.toLocaleString(locale, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-
-    // Format date
-    const date = point.timestamp ? new Date(point.timestamp) : null;
-    let dateStr = 'N/A';
-    if (date) {
-      const monthNames = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
-      const day = date.getDate();
-      const month = monthNames[date.getMonth()];
-      dateStr = `${day} ${month}`;
-    }
-
-    // Remove any existing tooltip content
-    this.tooltipElement.selectAll('*').remove();
-
-    // Create tooltip content group
-    const tooltipContent = this.tooltipElement
-      .append('g')
-      .attr('class', 'tooltip-content');
-
-    // Create background rectangle first (will be sized after text)
-    const bgRect = tooltipContent
-      .append('rect')
-      .attr('class', 'tooltip-bg')
-      .attr('rx', 8)
-      .attr('ry', 8)
-      .attr('fill', 'rgba(40, 26, 61, 0.98)')
-      .attr('stroke', 'none');
-
-    // Create value text
-    const valueText = tooltipContent
-      .append('text')
-      .attr('class', 'tooltip-value')
-      .attr('x', 0)
-      .attr('y', 0)
-      .attr('fill', '#ff69b4')
-      .attr('font-size', '16px')
-      .attr('font-weight', '600')
-      .attr('font-family', 'Roboto, sans-serif')
-      .attr('dominant-baseline', 'hanging')
-      .text(`${valueStr} kWh`);
-
-    // Create date text
-    const dateText = tooltipContent
-      .append('text')
-      .attr('class', 'tooltip-date')
-      .attr('x', 0)
-      .attr('y', 0)
-      .attr('fill', '#fff')
-      .attr('font-size', '13px')
-      .attr('font-weight', '500')
-      .attr('font-family', 'Roboto, sans-serif')
-      .attr('dominant-baseline', 'hanging')
-      .text(dateStr);
-
-    // Measure text elements
-    const valueBBox = (valueText.node() as SVGTextElement)?.getBBox();
-    const dateBBox = (dateText.node() as SVGTextElement)?.getBBox();
-
-    if (!valueBBox || !dateBBox) {
-      this.tooltipElement.style('display', 'none');
-      return;
-    }
-
-    // Calculate tooltip dimensions
-    const paddingX = 24;
-    const paddingY = 16;
-    const textWidth = Math.max(valueBBox.width, dateBBox.width);
-    const textHeight = valueBBox.height + dateBBox.height + 4; // 4px gap between texts
-    const tooltipWidth = textWidth + paddingX;
-    const tooltipHeight = textHeight + paddingY;
-
-    // Position text elements
-    valueText.attr('x', paddingX / 2).attr('y', paddingY / 2);
-    dateText.attr('x', paddingX / 2).attr('y', paddingY / 2 + valueBBox.height + 4);
-
-    // Size and position background rectangle
-    bgRect
-      .attr('width', tooltipWidth)
-      .attr('height', tooltipHeight)
-      .attr('x', 0)
-      .attr('y', 0);
-
-    // Calculate tooltip position
-    const offsetX = 15;
-    const offsetY = tooltipHeight + 10;
-    const svgWidth = this.config.width;
-    const svgHeight = this.config.height;
-
-    // Horizontal positioning: avoid overflow
-    let tooltipX = x + offsetX;
-    if (tooltipX + tooltipWidth > svgWidth) {
-      tooltipX = x - tooltipWidth - offsetX;
-    }
-    if (tooltipX < 0) {
-      tooltipX = paddingX / 2;
-    }
-
-    // Vertical positioning: above cursor, avoid overflow
-    let tooltipY = y - offsetY;
-    if (tooltipY < 0) {
-      tooltipY = y + offsetX; // Position below if no space above
-    }
-
-    // Apply transform to position tooltip
-    tooltipContent.attr('transform', `translate(${tooltipX}, ${tooltipY})`);
-
-    // Show tooltip
-    this.tooltipElement.style('display', 'block');
-  }
-
-  /**
-   * Hide tooltip
-   */
-  hideTooltip(): void {
-    if (this.tooltipElement) {
-      this.tooltipElement.style('display', 'none');
-      // Clear content for next show
-      this.tooltipElement.selectAll('*').remove();
-    }
-  }
 
   /**
    * Render a bar chart
@@ -278,8 +131,7 @@ export class D3Chart {
         setYScale: (scale) => { this.yScale = scale; },
         hoveredPoint: this.hoveredPoint,
         setHoveredPoint: (point) => { this.hoveredPoint = point; },
-        showTooltip: (x, y, point) => this.showTooltip(x, y, point),
-        hideTooltip: () => this.hideTooltip(),
+,
         setBarWidth: (width) => { this.currentBarWidth = width; }
       }
     );
@@ -305,8 +157,6 @@ export class D3Chart {
         setYScale: (scale) => { this.yScale = scale; },
         hoveredPoint: this.hoveredPoint,
         setHoveredPoint: (point) => { this.hoveredPoint = point; },
-        showTooltip: (x, y, point) => this.showTooltip(x, y, point),
-        hideTooltip: () => this.hideTooltip()
       }
     );
   }
@@ -341,8 +191,6 @@ export class D3Chart {
         setYScale: (scale) => { this.yScale = scale; },
         hoveredPoint: this.hoveredPoint,
         setHoveredPoint: (point) => { this.hoveredPoint = point; },
-        showTooltip: (x, y, point) => this.showTooltip(x, y, point),
-        hideTooltip: () => this.hideTooltip()
       }
     );
   }

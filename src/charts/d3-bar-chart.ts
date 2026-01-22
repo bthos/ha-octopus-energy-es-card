@@ -18,9 +18,29 @@ interface D3ChartContext {
   setYScale: (scale: d3.ScaleLinear<number, number>) => void;
   hoveredPoint: DataPoint | null;
   setHoveredPoint: (point: DataPoint | null) => void;
-  showTooltip: (x: number, y: number, point: DataPoint) => void;
-  hideTooltip: () => void;
   setBarWidth: (width: number) => void;
+}
+
+/**
+ * Format tooltip text for browser tooltip
+ */
+function formatTooltipText(point: DataPoint, language: string = 'en'): string {
+  const locale = language === 'es' ? 'es-ES' : language === 'be' ? 'be-BY' : 'en-US';
+  const valueStr = point.value.toLocaleString(locale, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+
+  const date = point.timestamp ? new Date(point.timestamp) : null;
+  let dateStr = 'N/A';
+  if (date) {
+    const monthNames = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+    const day = date.getDate();
+    const month = monthNames[date.getMonth()];
+    dateStr = `${day} ${month}`;
+  }
+
+  return `${valueStr} kWh\n${dateStr}`;
 }
 
 export async function renderD3BarChart(
@@ -262,6 +282,7 @@ export async function renderD3BarChart(
       return config.colors.primary;
     })
     .style('cursor', 'pointer')
+    .attr('title', (d) => formatTooltipText(d, config.language))
     .on('mouseenter', function(event, d) {
       context.setHoveredPoint(d);
       
@@ -270,10 +291,6 @@ export async function renderD3BarChart(
         .transition()
         .duration(200)
         .attr('fill', config.colors.hover || '#ff69b4');
-
-      // Show tooltip
-      const [x, y] = d3.pointer(event, svg.node());
-      context.showTooltip(x, y, d);
     })
     .on('mouseleave', function() {
       context.setHoveredPoint(null);
@@ -283,13 +300,6 @@ export async function renderD3BarChart(
         .transition()
         .duration(150) // Match Victory.js tooltip fade timing
         .attr('fill', config.colors.primary);
-
-      context.hideTooltip();
-    })
-    .on('mousemove', function(event, d) {
-      // Update tooltip position
-      const [x, y] = d3.pointer(event, svg.node());
-      context.showTooltip(x, y, d);
     });
 
   bars.exit().remove();

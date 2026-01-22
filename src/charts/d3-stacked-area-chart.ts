@@ -18,8 +18,28 @@ interface D3ChartContext {
   setYScale: (scale: d3.ScaleLinear<number, number>) => void;
   hoveredPoint: DataPoint | null;
   setHoveredPoint: (point: DataPoint | null) => void;
-  showTooltip: (x: number, y: number, point: DataPoint) => void;
-  hideTooltip: () => void;
+}
+
+/**
+ * Format tooltip text for browser tooltip
+ */
+function formatTooltipText(point: DataPoint, language: string = 'en'): string {
+  const locale = language === 'es' ? 'es-ES' : language === 'be' ? 'be-BY' : 'en-US';
+  const valueStr = point.value.toLocaleString(locale, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+
+  const date = point.timestamp ? new Date(point.timestamp) : null;
+  let dateStr = 'N/A';
+  if (date) {
+    const monthNames = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+    const day = date.getDate();
+    const month = monthNames[date.getMonth()];
+    dateStr = `${day} ${month}`;
+  }
+
+  return `${valueStr} kWh\n${dateStr}`;
 }
 
 export async function renderD3StackedAreaChart(
@@ -237,13 +257,13 @@ export async function renderD3StackedAreaChart(
             timestamp: timestamps[closestIndex]
           };
           context.setHoveredPoint(point);
-          const [absX, absY] = d3.pointer(event, svg.node());
-          context.showTooltip(absX, absY, point);
+          // Update title dynamically
+          d3.select(this).attr('title', formatTooltipText(point, config.language));
         }
       })
       .on('mouseleave', function() {
         context.setHoveredPoint(null);
-        context.hideTooltip();
+        d3.select(this).attr('title', '');
       })
       .on('mousemove', function(event, d) {
         const [x] = d3.pointer(event, contentGroup.node());
@@ -270,8 +290,8 @@ export async function renderD3StackedAreaChart(
             value: layer.data[closestIndex],
             timestamp: timestamps[closestIndex]
           };
-          const [absX, absY] = d3.pointer(event, svg.node());
-          context.showTooltip(absX, absY, point);
+          // Update title dynamically
+          d3.select(this).attr('title', formatTooltipText(point, config.language));
         }
       });
   });

@@ -1751,6 +1751,7 @@ export class OctopusConsumptionCard extends LitElement {
                 return html`
                   <div 
                     class="heat-calendar-day intensity-${day.intensity}"
+                    title="${tooltip}"
                   >
                     ${isYearView ? '' : dayNum}
                   </div>

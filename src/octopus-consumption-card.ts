@@ -1751,7 +1751,6 @@ export class OctopusConsumptionCard extends LitElement {
                 return html`
                   <div 
                     class="heat-calendar-day intensity-${day.intensity}"
-                    title="${tooltip}"
                   >
                     ${isYearView ? '' : dayNum}
                   </div>
@@ -1915,7 +1914,6 @@ export class OctopusConsumptionCard extends LitElement {
                   <div 
                     class="tariff-chart-bar p1" 
                     style="height: ${maxConsumption > 0 ? (p1Consumption / maxConsumption) * 100 : 0}%"
-                    title="P1: ${p1Consumption.toFixed(2)} kWh, €${p1Cost.toFixed(2)} (€${p1CostPerKwh.toFixed(3)}/kWh)"
                   ></div>
                 </div>
                 <div class="tariff-chart-bar-group">
@@ -1923,7 +1921,6 @@ export class OctopusConsumptionCard extends LitElement {
                   <div 
                     class="tariff-chart-bar p2" 
                     style="height: ${maxConsumption > 0 ? (p2Consumption / maxConsumption) * 100 : 0}%"
-                    title="P2: ${p2Consumption.toFixed(2)} kWh, €${p2Cost.toFixed(2)} (€${p2CostPerKwh.toFixed(3)}/kWh)"
                   ></div>
                 </div>
                 <div class="tariff-chart-bar-group">
@@ -1931,7 +1928,6 @@ export class OctopusConsumptionCard extends LitElement {
                   <div 
                     class="tariff-chart-bar p3" 
                     style="height: ${maxConsumption > 0 ? (p3Consumption / maxConsumption) * 100 : 0}%"
-                    title="P3: ${p3Consumption.toFixed(2)} kWh, €${p3Cost.toFixed(2)} (€${p3CostPerKwh.toFixed(3)}/kWh)"
                   ></div>
                 </div>
               </div>

@@ -130,13 +130,15 @@ export class D3Chart {
   showTooltip(x: number, y: number, point: DataPoint): void {
     if (!this.tooltipElement) return;
 
-    // Format value with Spanish locale (comma as decimal separator)
-    const valueStr = point.value.toLocaleString('es-ES', {
+    // Format value with locale
+    const language = this.config.language || 'en';
+    const locale = language === 'es' ? 'es-ES' : language === 'be' ? 'be-BY' : 'en-US';
+    const valueStr = point.value.toLocaleString(locale, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     });
 
-    // Format date as "8 ENE" (day + abbreviated month)
+    // Format date
     const date = point.timestamp ? new Date(point.timestamp) : null;
     let dateStr = 'N/A';
     if (date) {
@@ -146,90 +148,102 @@ export class D3Chart {
       dateStr = `${day} ${month}`;
     }
 
-    // Create tooltip content group (temporarily positioned off-screen to measure)
-    const tooltipContent = this.tooltipElement
-      .selectAll('g.tooltip-content')
-      .data([point])
-      .join('g')
-      .attr('class', 'tooltip-content')
-      .attr('transform', 'translate(-10000, -10000)'); // Off-screen for measurement
+    // Remove any existing tooltip content
+    this.tooltipElement.selectAll('*').remove();
 
-    // Background rectangle (will be sized after text is rendered)
-    tooltipContent
-      .selectAll('rect.tooltip-bg')
-      .data([point])
-      .join('rect')
+    // Create tooltip content group
+    const tooltipContent = this.tooltipElement
+      .append('g')
+      .attr('class', 'tooltip-content');
+
+    // Create background rectangle first (will be sized after text)
+    const bgRect = tooltipContent
+      .append('rect')
       .attr('class', 'tooltip-bg')
       .attr('rx', 8)
       .attr('ry', 8)
-      .attr('fill', 'rgba(40, 26, 61, 0.98)') // Increased opacity from 0.95 to 0.98
+      .attr('fill', 'rgba(40, 26, 61, 0.98)')
       .attr('stroke', 'none');
 
-    // Value text (pink, larger)
-    tooltipContent
-      .selectAll('text.tooltip-value')
-      .data([point])
-      .join('text')
+    // Create value text
+    const valueText = tooltipContent
+      .append('text')
       .attr('class', 'tooltip-value')
-      .attr('x', 12)
-      .attr('y', 20)
+      .attr('x', 0)
+      .attr('y', 0)
       .attr('fill', '#ff69b4')
       .attr('font-size', '16px')
       .attr('font-weight', '600')
       .attr('font-family', 'Roboto, sans-serif')
+      .attr('dominant-baseline', 'hanging')
       .text(`${valueStr} kWh`);
 
-    // Date text (white, smaller)
-    tooltipContent
-      .selectAll('text.tooltip-date')
-      .data([point])
-      .join('text')
+    // Create date text
+    const dateText = tooltipContent
+      .append('text')
       .attr('class', 'tooltip-date')
-      .attr('x', 12)
-      .attr('y', 38)
+      .attr('x', 0)
+      .attr('y', 0)
       .attr('fill', '#fff')
       .attr('font-size', '13px')
       .attr('font-weight', '500')
       .attr('font-family', 'Roboto, sans-serif')
+      .attr('dominant-baseline', 'hanging')
       .text(dateStr);
 
-    // Calculate background size based on text content
-    const node = tooltipContent.node();
-    if (node && 'getBBox' in node) {
-      const bbox = (node as SVGGElement).getBBox();
-      const paddingX = 24;
-      const paddingY = 16;
-      const tooltipWidth = bbox.width + paddingX;
-      const tooltipHeight = bbox.height + paddingY;
-      
-      // Update background rectangle with calculated size
-      tooltipContent.select('rect.tooltip-bg')
-        .attr('width', tooltipWidth)
-        .attr('height', tooltipHeight)
-        .attr('x', -12)
-        .attr('y', -8);
+    // Measure text elements
+    const valueBBox = (valueText.node() as SVGTextElement)?.getBBox();
+    const dateBBox = (dateText.node() as SVGTextElement)?.getBBox();
 
-      // Position tooltip above the cursor point
-      // Offset: 15px horizontal, tooltip height + 10px vertical above cursor
-      const offsetX = 15;
-      const offsetY = tooltipHeight + 10; // Position above cursor with 10px gap
-      
-      // Ensure tooltip doesn't go off-screen horizontally
-      const svgWidth = this.config.width;
-      const tooltipX = x + offsetX + tooltipWidth > svgWidth 
-        ? x - tooltipWidth - offsetX // Position to the left if it would overflow
-        : x + offsetX;
-      
-      // Position tooltip above cursor (y decreases upward in SVG)
-      const tooltipY = y - offsetY;
-      
-      // Update transform with calculated position
-      tooltipContent.attr('transform', `translate(${tooltipX}, ${tooltipY})`);
-    } else {
-      // Fallback positioning if measurement fails
-      tooltipContent.attr('transform', `translate(${x + 15}, ${y - 60})`);
+    if (!valueBBox || !dateBBox) {
+      this.tooltipElement.style('display', 'none');
+      return;
     }
 
+    // Calculate tooltip dimensions
+    const paddingX = 24;
+    const paddingY = 16;
+    const textWidth = Math.max(valueBBox.width, dateBBox.width);
+    const textHeight = valueBBox.height + dateBBox.height + 4; // 4px gap between texts
+    const tooltipWidth = textWidth + paddingX;
+    const tooltipHeight = textHeight + paddingY;
+
+    // Position text elements
+    valueText.attr('x', paddingX / 2).attr('y', paddingY / 2);
+    dateText.attr('x', paddingX / 2).attr('y', paddingY / 2 + valueBBox.height + 4);
+
+    // Size and position background rectangle
+    bgRect
+      .attr('width', tooltipWidth)
+      .attr('height', tooltipHeight)
+      .attr('x', 0)
+      .attr('y', 0);
+
+    // Calculate tooltip position
+    const offsetX = 15;
+    const offsetY = tooltipHeight + 10;
+    const svgWidth = this.config.width;
+    const svgHeight = this.config.height;
+
+    // Horizontal positioning: avoid overflow
+    let tooltipX = x + offsetX;
+    if (tooltipX + tooltipWidth > svgWidth) {
+      tooltipX = x - tooltipWidth - offsetX;
+    }
+    if (tooltipX < 0) {
+      tooltipX = paddingX / 2;
+    }
+
+    // Vertical positioning: above cursor, avoid overflow
+    let tooltipY = y - offsetY;
+    if (tooltipY < 0) {
+      tooltipY = y + offsetX; // Position below if no space above
+    }
+
+    // Apply transform to position tooltip
+    tooltipContent.attr('transform', `translate(${tooltipX}, ${tooltipY})`);
+
+    // Show tooltip
     this.tooltipElement.style('display', 'block');
   }
 
@@ -239,6 +253,8 @@ export class D3Chart {
   hideTooltip(): void {
     if (this.tooltipElement) {
       this.tooltipElement.style('display', 'none');
+      // Clear content for next show
+      this.tooltipElement.selectAll('*').remove();
     }
   }
 

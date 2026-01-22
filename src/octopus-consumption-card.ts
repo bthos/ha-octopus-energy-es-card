@@ -318,6 +318,10 @@ export class OctopusConsumptionCard extends LitElement {
     
     // Handle period/date changes (internal state changes)
     // Skip if navigation is already in progress
+    // For tariff-comparison, week-analysis, and heat-calendar views, _currentPeriod is legacy and shouldn't trigger reload
+    const view = this.config?.view;
+    const isPeriodDependentView = view === "consumption";
+    
     if ((changedProperties.has("_currentPeriod") || changedProperties.has("_currentDate")) &&
         !this._loading &&
         !this._isNavigating &&
@@ -335,7 +339,8 @@ export class OctopusConsumptionCard extends LitElement {
                          oldDate.getTime() !== this._currentDate.getTime();
       
       // Only load if this is a real change and not triggered by navigation
-      if ((periodChanged || dateChanged) && !this._isNavigating) {
+      // For tariff-comparison, week-analysis, and heat-calendar views, ignore _currentPeriod changes
+      if ((periodChanged && isPeriodDependentView || dateChanged) && !this._isNavigating) {
         this._loadData();
       }
     }
@@ -886,6 +891,27 @@ export class OctopusConsumptionCard extends LitElement {
         const result = comparisonResult.result;
         // Validate that result has required structure
         if (result.tariffs && Array.isArray(result.tariffs) && result.tariffs.length > 0) {
+          // Validate that tariffs have period_breakdown data
+          const tariffsWithBreakdown = result.tariffs.filter(tariff => 
+            tariff.period_breakdown && 
+            typeof tariff.period_breakdown.p1_consumption === 'number' &&
+            typeof tariff.period_breakdown.p2_consumption === 'number' &&
+            typeof tariff.period_breakdown.p3_consumption === 'number'
+          );
+          
+          if (tariffsWithBreakdown.length === 0 && result.tariffs.length > 0) {
+            // Tariffs exist but period_breakdown is missing or invalid
+            Logger.groupError('Tariff comparison missing period breakdown');
+            Logger.warn('⚠ Tariff comparison result has tariffs but no valid period_breakdown data');
+            Logger.data('Tariffs structure', result.tariffs.map(t => ({
+              name: t.name,
+              has_period_breakdown: !!t.period_breakdown,
+              period_breakdown: t.period_breakdown
+            })));
+            Logger.groupEnd();
+            // Still set the result - let the UI handle displaying the issue
+          }
+          
           this._comparisonResult = result;
           this._comparisonError = null; // Clear any previous errors
         } else {
@@ -1818,20 +1844,42 @@ export class OctopusConsumptionCard extends LitElement {
 
     const tariffs = this._comparisonResult.tariffs;
     
+    // Filter tariffs that have valid period breakdown data
+    // Allow 0 values but require period_breakdown object to exist
+    const tariffsWithBreakdown = tariffs.filter(tariff => 
+      tariff.period_breakdown && 
+      tariff.period_breakdown.p1_consumption !== undefined &&
+      tariff.period_breakdown.p2_consumption !== undefined &&
+      tariff.period_breakdown.p3_consumption !== undefined &&
+      tariff.period_breakdown.p1_consumption !== null &&
+      tariff.period_breakdown.p2_consumption !== null &&
+      tariff.period_breakdown.p3_consumption !== null
+    );
+    
+    if (tariffsWithBreakdown.length === 0) {
+      return html`
+        <div class="tariff-chart-container">
+          <div style="padding: 16px; color: var(--secondary-text-color); font-size: 14px;">
+            Period breakdown data not available. Ensure consumption data includes P1/P2/P3 period information.
+          </div>
+        </div>
+      `;
+    }
+    
     // Find max values for scaling
     let maxConsumption = 0;
     let maxCost = 0;
     
-    for (const tariff of tariffs) {
-      const breakdown = tariff.period_breakdown;
-      maxConsumption = Math.max(maxConsumption, breakdown.p1_consumption, breakdown.p2_consumption, breakdown.p3_consumption);
+    for (const tariff of tariffsWithBreakdown) {
+      const breakdown = tariff.period_breakdown!;
+      maxConsumption = Math.max(maxConsumption, breakdown.p1_consumption || 0, breakdown.p2_consumption || 0, breakdown.p3_consumption || 0);
       
       // Calculate cost per period
-      const p1Cost = breakdown.p1_consumption > 0 ? 
+      const p1Cost = (breakdown.p1_consumption || 0) > 0 ? 
         (tariff.hourly_breakdown?.filter(h => h.period === 'P1').reduce((sum, h) => sum + h.cost, 0) || 0) : 0;
-      const p2Cost = breakdown.p2_consumption > 0 ? 
+      const p2Cost = (breakdown.p2_consumption || 0) > 0 ? 
         (tariff.hourly_breakdown?.filter(h => h.period === 'P2').reduce((sum, h) => sum + h.cost, 0) || 0) : 0;
-      const p3Cost = breakdown.p3_consumption > 0 ? 
+      const p3Cost = (breakdown.p3_consumption || 0) > 0 ? 
         (tariff.hourly_breakdown?.filter(h => h.period === 'P3').reduce((sum, h) => sum + h.cost, 0) || 0) : 0;
       
       maxCost = Math.max(maxCost, p1Cost, p2Cost, p3Cost);
@@ -1840,20 +1888,23 @@ export class OctopusConsumptionCard extends LitElement {
     return html`
       <div class="tariff-chart-container">
         <div class="period-breakdown-title">Consumption & Cost by Period</div>
-        ${tariffs.map(tariff => {
-          const breakdown = tariff.period_breakdown;
+        ${tariffsWithBreakdown.map(tariff => {
+          const breakdown = tariff.period_breakdown!;
+          const p1Consumption = breakdown.p1_consumption || 0;
+          const p2Consumption = breakdown.p2_consumption || 0;
+          const p3Consumption = breakdown.p3_consumption || 0;
           
           // Calculate costs per period
-          const p1Cost = breakdown.p1_consumption > 0 ? 
+          const p1Cost = p1Consumption > 0 ? 
             (tariff.hourly_breakdown?.filter(h => h.period === 'P1').reduce((sum, h) => sum + h.cost, 0) || 0) : 0;
-          const p2Cost = breakdown.p2_consumption > 0 ? 
+          const p2Cost = p2Consumption > 0 ? 
             (tariff.hourly_breakdown?.filter(h => h.period === 'P2').reduce((sum, h) => sum + h.cost, 0) || 0) : 0;
-          const p3Cost = breakdown.p3_consumption > 0 ? 
+          const p3Cost = p3Consumption > 0 ? 
             (tariff.hourly_breakdown?.filter(h => h.period === 'P3').reduce((sum, h) => sum + h.cost, 0) || 0) : 0;
           
-          const p1CostPerKwh = breakdown.p1_consumption > 0 ? p1Cost / breakdown.p1_consumption : 0;
-          const p2CostPerKwh = breakdown.p2_consumption > 0 ? p2Cost / breakdown.p2_consumption : 0;
-          const p3CostPerKwh = breakdown.p3_consumption > 0 ? p3Cost / breakdown.p3_consumption : 0;
+          const p1CostPerKwh = p1Consumption > 0 ? p1Cost / p1Consumption : 0;
+          const p2CostPerKwh = p2Consumption > 0 ? p2Cost / p2Consumption : 0;
+          const p3CostPerKwh = p3Consumption > 0 ? p3Cost / p3Consumption : 0;
 
           return html`
             <div style="margin-top: 16px;">
@@ -1863,24 +1914,24 @@ export class OctopusConsumptionCard extends LitElement {
                   <div class="tariff-chart-bar-label">P1</div>
                   <div 
                     class="tariff-chart-bar p1" 
-                    style="height: ${maxConsumption > 0 ? (breakdown.p1_consumption / maxConsumption) * 100 : 0}%"
-                    title="P1: ${breakdown.p1_consumption.toFixed(2)} kWh, €${p1Cost.toFixed(2)} (€${p1CostPerKwh.toFixed(3)}/kWh)"
+                    style="height: ${maxConsumption > 0 ? (p1Consumption / maxConsumption) * 100 : 0}%"
+                    title="P1: ${p1Consumption.toFixed(2)} kWh, €${p1Cost.toFixed(2)} (€${p1CostPerKwh.toFixed(3)}/kWh)"
                   ></div>
                 </div>
                 <div class="tariff-chart-bar-group">
                   <div class="tariff-chart-bar-label">P2</div>
                   <div 
                     class="tariff-chart-bar p2" 
-                    style="height: ${maxConsumption > 0 ? (breakdown.p2_consumption / maxConsumption) * 100 : 0}%"
-                    title="P2: ${breakdown.p2_consumption.toFixed(2)} kWh, €${p2Cost.toFixed(2)} (€${p2CostPerKwh.toFixed(3)}/kWh)"
+                    style="height: ${maxConsumption > 0 ? (p2Consumption / maxConsumption) * 100 : 0}%"
+                    title="P2: ${p2Consumption.toFixed(2)} kWh, €${p2Cost.toFixed(2)} (€${p2CostPerKwh.toFixed(3)}/kWh)"
                   ></div>
                 </div>
                 <div class="tariff-chart-bar-group">
                   <div class="tariff-chart-bar-label">P3</div>
                   <div 
                     class="tariff-chart-bar p3" 
-                    style="height: ${maxConsumption > 0 ? (breakdown.p3_consumption / maxConsumption) * 100 : 0}%"
-                    title="P3: ${breakdown.p3_consumption.toFixed(2)} kWh, €${p3Cost.toFixed(2)} (€${p3CostPerKwh.toFixed(3)}/kWh)"
+                    style="height: ${maxConsumption > 0 ? (p3Consumption / maxConsumption) * 100 : 0}%"
+                    title="P3: ${p3Consumption.toFixed(2)} kWh, €${p3Cost.toFixed(2)} (€${p3CostPerKwh.toFixed(3)}/kWh)"
                   ></div>
                 </div>
               </div>

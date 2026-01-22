@@ -184,7 +184,8 @@ export async function renderD3BarChart(
 
   // Handle animations if enabled
   if (options.animation?.enabled) {
-    const duration = options.animation.duration || 2000; // Match Victory.js timing (2000ms)
+    const animation = options.animation;
+    const duration = animation.duration || 2000; // Match Victory.js timing (2000ms)
     bars
       .attr('d', (d, i) => {
         const barX = period === 'month' || period === 'week'
@@ -197,7 +198,7 @@ export async function renderD3BarChart(
       })
       .transition()
       .duration(duration)
-      .delay((d, i) => (options.animation.delay || 0) + i * 50) // Fixed 50ms per bar (Victory.js pattern)
+      .delay((d, i) => (animation.delay || 0) + i * 50) // Fixed 50ms per bar (Victory.js pattern)
       .ease(d3.easeExpOut)
       .attr('d', (d, i) => {
         const barX = period === 'month' || period === 'week'

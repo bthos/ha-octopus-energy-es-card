@@ -168,11 +168,12 @@ export async function renderD3StackedAreaChart(
 
   // Handle animations
   if (options.animation?.enabled) {
+    const animation = options.animation;
     areasGroup.selectAll('path.area-stack')
       .attr('opacity', 0)
       .transition()
-      .duration(options.animation.duration || 800)
-      .delay((d, i) => (options.animation.delay || 0) + i * 100)
+      .duration(animation.duration || 800)
+      .delay((d, i) => (animation.delay || 0) + i * 100)
       .ease(d3.easeExpOut)
       .attr('opacity', (d, i) => stackedData.layers[i]?.opacity || 0.7);
   }

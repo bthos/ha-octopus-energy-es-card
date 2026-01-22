@@ -158,9 +158,10 @@ export function formatDate(dateStr: string, period?: 'day' | 'week' | 'month' | 
       // Format as hour:minute for hourly data (e.g., "14:00")
       return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: false });
     } else if (period === 'week') {
-      // Format as week number (e.g., "Week 3")
-      const weekStart = getWeekStart(date);
-      return `Week ${getISOWeekNumber(weekStart)}`;
+      // Format as DD/MM for week view (shows individual days of the week)
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      return `${day}/${month}`;
     } else if (period === 'month') {
       // Format as DD/MM (e.g., "08/01" for January 8th)
       const day = date.getDate().toString().padStart(2, '0');

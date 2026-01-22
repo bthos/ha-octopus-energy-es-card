@@ -2747,14 +2747,8 @@ export class OctopusConsumptionCard extends LitElement {
     let values = this._consumptionData.map(d => d.consumption || d.value || 0);
     let timestamps = this._consumptionData.map(d => d.start_time || d.date || '');
     
-    // Group data based on period type
-    // Week: group daily data by weeks
-    if (this._currentPeriod === "week" && values.length > 0) {
-      // Group daily data by weeks
-      const grouped = groupByWeeks(values, timestamps);
-      values = grouped.values;
-      timestamps = grouped.timestamps;
-    }
+    // Note: Week view shows individual days of one week (Monday to Sunday), not aggregated weeks
+    // Data is already loaded as daily for week view, so no grouping needed
     
     // Prepare cost data if enabled (after grouping consumption data)
     let costData: ChartData | undefined;
@@ -2776,12 +2770,7 @@ export class OctopusConsumptionCard extends LitElement {
             item.timestamp || item.date || ''
           );
           
-          // Group cost data the same way as consumption data
-          if (this._currentPeriod === "week" && costValues.length > 0) {
-            const grouped = groupByWeeks(costValues, costTimestamps);
-            costValues = grouped.values;
-            costTimestamps = grouped.timestamps;
-          }
+          // Note: Week view shows individual days, so no grouping needed for cost data
           
           if (costValues.length === values.length) {
             const maxCost = Math.max(...costValues, 0.01);

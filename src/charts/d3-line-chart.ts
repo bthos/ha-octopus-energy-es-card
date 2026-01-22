@@ -7,40 +7,21 @@ import type {
   ChartConfig,
   ChartData,
   LineChartOptions,
-  DataPoint
+  DataPoint,
+  D3ChartContext
 } from './chart-types';
-import { formatDate, calculateMovingAverage } from './chart-utils';
-
-interface D3ChartContext {
-  xScale: d3.ScaleBand<string> | d3.ScaleLinear<number, number> | null;
-  yScale: d3.ScaleLinear<number, number> | null;
-  setXScale: (scale: d3.ScaleBand<string> | d3.ScaleLinear<number, number>) => void;
-  setYScale: (scale: d3.ScaleLinear<number, number>) => void;
-  hoveredPoint: DataPoint | null;
-  setHoveredPoint: (point: DataPoint | null) => void;
-}
-
-/**
- * Format tooltip text for browser tooltip
- */
-function formatTooltipText(point: DataPoint, language: string = 'en'): string {
-  const locale = language === 'es' ? 'es-ES' : language === 'be' ? 'be-BY' : 'en-US';
-  const valueStr = point.value.toLocaleString(locale, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
-
-  const date = point.timestamp ? new Date(point.timestamp) : null;
-  let dateStr = 'N/A';
-  if (date) {
-    const monthNames = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
-    const day = date.getDate();
-    const month = monthNames[date.getMonth()];
-    dateStr = `${day} ${month}`;
-  }
-
-  return `${valueStr} kWh\n${dateStr}`;
-}
+import { formatTooltipText, calculateMovingAverage } from './chart-utils';
+import {
+  getChartDimensions,
+  createXScale,
+  createYScale,
+  createContentGroup,
+  createGridLines,
+  createXAxis,
+  createYAxis,
+  addYAxisLabel,
+  getXCoordinate
+} from './chart-render-utils';
 
 export async function renderD3LineChart(
   svg: d3.Selection<SVGSVGElement, unknown, null, undefined>,
@@ -49,161 +30,47 @@ export async function renderD3LineChart(
   options: LineChartOptions,
   context: D3ChartContext
 ): Promise<void> {
-  const { width, height, padding } = config;
-  const chartWidth = width - padding.left - padding.right;
-  const chartHeight = height - padding.top - padding.bottom;
+  const { padding } = config;
+  const { chartWidth, chartHeight } = getChartDimensions(config);
 
   // Clear previous content
   svg.selectAll('g.chart-content, g.axis, g.grid, path.line, path.area, circle.point').remove();
 
   // Create main content group
-  const contentGroup = svg
-    .append('g')
-    .attr('class', 'chart-content')
-    .attr('transform', `translate(${padding.left}, ${padding.top})`);
+  const contentGroup = createContentGroup(svg, padding);
 
   // Prepare data
   const timestamps = data.points.map(p => p.timestamp || '');
   const values = data.points.map(p => p.value);
-
-  // Setup scales
-  let xScale: d3.ScaleBand<string> | d3.ScaleLinear<number, number>;
   const period = options.period || 'month';
 
-  if (period === 'month' || period === 'week') {
-    xScale = d3.scaleBand<string>()
-      .domain(timestamps)
-      .range([0, chartWidth])
-      .padding(0.1);
-  } else {
-    xScale = d3.scaleLinear<number, number>()
-      .domain([0, timestamps.length - 1])
-      .range([0, chartWidth]);
-  }
-
-  const yScale = d3.scaleLinear<number, number>()
-    .domain([0, data.maxValue * 1.1])
-    .range([chartHeight, 0]);
+  // Setup scales
+  const xScale = createXScale(timestamps, chartWidth, period);
+  const yScale = createYScale(data.maxValue, chartHeight);
 
   context.setXScale(xScale);
   context.setYScale(yScale);
 
-  // Create grid lines group
-  const gridGroup = contentGroup.append('g').attr('class', 'grid');
-  
-  const yTicks = yScale.ticks(5);
-  gridGroup.selectAll('line.grid-line')
-    .data(yTicks)
-    .join('line')
-    .attr('class', 'grid-line')
-    .attr('x1', 0)
-    .attr('x2', chartWidth)
-    .attr('y1', d => yScale(d))
-    .attr('y2', d => yScale(d))
-    .attr('stroke', config.colors.grid)
-    .attr('stroke-width', 1)
-    .attr('opacity', 0.2);
+  // Create grid lines
+  createGridLines(contentGroup, yScale, chartWidth, config);
 
   // Create axes
-  const xAxisGroup = svg
-    .append('g')
-    .attr('class', 'axis axis-x')
-    .attr('transform', `translate(${padding.left}, ${height - padding.bottom})`);
+  createXAxis(svg, xScale, timestamps, period, config);
+  createYAxis(svg, yScale, config);
 
-  const yAxisGroup = svg
-    .append('g')
-    .attr('class', 'axis axis-y')
-    .attr('transform', `translate(${padding.left}, ${padding.top})`);
-
-  if (period === 'month' || period === 'week') {
-    const xAxis = d3.axisBottom(xScale as d3.ScaleBand<string>)
-      .tickFormat((d) => formatDate(d as string, period));
-    
-    if (period === 'month') {
-      xAxis.tickValues(timestamps.filter((ts, i) => {
-        const date = new Date(ts);
-        return date.getDate() % 2 === 1;
-      }));
-    }
-    
-    xAxisGroup.call(xAxis);
-  } else {
-    const xAxis = d3.axisBottom(xScale as d3.ScaleLinear<number, number>)
-      .ticks(Math.min(timestamps.length, 12))
-      .tickFormat((d, i) => {
-        const idx = Math.round(d as number);
-        if (idx >= 0 && idx < timestamps.length) {
-          return formatDate(timestamps[idx], period);
-        }
-        return '';
-      });
-    
-    xAxisGroup.call(xAxis);
-  }
-
-  xAxisGroup.selectAll('text')
-    .attr('fill', config.colors.text)
-    .attr('font-size', '13px')
-    .attr('font-family', config.fontFamily || 'Roboto, sans-serif')
-    .attr('opacity', 0.9);
-
-  xAxisGroup.selectAll('line, path')
-    .attr('stroke', config.colors.axis)
-    .attr('opacity', 0.2);
-
-  const yAxis = d3.axisLeft(yScale)
-    .ticks(5)
-    .tickFormat(d => String(d));
-
-  yAxisGroup.call(yAxis)
-    .selectAll('text')
-    .attr('fill', config.colors.text)
-    .attr('font-size', '13px')
-    .attr('font-family', config.fontFamily || 'Roboto, sans-serif')
-    .attr('opacity', 0.9);
-
-  yAxisGroup.selectAll('line, path')
-    .attr('stroke', config.colors.axis)
-    .attr('opacity', 0.2);
-
-  // Add "kWh" label above Y-axis (once)
-  svg.append('text')
-    .attr('class', 'y-axis-label')
-    .attr('x', padding.left - 10)
-    .attr('y', padding.top - 10)
-    .attr('text-anchor', 'end')
-    .attr('fill', config.colors.text)
-    .attr('font-size', '13px')
-    .attr('font-family', config.fontFamily || 'Roboto, sans-serif')
-    .attr('opacity', 0.9)
-    .text('kWh');
+  // Add Y-axis label
+  addYAxisLabel(svg, padding, config);
 
   // Create line generator
   const line = d3.line<DataPoint>()
-    .x((d, i) => {
-      if (period === 'month' || period === 'week') {
-        const bandScale = xScale as d3.ScaleBand<string>;
-        const center = bandScale(d.timestamp || '');
-        return center ? center + bandScale.bandwidth() / 2 : 0;
-      } else {
-        return (xScale as d3.ScaleLinear<number, number>)(i);
-      }
-    })
+    .x((d, i) => getXCoordinate(xScale, d.timestamp, i, period))
     .y(d => yScale(d.value))
     .curve(d3.curveMonotoneX);
 
   // Draw area if enabled
   if (options.showArea) {
     const area = d3.area<DataPoint>()
-      .x((d, i) => {
-        if (period === 'month' || period === 'week') {
-          const bandScale = xScale as d3.ScaleBand<string>;
-          const center = bandScale(d.timestamp || '');
-          return center ? center + bandScale.bandwidth() / 2 : 0;
-        } else {
-          return (xScale as d3.ScaleLinear<number, number>)(i);
-        }
-      })
+      .x((d, i) => getXCoordinate(xScale, d.timestamp, i, period))
       .y0(chartHeight)
       .y1(d => yScale(d.value))
       .curve(d3.curveMonotoneX);
@@ -237,15 +104,7 @@ export async function renderD3LineChart(
     }));
 
     const movingAvgLine = d3.line<DataPoint>()
-      .x((d, i) => {
-        if (period === 'month' || period === 'week') {
-          const bandScale = xScale as d3.ScaleBand<string>;
-          const center = bandScale(d.timestamp || '');
-          return center ? center + bandScale.bandwidth() / 2 : 0;
-        } else {
-          return (xScale as d3.ScaleLinear<number, number>)(i);
-        }
-      })
+      .x((d, i) => getXCoordinate(xScale, d.timestamp, i, period))
       .y(d => yScale(d.value))
       .curve(d3.curveMonotoneX);
 
@@ -269,15 +128,7 @@ export async function renderD3LineChart(
     .append('circle')
     .attr('class', 'point')
     .merge(points as any)
-    .attr('cx', (d, i) => {
-      if (period === 'month' || period === 'week') {
-        const bandScale = xScale as d3.ScaleBand<string>;
-        const center = bandScale(d.timestamp || '');
-        return center ? center + bandScale.bandwidth() / 2 : 0;
-      } else {
-        return (xScale as d3.ScaleLinear<number, number>)(i);
-      }
-    })
+    .attr('cx', (d, i) => getXCoordinate(xScale, d.timestamp, i, period))
     .attr('cy', d => yScale(d.value))
     .attr('r', d => {
       if (context.hoveredPoint && 

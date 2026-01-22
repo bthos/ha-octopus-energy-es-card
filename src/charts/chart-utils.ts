@@ -5,6 +5,16 @@
 import type { DataPoint, ChartData, AxisLabel, GridLine, ChartConfig } from './chart-types';
 
 /**
+ * Month names constants for tooltip formatting (uppercase, Spanish format)
+ */
+export const MONTH_NAMES_UPPERCASE = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+
+/**
+ * Month names constants for date formatting (lowercase, Spanish format)
+ */
+export const MONTH_NAMES_LOWERCASE = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+/**
  * Calculate chart coordinates for data points
  */
 export function calculatePoints(
@@ -136,13 +146,11 @@ export function generateGridLines(
   config: ChartConfig
 ): GridLine[] {
   const { width, padding } = config;
-  const x1 = padding.left;
-  const x2 = width - padding.right;
   
   return yAxisLabels.map(label => ({
-    x1,
+    x1: padding.left,
     y1: label.y,
-    x2,
+    x2: width - padding.right,
     y2: label.y
   }));
 }
@@ -169,13 +177,11 @@ export function formatDate(dateStr: string, period?: 'day' | 'week' | 'month' | 
       return `${day}/${month}`;
     } else if (period === 'year') {
       // Format as abbreviated month name in Spanish (e.g., "ene", "feb", "mar") - matching Octopus Energy España
-      const monthNames = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-      return monthNames[date.getMonth()];
+      return MONTH_NAMES_LOWERCASE[date.getMonth()];
     }
     
     // Default: abbreviated month name in Spanish
-    const monthNames = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-    return monthNames[date.getMonth()];
+    return MONTH_NAMES_LOWERCASE[date.getMonth()];
   } catch {
     return dateStr.split('T')[0];
   }
@@ -361,4 +367,26 @@ function getISOWeekNumber(date: Date): number {
   d.setUTCDate(d.getUTCDate() + 4 - dayNum);
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
   return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+}
+
+/**
+ * Format tooltip text for browser tooltip
+ * Used across all chart types (bar, line, stacked area)
+ */
+export function formatTooltipText(point: DataPoint, language: string = 'en'): string {
+  const locale = language === 'es' ? 'es-ES' : language === 'be' ? 'be-BY' : 'en-US';
+  const valueStr = point.value.toLocaleString(locale, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+
+  const date = point.timestamp ? new Date(point.timestamp) : null;
+  let dateStr = 'N/A';
+  if (date) {
+    const day = date.getDate();
+    const month = MONTH_NAMES_UPPERCASE[date.getMonth()];
+    dateStr = `${day} ${month}`;
+  }
+
+  return `${valueStr} kWh\n${dateStr}`;
 }

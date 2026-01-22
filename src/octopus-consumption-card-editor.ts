@@ -165,10 +165,6 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
       newConfig.selected_tariff_for_cost = undefined;
     }
 
-    if (newConfig.show_cost_on_chart === false) {
-      newConfig.selected_tariff_for_cost = undefined;
-    }
-
     this._config = newConfig;
     
     // Request update if view changed to rebuild schema
@@ -372,8 +368,6 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
         },
       });
     }
-
-    // Old conditional logic removed - now handled in view-specific sections above
 
     // Optional sensor override (available for all views)
     schema.push({

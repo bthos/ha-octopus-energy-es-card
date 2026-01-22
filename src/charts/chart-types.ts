@@ -2,6 +2,9 @@
  * Type definitions for D3.js Chart Library
  */
 
+// Import d3 types for interfaces
+import * as d3 from 'd3';
+
 export interface ChartConfig {
   width: number;
   height: number;
@@ -116,4 +119,18 @@ export interface GridLine {
   y1: number;
   x2: number;
   y2: number;
+}
+
+/**
+ * Context interface for D3 chart rendering
+ * Used to share state between chart rendering functions
+ */
+export interface D3ChartContext {
+  xScale: d3.ScaleBand<string> | d3.ScaleLinear<number, number> | null;
+  yScale: d3.ScaleLinear<number, number> | null;
+  setXScale: (scale: d3.ScaleBand<string> | d3.ScaleLinear<number, number>) => void;
+  setYScale: (scale: d3.ScaleLinear<number, number>) => void;
+  hoveredPoint: DataPoint | null;
+  setHoveredPoint: (point: DataPoint | null) => void;
+  setBarWidth?: (width: number) => void; // Optional, only for bar charts
 }

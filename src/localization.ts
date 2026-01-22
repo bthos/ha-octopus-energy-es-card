@@ -514,14 +514,12 @@ export function localizeWithVars(
  * Compute label for ha-form schema
  */
 export function computeLabel(schema: any, language: string = "en"): string {
-  const key = `editor.${schema.name}_label`;
-  return localize(key, language);
+  return localize(`editor.${schema.name}_label`, language);
 }
 
 /**
  * Compute helper text for ha-form schema
  */
 export function computeHelper(schema: any, language: string = "en"): string {
-  const key = `editor.${schema.name}_helper`;
-  return localize(key, language);
+  return localize(`editor.${schema.name}_helper`, language);
 }

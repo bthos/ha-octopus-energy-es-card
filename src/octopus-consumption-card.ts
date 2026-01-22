@@ -318,7 +318,6 @@ export class OctopusConsumptionCard extends LitElement {
     
     // Handle period/date changes (internal state changes)
     // Skip if navigation is already in progress
-    // For tariff-comparison, week-analysis, and heat-calendar views, _currentPeriod is legacy and shouldn't trigger reload
     const view = this.config?.view;
     const isPeriodDependentView = view === "consumption";
     
@@ -550,31 +549,6 @@ export class OctopusConsumptionCard extends LitElement {
     return String(error);
   }
 
-  /**
-   * Creates user-friendly error message from service error
-   */
-  private _createUserFriendlyError(error: any): Error {
-    if (error instanceof Error) {
-      return error;
-    }
-    
-    if (error && typeof error === 'object') {
-      const errorObj = error as any;
-      let message = errorObj.message || errorObj.translation_key || JSON.stringify(error);
-      
-      if (errorObj.code === 'service_validation_error') {
-        if (message.includes('return_response')) {
-          message = "The service integration may not support response data yet. Please ensure you're using the latest version of the Octopus Energy España integration and that it has been reloaded after updating.";
-        } else {
-          message = message || "Service validation error. Please check your configuration.";
-        }
-      }
-      
-      return new Error(message);
-    }
-    
-    return new Error(String(error));
-  }
 
   /**
    * Extracts response data from WebSocket result
@@ -825,7 +799,7 @@ export class OctopusConsumptionCard extends LitElement {
       Logger.error('✗ Service call failed: ', this._extractErrorMessage(serviceError));
       Logger.data('Full Error Object', serviceError);
       Logger.groupEnd();
-      throw this._createUserFriendlyError(serviceError);
+      throw this._handleServiceError(serviceError, OctopusConsumptionCard.SERVICE_DOMAIN, OctopusConsumptionCard.SERVICE_FETCH_CONSUMPTION);
     }
   }
 
@@ -888,22 +862,21 @@ export class OctopusConsumptionCard extends LitElement {
       );
 
       if (comparisonResult.success && comparisonResult.result) {
-        const result = comparisonResult.result;
         // Validate that result has required structure
-        if (result.tariffs && Array.isArray(result.tariffs) && result.tariffs.length > 0) {
+        if (comparisonResult.result.tariffs && Array.isArray(comparisonResult.result.tariffs) && comparisonResult.result.tariffs.length > 0) {
           // Validate that tariffs have period_breakdown data
-          const tariffsWithBreakdown = result.tariffs.filter(tariff => 
+          const tariffsWithBreakdown = comparisonResult.result.tariffs.filter(tariff => 
             tariff.period_breakdown && 
             typeof tariff.period_breakdown.p1_consumption === 'number' &&
             typeof tariff.period_breakdown.p2_consumption === 'number' &&
             typeof tariff.period_breakdown.p3_consumption === 'number'
           );
           
-          if (tariffsWithBreakdown.length === 0 && result.tariffs.length > 0) {
+          if (tariffsWithBreakdown.length === 0 && comparisonResult.result.tariffs.length > 0) {
             // Tariffs exist but period_breakdown is missing or invalid
             Logger.groupError('Tariff comparison missing period breakdown');
             Logger.warn('⚠ Tariff comparison result has tariffs but no valid period_breakdown data');
-            Logger.data('Tariffs structure', result.tariffs.map(t => ({
+            Logger.data('Tariffs structure', comparisonResult.result.tariffs.map(t => ({
               name: t.name,
               has_period_breakdown: !!t.period_breakdown,
               period_breakdown: t.period_breakdown
@@ -912,16 +885,16 @@ export class OctopusConsumptionCard extends LitElement {
             // Still set the result - let the UI handle displaying the issue
           }
           
-          this._comparisonResult = result;
+          this._comparisonResult = comparisonResult.result;
           this._comparisonError = null; // Clear any previous errors
         } else {
           // Result exists but tariffs array is missing or empty
-          const errorMsg = result.error || result.warning || "Tariff comparison returned no tariff data";
+          const errorMsg = comparisonResult.result.error || comparisonResult.result.warning || "Tariff comparison returned no tariff data";
           this._comparisonError = errorMsg;
           this._comparisonResult = null;
           Logger.groupError('Tariff comparison returned empty data');
           Logger.warn('⚠ Tariff comparison result has no tariffs');
-          Logger.data('Result structure', result);
+          Logger.data('Result structure', comparisonResult.result);
           Logger.groupEnd();
         }
       } else {
@@ -1536,18 +1509,17 @@ export class OctopusConsumptionCard extends LitElement {
         for (const hourData of tariffCost.hourly_breakdown) {
           const timestamp = hourData.hour || '';
           const consumption = hourData.consumption || 0;
-          const period = hourData.period;
           
           if (!periodMap.has(timestamp)) {
             periodMap.set(timestamp, { p1: 0, p2: 0, p3: 0 });
           }
           
           const entry = periodMap.get(timestamp)!;
-          if (period === 'P1') {
+          if (hourData.period === 'P1') {
             entry.p1 += consumption;
-          } else if (period === 'P2') {
+          } else if (hourData.period === 'P2') {
             entry.p2 += consumption;
-          } else if (period === 'P3') {
+          } else if (hourData.period === 'P3') {
             entry.p3 += consumption;
           }
         }
@@ -2898,9 +2870,6 @@ export class OctopusConsumptionCard extends LitElement {
       enabled: false
     };
 
-    // Determine period type for X-axis formatting
-    const periodType = this._currentPeriod;
-    
     // Render based on chart type
     try {
       switch (chartType) {
@@ -2912,7 +2881,7 @@ export class OctopusConsumptionCard extends LitElement {
             showCostAxis: !!(costEnabled && costData),
             costData,
             animation: animationConfig,
-            period: periodType,
+            period: this._currentPeriod,
             interactive: true // Enable tooltips
           });
           break;
@@ -2921,7 +2890,7 @@ export class OctopusConsumptionCard extends LitElement {
             showCostOverlay: !!(costEnabled && costData),
             costData,
             animation: animationConfig,
-            period: periodType,
+            period: this._currentPeriod,
             interactive: true // Enable tooltips
           });
           break;
@@ -2930,7 +2899,7 @@ export class OctopusConsumptionCard extends LitElement {
           if (stackedData) {
             await this._chartInstance.renderStackedAreaChart(stackedData, {
               animation: animationConfig,
-              period: periodType,
+              period: this._currentPeriod,
               interactive: true // Enable tooltips
             });
           } else {
@@ -2968,43 +2937,36 @@ export class OctopusConsumptionCard extends LitElement {
       const p2Data = periodData.map(d => d.p2 || 0);
       const p3Data = periodData.map(d => d.p3 || 0);
       
-      const p3Cumulative = p3Data;
       const p2Cumulative = p3Data.map((p3, i) => p3 + (p2Data[i] || 0));
       const p1Cumulative = p2Cumulative.map((p2p3, i) => p2p3 + (p1Data[i] || 0));
       
       const maxStackedValue = Math.max(...p1Cumulative, 1);
-    const minStackedValue = 0;
-      const stackedRange = maxStackedValue - minStackedValue || 1;
-
-    const errorColor = this._getComputedColor('--error-color', '#f44336');
-    const warningColor = this._getComputedColor('--warning-color', '#ff9800');
-    const successColor = this._getComputedColor('--success-color', '#4caf50');
 
     return {
       layers: [
         {
           data: p3Data,
-          color: successColor,
+          color: this._getComputedColor('--success-color', '#4caf50'),
           opacity: 0.6,
           label: 'P3 (Valley)'
         },
         {
           data: p2Data,
-          color: warningColor,
+          color: this._getComputedColor('--warning-color', '#ff9800'),
           opacity: 0.6,
           label: 'P2 (Flat)'
         },
         {
           data: p1Data,
-          color: errorColor,
+          color: this._getComputedColor('--error-color', '#f44336'),
           opacity: 0.6,
           label: 'P1 (Peak)'
         }
       ],
       timestamps: periodData.map(d => d.timestamp),
-      minValue: minStackedValue,
+      minValue: 0,
       maxValue: maxStackedValue,
-      range: stackedRange
+      range: maxStackedValue || 1
     };
   }
 

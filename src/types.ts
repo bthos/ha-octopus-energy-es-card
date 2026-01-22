@@ -126,7 +126,7 @@ export interface HeatCalendarDay {
   date: string;
   consumption: number;
   cost: number;
-  dayOfWeek: number; // 0 = Sunday, 6 = Saturday
+  dayOfWeek: number; // 0 = Monday, 6 = Sunday (Monday-based week)
   weekOfMonth?: number; // 0-based week index (for month view)
   weekOfYear?: number; // 0-52, ISO week (for year view)
   month?: number; // 0-11 (for year view grouping)

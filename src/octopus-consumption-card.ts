@@ -1524,19 +1524,21 @@ export class OctopusConsumptionCard extends LitElement {
           }
         }
         
-        // Convert map to array matching consumption data order
-        const result = Array.from(periodMap.entries()).map(([timestamp, periods]) => ({
-          timestamp,
-          ...periods
-        }));
+        // Convert map to array and sort by timestamp to ensure correct order (especially for week view: Monday to Sunday)
+        const result = Array.from(periodMap.entries())
+          .map(([timestamp, periods]) => ({
+            timestamp,
+            ...periods
+          }))
+          .sort((a, b) => a.timestamp.localeCompare(b.timestamp));
         
         if (result.length > 0) {
           return result;
         }
       }
       
-      // Try daily breakdown for month view
-      if (tariffCost && tariffCost.daily_breakdown && this._currentPeriod === 'month') {
+      // Try daily breakdown for week and month views
+      if (tariffCost && tariffCost.daily_breakdown && (this._currentPeriod === 'week' || this._currentPeriod === 'month')) {
         // For daily data, we need to estimate P1/P2/P3 distribution
         // Use the period_breakdown percentages to estimate
         if (tariffCost.period_breakdown) {
@@ -1544,12 +1546,15 @@ export class OctopusConsumptionCard extends LitElement {
           const p2Pct = tariffCost.period_breakdown.p2_percentage / 100;
           const p3Pct = tariffCost.period_breakdown.p3_percentage / 100;
           
-          return tariffCost.daily_breakdown.map(day => ({
-            timestamp: day.date,
-            p1: day.consumption * p1Pct,
-            p2: day.consumption * p2Pct,
-            p3: day.consumption * p3Pct,
-          }));
+          // Sort daily breakdown by date to ensure correct order (especially for week view: Monday to Sunday)
+          return tariffCost.daily_breakdown
+            .map(day => ({
+              timestamp: day.date,
+              p1: day.consumption * p1Pct,
+              p2: day.consumption * p2Pct,
+              p3: day.consumption * p3Pct,
+            }))
+            .sort((a, b) => a.timestamp.localeCompare(b.timestamp));
         }
       }
     }
@@ -1558,7 +1563,14 @@ export class OctopusConsumptionCard extends LitElement {
     if (this._consumptionData.length > 0) {
       const firstPoint = this._consumptionData[0];
       if (firstPoint.p1_consumption !== undefined || firstPoint.period) {
-        return this._consumptionData.map(point => ({
+        // Sort consumption data by timestamp to ensure correct order (especially for week view: Monday to Sunday)
+        const sortedData = [...this._consumptionData].sort((a, b) => {
+          const timestampA = a.start_time || a.date || '';
+          const timestampB = b.start_time || b.date || '';
+          return timestampA.localeCompare(timestampB);
+        });
+        
+        return sortedData.map(point => ({
           timestamp: point.start_time || point.date || '',
           p1: point.p1_consumption || (point.period === 'P1' ? point.consumption : 0),
           p2: point.p2_consumption || (point.period === 'P2' ? point.consumption : 0),
@@ -1977,7 +1989,10 @@ export class OctopusConsumptionCard extends LitElement {
     if (this._tariffCosts && this.config.source_entry_id) {
       const tariffCost = this._tariffCosts[this.config.source_entry_id];
       if (tariffCost && tariffCost.daily_breakdown && tariffCost.daily_breakdown.length > 0) {
-        dailyBreakdown = tariffCost.daily_breakdown;
+        // Sort daily breakdown by date to ensure correct order (Monday to Sunday for weeks)
+        dailyBreakdown = [...tariffCost.daily_breakdown].sort((a, b) => 
+          (a.date || '').localeCompare(b.date || '')
+        );
       }
     }
 
@@ -2103,7 +2118,10 @@ export class OctopusConsumptionCard extends LitElement {
     if (this._tariffCosts && this.config.source_entry_id) {
       tariffCost = this._tariffCosts[this.config.source_entry_id];
       if (tariffCost && tariffCost.daily_breakdown && tariffCost.daily_breakdown.length > 0) {
-        dailyBreakdown = tariffCost.daily_breakdown;
+        // Sort daily breakdown by date to ensure correct order (Monday to Sunday for weeks)
+        dailyBreakdown = [...tariffCost.daily_breakdown].sort((a, b) => 
+          (a.date || '').localeCompare(b.date || '')
+        );
       }
     }
 
@@ -2761,11 +2779,41 @@ export class OctopusConsumptionCard extends LitElement {
     const height = 300;
     
     // Prepare chart data with grouping based on period
-    let values = this._consumptionData.map(d => d.consumption || d.value || 0);
-    let timestamps = this._consumptionData.map(d => d.start_time || d.date || '');
+    // Sort consumption data by date to ensure correct order (especially for week view: Monday to Sunday)
+    const sortedConsumptionData = [...this._consumptionData].sort((a, b) => {
+      const dateA = a.start_time || a.date || '';
+      const dateB = b.start_time || b.date || '';
+      return dateA.localeCompare(dateB);
+    });
+    
+    let values = sortedConsumptionData.map(d => d.consumption || d.value || 0);
+    let timestamps = sortedConsumptionData.map(d => d.start_time || d.date || '');
     
     // Note: Week view shows individual days of one week (Monday to Sunday), not aggregated weeks
     // Data is already loaded as daily for week view, so no grouping needed
+    
+    // For week view with bar chart, ensure all 7 days are present (even if no data)
+    // This prevents bars from stretching across the full width when only partial data exists
+    if (this._currentPeriod === "week" && chartType === "bar") {
+      const { startDate } = this._getDateRange();
+      const fullWeekTimestamps: string[] = [];
+      const fullWeekValues: number[] = [];
+      
+      // Generate all 7 days of the week (Monday to Sunday)
+      for (let i = 0; i < 7; i++) {
+        const dayDate = new Date(startDate);
+        dayDate.setDate(startDate.getDate() + i);
+        const dayTimestamp = dayDate.toISOString().split('T')[0];
+        fullWeekTimestamps.push(dayTimestamp);
+        
+        // Find corresponding value or use 0 if no data
+        const dataIndex = timestamps.indexOf(dayTimestamp);
+        fullWeekValues.push(dataIndex >= 0 ? values[dataIndex] : 0);
+      }
+      
+      timestamps = fullWeekTimestamps;
+      values = fullWeekValues;
+    }
     
     // Prepare cost data if enabled (after grouping consumption data)
     let costData: ChartData | undefined;
@@ -2782,12 +2830,41 @@ export class OctopusConsumptionCard extends LitElement {
           : tariffCost.daily_breakdown;
         
         if (breakdown && breakdown.length > 0) {
-          let costValues = breakdown.map((item: { cost: number }) => item.cost);
-          let costTimestamps = breakdown.map((item: { timestamp?: string; date?: string }) => 
+          // Sort cost breakdown data by date to ensure correct order (especially for week view: Monday to Sunday)
+          const sortedBreakdown = [...breakdown].sort((a, b) => {
+            const dateA = a.timestamp || a.date || '';
+            const dateB = b.timestamp || b.date || '';
+            return dateA.localeCompare(dateB);
+          });
+          
+          let costValues = sortedBreakdown.map((item: { cost: number }) => item.cost);
+          let costTimestamps = sortedBreakdown.map((item: { timestamp?: string; date?: string }) => 
             item.timestamp || item.date || ''
           );
           
           // Note: Week view shows individual days, so no grouping needed for cost data
+          
+          // For week view with bar chart, ensure cost data also has all 7 days
+          if (this._currentPeriod === "week" && chartType === "bar") {
+            const { startDate } = this._getDateRange();
+            const fullWeekCostTimestamps: string[] = [];
+            const fullWeekCostValues: number[] = [];
+            
+            // Generate all 7 days of the week (Monday to Sunday)
+            for (let i = 0; i < 7; i++) {
+              const dayDate = new Date(startDate);
+              dayDate.setDate(startDate.getDate() + i);
+              const dayTimestamp = dayDate.toISOString().split('T')[0];
+              fullWeekCostTimestamps.push(dayTimestamp);
+              
+              // Find corresponding cost value or use 0 if no data
+              const costIndex = costTimestamps.indexOf(dayTimestamp);
+              fullWeekCostValues.push(costIndex >= 0 ? costValues[costIndex] : 0);
+            }
+            
+            costTimestamps = fullWeekCostTimestamps;
+            costValues = fullWeekCostValues;
+          }
           
           if (costValues.length === values.length) {
             const maxCost = Math.max(...costValues, 0.01);

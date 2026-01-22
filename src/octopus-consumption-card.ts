@@ -2627,30 +2627,27 @@ export class OctopusConsumptionCard extends LitElement {
   }
 
   private _renderChart(): TemplateResult {
-    // Show loading indicator while fetching data
     const language = this.hass?.language || 'en';
-    if (this._loading) {
-      return html`<div class="loading">${localize("card.loading", language)}</div>`;
-    }
-
-    // Show "No consumption data" only if loading is complete, no error, and no data
-    if (!this._loading && !this._error && this._consumptionData.length === 0) {
-      const dateRange = this._formatDateRange();
-      return html`
-        <div class="loading">
-          <div>${localize("card.no_data", language)}</div>
-          <div style="margin-top: 8px; font-size: 12px; color: var(--secondary-text-color);">
-            Period: ${dateRange}
-          </div>
-        </div>
-      `;
-    }
-
-    // Return SVG container - actual rendering happens in _renderD3Chart
+    
+    // Always return the chart container to ensure it exists in DOM
+    // This prevents the chart from disappearing when loading state changes
     return html`
       <div 
         id="chart-container"
         class="chart-svg-container">
+        ${this._loading ? html`
+          <div class="loading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%; text-align: center;">
+            ${localize("card.loading", language)}
+          </div>
+        ` : ""}
+        ${!this._loading && !this._error && this._consumptionData.length === 0 ? html`
+          <div class="loading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%; text-align: center;">
+            <div>${localize("card.no_data", language)}</div>
+            <div style="margin-top: 8px; font-size: 12px; color: var(--secondary-text-color);">
+              Period: ${this._formatDateRange()}
+            </div>
+          </div>
+        ` : ""}
       </div>
     `;
   }

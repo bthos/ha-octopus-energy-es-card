@@ -724,6 +724,15 @@ export class OctopusConsumptionCard extends LitElement {
       if (result && result.success && result.last_data_date) {
         this._lastDataDate = result.last_data_date;
         Logger.info('Last data date:', this._lastDataDate);
+        
+        // For tariff-comparison view, adjust _currentDate to last available date if it's in the future
+        if (this.config.view === "tariff-comparison") {
+          const lastDataDateObj = new Date(this._lastDataDate);
+          lastDataDateObj.setHours(23, 59, 59, 999);
+          if (this._currentDate > lastDataDateObj) {
+            this._currentDate = new Date(lastDataDateObj);
+          }
+        }
       } else {
         // If service doesn't support this or returns error, set to null
         this._lastDataDate = null;
@@ -966,13 +975,27 @@ export class OctopusConsumptionCard extends LitElement {
     
     // Tariff comparison always uses daily consumption data (last 365 days)
     if (view === "tariff-comparison") {
-      let endDate = new Date(this._currentDate);
+      // Use last available data date as end date, or current date if not available
+      let endDate = this._lastDataDate 
+        ? new Date(this._lastDataDate)
+        : new Date(this._currentDate);
       endDate.setHours(23, 59, 59, 999);
       endDate = this._adjustEndDateForLastDataDate(endDate);
       
       const startDate = new Date(endDate);
       startDate.setDate(startDate.getDate() - 364); // Last 365 days (daily data)
       startDate.setHours(0, 0, 0, 0);
+      
+      // Ensure startDate doesn't exceed last available date
+      if (this._lastDataDate) {
+        const lastDataDateObj = new Date(this._lastDataDate);
+        lastDataDateObj.setHours(0, 0, 0, 0);
+        if (startDate < lastDataDateObj) {
+          // If calculated start date is before last available date, use last available date as start
+          // This ensures we use all available data
+          startDate.setTime(lastDataDateObj.getTime());
+        }
+      }
       
       return { startDate, endDate };
     }

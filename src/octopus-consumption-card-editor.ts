@@ -4,7 +4,7 @@
  * Visual editor component for configuring the consumption card
  */
 
-import { LitElement, html, PropertyValues, TemplateResult } from "lit";
+import { LitElement, html, PropertyValues, TemplateResult, nothing } from "lit";
 
 // Disable Lit dev mode warnings (only available in dev builds)
 // This will be tree-shaken out in production builds
@@ -473,7 +473,7 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
                   .value=${currentValue}
                   .label=${index === 0 
                     ? localize("editor.tariff_entry_ids_helper", this._language)
-                    : ""}
+                    : nothing}
                   @value-changed=${(ev: CustomEvent) => this._handleTariffSelection(index, ev)}
                 ></ha-selector>
                 ${currentValue ? html`
@@ -483,7 +483,7 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
                   >
                     <ha-icon icon="mdi:delete"></ha-icon>
                   </ha-icon-button>
-                ` : ""}
+                ` : nothing}
               </div>
             `;
           })}
@@ -512,7 +512,7 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
           @value-changed=${this._valueChanged}
         ></ha-form>
         
-        ${view === "tariff-comparison" ? this._renderTariffDropdowns() : ""}
+        ${view === "tariff-comparison" ? this._renderTariffDropdowns() : nothing}
       </div>
     `;
   }

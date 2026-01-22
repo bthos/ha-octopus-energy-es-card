@@ -4,7 +4,7 @@
  * A Lovelace card for displaying consumption graphs and tariff comparisons.
  */
 
-import { LitElement, html, PropertyValues, TemplateResult } from "lit";
+import { LitElement, html, PropertyValues, TemplateResult, nothing } from "lit";
 
 // Disable Lit dev mode warnings (only available in dev builds)
 // This will be tree-shaken out in production builds
@@ -2325,11 +2325,11 @@ export class OctopusConsumptionCard extends LitElement {
           <div class="loading-overlay">
             <ha-circular-progress indeterminate style="--mdc-theme-primary: var(--primary-color);"></ha-circular-progress>
           </div>
-        ` : ""}
-        ${view === "consumption" ? this._renderConsumptionView() : ""}
-        ${view === "heat-calendar" ? this._renderHeatCalendarView() : ""}
-        ${view === "week-analysis" ? this._renderWeekAnalysisView() : ""}
-        ${view === "tariff-comparison" ? this._renderTariffComparisonView() : ""}
+        ` : nothing}
+        ${view === "consumption" ? this._renderConsumptionView() : nothing}
+        ${view === "heat-calendar" ? this._renderHeatCalendarView() : nothing}
+        ${view === "week-analysis" ? this._renderWeekAnalysisView() : nothing}
+        ${view === "tariff-comparison" ? this._renderTariffComparisonView() : nothing}
       </div>
     `;
   }
@@ -2373,7 +2373,7 @@ export class OctopusConsumptionCard extends LitElement {
             ${localize("card.button.next", language)}
           </button>
         </div>
-      ` : ""}
+      ` : nothing}
 
       ${this._consumptionData.length > 0 ? html`
         <div class="consumption-summary-header">
@@ -2409,7 +2409,7 @@ export class OctopusConsumptionCard extends LitElement {
             maximumFractionDigits: 0 
           })} kWh</div>
         </div>
-      ` : ""}
+      ` : nothing}
 
       ${this._showChartView ? html`
         <div class="chart-container">
@@ -2569,7 +2569,7 @@ export class OctopusConsumptionCard extends LitElement {
               : `${localize("editor.heat_calendar_period_month", language)} ${localize("card.button.next", language)}`}
           </button>
         </div>
-      ` : ""}
+      ` : nothing}
 
       <div class="chart-container">
         ${this._renderHeatCalendar()}
@@ -2610,7 +2610,7 @@ export class OctopusConsumptionCard extends LitElement {
             Next →
           </button>
         </div>
-      ` : ""}
+      ` : nothing}
 
       ${this._renderWeekComparison()}
     `;
@@ -2644,7 +2644,7 @@ export class OctopusConsumptionCard extends LitElement {
             <span>${localize("card.tariff_comparison.info", language)}</span>
           </div>
           ${this._renderComparison()}
-          ${this.config.show_tariff_chart !== false ? this._renderTariffComparisonChart() : ""}
+          ${this.config.show_tariff_chart !== false ? this._renderTariffComparisonChart() : nothing}
         ` : html`
           <div class="loading">
             <p>No comparison data available</p>
@@ -2749,7 +2749,7 @@ export class OctopusConsumptionCard extends LitElement {
           <div class="loading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%; text-align: center;">
             ${localize("card.loading", language)}
           </div>
-        ` : ""}
+        ` : nothing}
         ${!this._loading && !this._error && this._consumptionData.length === 0 ? html`
           <div class="loading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%; text-align: center;">
             <div>${localize("card.no_data", language)}</div>
@@ -2757,7 +2757,7 @@ export class OctopusConsumptionCard extends LitElement {
               Period: ${this._formatDateRange()}
             </div>
           </div>
-        ` : ""}
+        ` : nothing}
       </div>
     `;
   }
@@ -3125,7 +3125,7 @@ export class OctopusConsumptionCard extends LitElement {
             <div class="tariff-header">
               <span class="tariff-name">
                 ${tariff.name}
-                ${bestTariffId === tariff.entry_id ? html`<span class="best-tariff-badge">Best</span>` : ""}
+                ${bestTariffId === tariff.entry_id ? html`<span class="best-tariff-badge">Best</span>` : nothing}
               </span>
               <span class="tariff-cost">€${tariff.total_cost.toFixed(2)}</span>
             </div>
@@ -3159,7 +3159,7 @@ export class OctopusConsumptionCard extends LitElement {
           <strong>Potential Savings:</strong> €${this._comparisonResult.savings.amount.toFixed(2)} 
           (${this._comparisonResult.savings.percentage.toFixed(1)}%) by choosing the best tariff
         </div>
-      ` : ""}
+      ` : nothing}
     `;
   }
 

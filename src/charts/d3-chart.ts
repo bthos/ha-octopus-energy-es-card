@@ -131,7 +131,6 @@ export class D3Chart {
         setYScale: (scale) => { this.yScale = scale; },
         hoveredPoint: this.hoveredPoint,
         setHoveredPoint: (point) => { this.hoveredPoint = point; },
-,
         setBarWidth: (width) => { this.currentBarWidth = width; }
       }
     );

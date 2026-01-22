@@ -2604,11 +2604,38 @@ export class OctopusConsumptionCard extends LitElement {
       return monthNames[date.getMonth()];
     }
     
-    return date.toLocaleDateString('es-ES', { 
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    });
+    // Format date using localized month names
+    const monthNames = [
+      localize("card.month.long.jan", language),
+      localize("card.month.long.feb", language),
+      localize("card.month.long.mar", language),
+      localize("card.month.long.apr", language),
+      localize("card.month.long.may", language),
+      localize("card.month.long.jun", language),
+      localize("card.month.long.jul", language),
+      localize("card.month.long.aug", language),
+      localize("card.month.long.sep", language),
+      localize("card.month.long.oct", language),
+      localize("card.month.long.nov", language),
+      localize("card.month.long.dec", language)
+    ];
+    
+    const day = date.getDate();
+    const month = monthNames[date.getMonth()];
+    const year = date.getFullYear();
+    const of = localize("card.date.of", language);
+    
+    // Format based on language
+    if (language === 'en') {
+      // English: "December 22, 2025"
+      return `${month} ${day}, ${year}`;
+    } else if (language === 'es') {
+      // Spanish: "22 de diciembre de 2025"
+      return `${day} ${of} ${month} ${of} ${year}`;
+    } else {
+      // Other languages (like Belarusian): "22 снежня 2025"
+      return `${day} ${month} ${year}`;
+    }
   }
 
   /**

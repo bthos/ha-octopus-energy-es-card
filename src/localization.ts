@@ -133,6 +133,23 @@ export const translations: Record<string, Translations> = {
     "card.month.nov": "Nov",
     "card.month.dec": "Dec",
     
+    // Month names (long)
+    "card.month.long.jan": "January",
+    "card.month.long.feb": "February",
+    "card.month.long.mar": "March",
+    "card.month.long.apr": "April",
+    "card.month.long.may": "May",
+    "card.month.long.jun": "June",
+    "card.month.long.jul": "July",
+    "card.month.long.aug": "August",
+    "card.month.long.sep": "September",
+    "card.month.long.oct": "October",
+    "card.month.long.nov": "November",
+    "card.month.long.dec": "December",
+    
+    // Date formatting
+    "card.date.of": "of",
+    
     // Day names (short)
     "card.day.sun": "Sun",
     "card.day.mon": "Mon",
@@ -268,6 +285,23 @@ export const translations: Record<string, Translations> = {
     "card.month.nov": "nov",
     "card.month.dec": "dic",
     
+    // Month names (long)
+    "card.month.long.jan": "enero",
+    "card.month.long.feb": "febrero",
+    "card.month.long.mar": "marzo",
+    "card.month.long.apr": "abril",
+    "card.month.long.may": "mayo",
+    "card.month.long.jun": "junio",
+    "card.month.long.jul": "julio",
+    "card.month.long.aug": "agosto",
+    "card.month.long.sep": "septiembre",
+    "card.month.long.oct": "octubre",
+    "card.month.long.nov": "noviembre",
+    "card.month.long.dec": "diciembre",
+    
+    // Date formatting
+    "card.date.of": "de",
+    
     // Day names (short)
     "card.day.sun": "Dom",
     "card.day.mon": "Lun",
@@ -402,6 +436,23 @@ export const translations: Record<string, Translations> = {
     "card.month.oct": "кастр",
     "card.month.nov": "ліст",
     "card.month.dec": "снеж",
+    
+    // Month names (long)
+    "card.month.long.jan": "студзеня",
+    "card.month.long.feb": "лютага",
+    "card.month.long.mar": "сакавіка",
+    "card.month.long.apr": "красавіка",
+    "card.month.long.may": "мая",
+    "card.month.long.jun": "чэрвеня",
+    "card.month.long.jul": "ліпеня",
+    "card.month.long.aug": "жніўня",
+    "card.month.long.sep": "верасня",
+    "card.month.long.oct": "кастрычніка",
+    "card.month.long.nov": "лістапада",
+    "card.month.long.dec": "снежня",
+    
+    // Date formatting
+    "card.date.of": "",
     
     // Day names (short)
     "card.day.sun": "Нд",

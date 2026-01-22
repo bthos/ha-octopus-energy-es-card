@@ -140,6 +140,8 @@ export interface WeekComparisonData {
     weekEnd: string;
     consumption: number;
     cost: number;
+    daysCount: number; // Number of days with data in this week
+    isComplete: boolean; // Whether the week is complete (has all 7 days and weekEnd is not in the future)
     periodBreakdown: {
       p1_consumption: number;
       p2_consumption: number;

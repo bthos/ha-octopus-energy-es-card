@@ -1854,27 +1854,64 @@ export class OctopusConsumptionCard extends LitElement {
             const weekLabel = index === 0 
               ? localize("card.week_comparison.base_week", language)
               : `Week -${index}`;
+            
+            // Calculate forecast for incomplete weeks
+            const isIncomplete = !week.isComplete;
+            let forecastConsumption = 0;
+            let forecastCost = 0;
+            if (isIncomplete && week.daysCount > 0) {
+              const avgDailyConsumption = week.consumption / week.daysCount;
+              const avgDailyCost = week.cost / week.daysCount;
+              forecastConsumption = avgDailyConsumption * 7;
+              forecastCost = avgDailyCost * 7;
+            }
+            
             return html`
-              <div class="week-card">
+              <div class="week-card ${isIncomplete ? 'week-card-incomplete' : ''}">
                 <div class="week-card-header">
-                  ${weekLabel}
-                  ${comparison ? html`
+                  <div class="week-card-header-title">
+                    ${weekLabel}
+                    ${isIncomplete ? html`
+                      <span class="week-incomplete-badge">${localize("card.week_comparison.incomplete", language)}</span>
+                    ` : ''}
+                  </div>
+                  ${comparison && week.isComplete ? html`
                     <span class="week-change ${comparison.consumptionChangePercent >= 0 ? 'positive' : 'negative'}">
                       ${comparison.consumptionChangePercent >= 0 ? '↑' : '↓'} ${Math.abs(comparison.consumptionChangePercent).toFixed(1)}%
+                    </span>
+                  ` : comparison && isIncomplete ? html`
+                    <span class="week-change-disabled" title="${localize("card.week_comparison.comparison_disabled_tooltip", language)}">
+                      ${localize("card.week_comparison.comparison_disabled", language)}
                     </span>
                   ` : ''}
                 </div>
                 <div class="week-card-metrics">
+                  ${isIncomplete ? html`
+                    <div class="week-metric week-metric-days">
+                      <span class="week-metric-label">${localize("card.week_comparison.days_available", language)}:</span>
+                      <span class="week-metric-value">${week.daysCount}/7 ${localize("card.week_comparison.days", language)}</span>
+                    </div>
+                  ` : ''}
                   <div class="week-metric">
-                    <span class="week-metric-label">Consumption:</span>
-                    <span class="week-metric-value">${week.consumption.toFixed(1)} kWh</span>
+                    <span class="week-metric-label">${localize("card.week_comparison.consumption", language)}:</span>
+                    <span class="week-metric-value">
+                      ${week.consumption.toFixed(1)} kWh
+                      ${isIncomplete && forecastConsumption > 0 ? html`
+                        <span class="week-forecast">(${localize("card.week_comparison.forecast", language)}: ${forecastConsumption.toFixed(1)} kWh)</span>
+                      ` : ''}
+                    </span>
                   </div>
                   <div class="week-metric">
-                    <span class="week-metric-label">Cost:</span>
-                    <span class="week-metric-value">€${week.cost.toFixed(2)}</span>
+                    <span class="week-metric-label">${localize("card.week_comparison.cost", language)}:</span>
+                    <span class="week-metric-value">
+                      €${week.cost.toFixed(2)}
+                      ${isIncomplete && forecastCost > 0 ? html`
+                        <span class="week-forecast">(${localize("card.week_comparison.forecast", language)}: €${forecastCost.toFixed(2)})</span>
+                      ` : ''}
+                    </span>
                   </div>
                   <div class="week-metric">
-                    <span class="week-metric-label">Period:</span>
+                    <span class="week-metric-label">${localize("card.week_comparison.period", language)}:</span>
                     <span class="week-metric-value week-period-date">${week.weekStart} - ${week.weekEnd}</span>
                   </div>
                 </div>
@@ -2197,20 +2234,24 @@ export class OctopusConsumptionCard extends LitElement {
     }
 
     // Group days by week (Monday to Sunday)
-    const weeks: Array<{
+    type WeekData = {
       weekStart: string;
       weekEnd: string;
       consumption: number;
       cost: number;
+      daysCount: number;
+      isComplete: boolean;
       periodBreakdown: {
         p1_consumption: number;
         p2_consumption: number;
         p3_consumption: number;
       };
-    }> = [];
+    };
 
     // Group days into weeks
-    const weekMap = new Map<string, typeof weeks[0]>();
+    const weekMap = new Map<string, WeekData & { daysSet: Set<string> }>();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     
     for (const day of dailyBreakdown) {
       const date = new Date(day.date);
@@ -2238,6 +2279,9 @@ export class OctopusConsumptionCard extends LitElement {
           weekEnd: sunday.toISOString().split("T")[0],
           consumption: 0,
           cost: 0,
+          daysCount: 0,
+          isComplete: false,
+          daysSet: new Set<string>(),
           periodBreakdown: {
             p1_consumption: 0,
             p2_consumption: 0,
@@ -2247,6 +2291,14 @@ export class OctopusConsumptionCard extends LitElement {
       }
 
       const week = weekMap.get(weekKey)!;
+      const dayKey = day.date;
+      
+      // Count unique days with data
+      if (!week.daysSet.has(dayKey)) {
+        week.daysSet.add(dayKey);
+        week.daysCount++;
+      }
+      
       week.consumption += day.consumption;
       week.cost += (day.cost || 0);
       
@@ -2268,13 +2320,30 @@ export class OctopusConsumptionCard extends LitElement {
       // If no period breakdown available, leave at 0
     }
 
+    // Determine completeness for each week
+    for (const week of weekMap.values()) {
+      const weekEndDate = new Date(week.weekEnd);
+      weekEndDate.setHours(0, 0, 0, 0);
+      
+      // Week is complete if:
+      // 1. weekEnd is not in the future
+      // 2. It has data for all 7 days
+      week.isComplete = weekEndDate <= today && week.daysCount === 7;
+      
+      // Remove daysSet as it's not part of the final structure
+      delete (week as any).daysSet;
+    }
+
     // Sort weeks by start date (most recent first)
     const sortedWeeks = Array.from(weekMap.values()).sort((a, b) => 
       new Date(b.weekStart).getTime() - new Date(a.weekStart).getTime()
     );
 
-    // Take only the requested number of weeks
-    const weeksToCompare = sortedWeeks.slice(0, comparisonCount);
+    // Take only the requested number of weeks and remove daysSet
+    const weeksToCompare: WeekComparisonData['weeks'] = sortedWeeks.slice(0, comparisonCount).map(week => {
+      const { daysSet, ...weekData } = week;
+      return weekData;
+    });
 
     // Calculate comparisons
     const comparisons: Array<{

@@ -754,11 +754,40 @@ export const cardStyles = css`
     background: var(--card-background-color);
   }
 
+  .week-card-incomplete {
+    background: rgba(var(--primary-color-rgb, 3, 169, 244), 0.05);
+    border: 1px dashed var(--divider-color);
+    opacity: 0.9;
+  }
+
   .week-card-header {
     font-size: 16px;
     font-weight: 500;
     margin-bottom: 12px;
     color: var(--primary-text-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .week-card-header-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .week-incomplete-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background: var(--warning-color);
+    color: var(--text-primary-color);
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
   }
 
   .week-card-metrics {
@@ -809,6 +838,31 @@ export const cardStyles = css`
   .week-change.negative {
     background: var(--success-color);
     color: var(--text-primary-color);
+  }
+
+  .week-change-disabled {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--secondary-text-color);
+    background: var(--secondary-background-color);
+    opacity: 0.6;
+    cursor: help;
+  }
+
+  .week-metric-days {
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--divider-color);
+    margin-bottom: 4px;
+  }
+
+  .week-forecast {
+    font-size: 12px;
+    color: var(--secondary-text-color);
+    font-weight: 400;
+    margin-left: 4px;
   }
 
   .tariff-chart-container {

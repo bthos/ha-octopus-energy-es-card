@@ -1413,21 +1413,30 @@ export class OctopusConsumptionCard extends LitElement {
       currentSunday.setDate(currentSunday.getDate() + (change * 7));
       this._currentDate = currentSunday;
       
-      // Ensure _currentDate doesn't exceed last available data date
-      if (this._lastDataDate) {
+      // For week-analysis, allow navigation to incomplete weeks (weeks containing last available date)
+      // Only restrict if navigating forward beyond the week containing last available date
+      if (this._lastDataDate && change > 0) {
         const lastDataDateObj = new Date(this._lastDataDate);
         lastDataDateObj.setHours(23, 59, 59, 999);
-        if (this._currentDate > lastDataDateObj) {
-          this._currentDate = new Date(lastDataDateObj);
-          // Ensure we're on Sunday of the week containing last available date
-          const lastDayOfWeek = this._currentDate.getDay();
-          if (lastDayOfWeek !== 0) {
-            // Move to Sunday of this week
-            const daysToSundayFromLast = 7 - lastDayOfWeek;
-            this._currentDate.setDate(this._currentDate.getDate() + daysToSundayFromLast);
-          }
+        
+        // Find Sunday of the week containing last available date
+        const lastDayOfWeek = lastDataDateObj.getDay();
+        let daysToSundayFromLast: number;
+        if (lastDayOfWeek === 0) {
+          daysToSundayFromLast = 0; // Already Sunday
+        } else {
+          daysToSundayFromLast = 7 - lastDayOfWeek; // Days to get to Sunday
+        }
+        const lastDataSunday = new Date(lastDataDateObj);
+        lastDataSunday.setDate(lastDataDateObj.getDate() + daysToSundayFromLast);
+        lastDataSunday.setHours(23, 59, 59, 999);
+        
+        // Only restrict if navigating forward beyond the week containing last available date
+        if (this._currentDate > lastDataSunday) {
+          this._currentDate = new Date(lastDataSunday);
         }
       }
+      // For backward navigation (change < 0), allow navigation to any week, including incomplete ones
     } else if (isHeatCalendarYear) {
       // Navigate by year for heat calendar year view
       this._currentDate.setFullYear(this._currentDate.getFullYear() + change);

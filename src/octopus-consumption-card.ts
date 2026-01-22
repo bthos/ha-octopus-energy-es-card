@@ -1079,11 +1079,14 @@ export class OctopusConsumptionCard extends LitElement {
       }
       
       // Set startDate to Monday of the week
-      startDate.setDate(endDate.getDate() + daysToMonday);
+      // Use setTime to copy the date, then adjust days
+      startDate.setTime(endDate.getTime());
+      startDate.setDate(startDate.getDate() + daysToMonday);
       startDate.setHours(0, 0, 0, 0);
       
       // Set endDate to Sunday of the same week
-      endDate.setDate(startDate.getDate() + 6);
+      endDate.setTime(startDate.getTime());
+      endDate.setDate(endDate.getDate() + 6);
       endDate.setHours(23, 59, 59, 999);
       
       // Adjust endDate if it exceeds last available data date
@@ -2920,9 +2923,9 @@ export class OctopusConsumptionCard extends LitElement {
     // Note: Week view shows individual days of one week (Monday to Sunday), not aggregated weeks
     // Data is already loaded as daily for week view, so no grouping needed
     
-    // For week view with bar chart, ensure all 7 days are present (even if no data)
-    // This prevents bars from stretching across the full width when only partial data exists
-    if (this._currentPeriod === "week" && chartType === "bar") {
+    // For week view, ensure data is ordered Monday to Sunday for all chart types
+    // This ensures consistent display regardless of how the API returns the data
+    if (this._currentPeriod === "week") {
       const { startDate } = this._getDateRange();
       const fullWeekTimestamps: string[] = [];
       const fullWeekValues: number[] = [];
@@ -2934,10 +2937,18 @@ export class OctopusConsumptionCard extends LitElement {
       });
       
       // Generate all 7 days of the week (Monday to Sunday)
+      // Use local date to avoid timezone issues
+      const mondayDate = new Date(startDate);
+      mondayDate.setHours(0, 0, 0, 0);
+      
       for (let i = 0; i < 7; i++) {
-        const dayDate = new Date(startDate);
-        dayDate.setDate(startDate.getDate() + i);
-        const dayTimestamp = dayDate.toISOString().split('T')[0];
+        const dayDate = new Date(mondayDate);
+        dayDate.setDate(mondayDate.getDate() + i);
+        // Format as YYYY-MM-DD using local date to avoid timezone shifts
+        const year = dayDate.getFullYear();
+        const month = String(dayDate.getMonth() + 1).padStart(2, '0');
+        const day = String(dayDate.getDate()).padStart(2, '0');
+        const dayTimestamp = `${year}-${month}-${day}`;
         fullWeekTimestamps.push(dayTimestamp);
         
         // Find corresponding value or use 0 if no data
@@ -2979,8 +2990,8 @@ export class OctopusConsumptionCard extends LitElement {
           
           // Note: Week view shows individual days, so no grouping needed for cost data
           
-          // For week view with bar chart, ensure cost data also has all 7 days
-          if (this._currentPeriod === "week" && chartType === "bar") {
+          // For week view, ensure cost data is also ordered Monday to Sunday for all chart types
+          if (this._currentPeriod === "week") {
             const { startDate } = this._getDateRange();
             const fullWeekCostTimestamps: string[] = [];
             const fullWeekCostValues: number[] = [];
@@ -2992,10 +3003,18 @@ export class OctopusConsumptionCard extends LitElement {
             });
             
             // Generate all 7 days of the week (Monday to Sunday)
+            // Use local date to avoid timezone issues
+            const mondayDate = new Date(startDate);
+            mondayDate.setHours(0, 0, 0, 0);
+            
             for (let i = 0; i < 7; i++) {
-              const dayDate = new Date(startDate);
-              dayDate.setDate(startDate.getDate() + i);
-              const dayTimestamp = dayDate.toISOString().split('T')[0];
+              const dayDate = new Date(mondayDate);
+              dayDate.setDate(mondayDate.getDate() + i);
+              // Format as YYYY-MM-DD using local date to avoid timezone shifts
+              const year = dayDate.getFullYear();
+              const month = String(dayDate.getMonth() + 1).padStart(2, '0');
+              const day = String(dayDate.getDate()).padStart(2, '0');
+              const dayTimestamp = `${year}-${month}-${day}`;
               fullWeekCostTimestamps.push(dayTimestamp);
               
               // Find corresponding cost value or use 0 if no data

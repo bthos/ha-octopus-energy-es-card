@@ -154,5 +154,6 @@ export interface WeekComparisonData {
     consumptionChangePercent: number;
     costChange: number;
     costChangePercent: number;
+    isForecastComparison?: boolean; // Indicates if comparison is based on forecast
   }>;
 }

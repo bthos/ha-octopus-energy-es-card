@@ -1875,13 +1875,11 @@ export class OctopusConsumptionCard extends LitElement {
                       <span class="week-incomplete-badge">${localize("card.week_comparison.incomplete", language)}</span>
                     ` : ''}
                   </div>
-                  ${comparison && week.isComplete ? html`
-                    <span class="week-change ${comparison.consumptionChangePercent >= 0 ? 'positive' : 'negative'}">
+                  ${comparison ? html`
+                    <span class="week-change ${comparison.consumptionChangePercent >= 0 ? 'positive' : 'negative'} ${comparison.isForecastComparison ? 'week-change-forecast' : ''}" 
+                          title="${comparison.isForecastComparison ? localize("card.week_comparison.forecast_comparison_tooltip", language) : ''}">
                       ${comparison.consumptionChangePercent >= 0 ? '↑' : '↓'} ${Math.abs(comparison.consumptionChangePercent).toFixed(1)}%
-                    </span>
-                  ` : comparison && isIncomplete ? html`
-                    <span class="week-change-disabled" title="${localize("card.week_comparison.comparison_disabled_tooltip", language)}">
-                      ${localize("card.week_comparison.comparison_disabled", language)}
+                      ${comparison.isForecastComparison ? html`<span class="week-change-forecast-indicator">*</span>` : ''}
                     </span>
                   ` : ''}
                 </div>
@@ -1894,21 +1892,21 @@ export class OctopusConsumptionCard extends LitElement {
                   ` : ''}
                   <div class="week-metric">
                     <span class="week-metric-label">${localize("card.week_comparison.consumption", language)}:</span>
-                    <span class="week-metric-value">
-                      ${week.consumption.toFixed(1)} kWh
+                    <div class="week-metric-value-container">
+                      <span class="week-metric-value">${week.consumption.toFixed(1)} kWh</span>
                       ${isIncomplete && forecastConsumption > 0 ? html`
-                        <span class="week-forecast">(${localize("card.week_comparison.forecast", language)}: ${forecastConsumption.toFixed(1)} kWh)</span>
+                        <div class="week-forecast">${localize("card.week_comparison.forecast", language)}: ${forecastConsumption.toFixed(1)} kWh</div>
                       ` : ''}
-                    </span>
+                    </div>
                   </div>
                   <div class="week-metric">
                     <span class="week-metric-label">${localize("card.week_comparison.cost", language)}:</span>
-                    <span class="week-metric-value">
-                      €${week.cost.toFixed(2)}
+                    <div class="week-metric-value-container">
+                      <span class="week-metric-value">€${week.cost.toFixed(2)}</span>
                       ${isIncomplete && forecastCost > 0 ? html`
-                        <span class="week-forecast">(${localize("card.week_comparison.forecast", language)}: €${forecastCost.toFixed(2)})</span>
+                        <div class="week-forecast">${localize("card.week_comparison.forecast", language)}: €${forecastCost.toFixed(2)}</div>
                       ` : ''}
-                    </span>
+                    </div>
                   </div>
                   <div class="week-metric">
                     <span class="week-metric-label">${localize("card.week_comparison.period", language)}:</span>
@@ -2352,20 +2350,46 @@ export class OctopusConsumptionCard extends LitElement {
       consumptionChangePercent: number;
       costChange: number;
       costChangePercent: number;
+      isForecastComparison?: boolean; // Indicates if comparison is based on forecast
     }> = [];
 
     for (let i = 0; i < weeksToCompare.length - 1; i++) {
       const currentWeek = weeksToCompare[i];
       const previousWeek = weeksToCompare[i + 1];
       
-      const consumptionChange = currentWeek.consumption - previousWeek.consumption;
-      const consumptionChangePercent = previousWeek.consumption > 0
-        ? (consumptionChange / previousWeek.consumption) * 100
+      // Calculate forecast for incomplete weeks
+      let currentConsumption = currentWeek.consumption;
+      let currentCost = currentWeek.cost;
+      let previousConsumption = previousWeek.consumption;
+      let previousCost = previousWeek.cost;
+      let isForecastComparison = false;
+      
+      // Use forecast for incomplete current week
+      if (!currentWeek.isComplete && currentWeek.daysCount > 0) {
+        const avgDailyConsumption = currentWeek.consumption / currentWeek.daysCount;
+        const avgDailyCost = currentWeek.cost / currentWeek.daysCount;
+        currentConsumption = avgDailyConsumption * 7;
+        currentCost = avgDailyCost * 7;
+        isForecastComparison = true;
+      }
+      
+      // Use forecast for incomplete previous week
+      if (!previousWeek.isComplete && previousWeek.daysCount > 0) {
+        const avgDailyConsumption = previousWeek.consumption / previousWeek.daysCount;
+        const avgDailyCost = previousWeek.cost / previousWeek.daysCount;
+        previousConsumption = avgDailyConsumption * 7;
+        previousCost = avgDailyCost * 7;
+        isForecastComparison = true;
+      }
+      
+      const consumptionChange = currentConsumption - previousConsumption;
+      const consumptionChangePercent = previousConsumption > 0
+        ? (consumptionChange / previousConsumption) * 100
         : 0;
       
-      const costChange = currentWeek.cost - previousWeek.cost;
-      const costChangePercent = previousWeek.cost > 0
-        ? (costChange / previousWeek.cost) * 100
+      const costChange = currentCost - previousCost;
+      const costChangePercent = previousCost > 0
+        ? (costChange / previousCost) * 100
         : 0;
 
       comparisons.push({
@@ -2374,6 +2398,7 @@ export class OctopusConsumptionCard extends LitElement {
         consumptionChangePercent,
         costChange,
         costChangePercent,
+        isForecastComparison,
       });
     }
 

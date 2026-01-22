@@ -799,12 +799,19 @@ export const cardStyles = css`
   .week-metric {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
   }
 
   .week-metric-label {
     font-size: 14px;
     color: var(--secondary-text-color);
+  }
+
+  .week-metric-value-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
   }
 
   .week-metric-value {
@@ -852,6 +859,16 @@ export const cardStyles = css`
     cursor: help;
   }
 
+  .week-change.week-change-forecast {
+    opacity: 0.85;
+  }
+
+  .week-change-forecast-indicator {
+    font-size: 10px;
+    margin-left: 2px;
+    vertical-align: super;
+  }
+
   .week-metric-days {
     padding-bottom: 8px;
     border-bottom: 1px dashed var(--divider-color);
@@ -862,7 +879,7 @@ export const cardStyles = css`
     font-size: 12px;
     color: var(--secondary-text-color);
     font-weight: 400;
-    margin-left: 4px;
+    text-align: right;
   }
 
   .tariff-chart-container {

@@ -115,7 +115,7 @@ export const cardStyles = css`
   path.bar {
     fill: #8B5CF6;
     transition: fill 0.2s ease;
-    cursor: pointer;
+    cursor: help;
   }
 
   path.bar:hover {
@@ -642,7 +642,7 @@ export const cardStyles = css`
     align-items: center;
     justify-content: center;
     font-size: 11px;
-    cursor: pointer;
+    cursor: help;
     position: relative;
     border: 1px solid var(--divider-color);
     transition: transform 0.2s ease;
@@ -908,6 +908,7 @@ export const cardStyles = css`
 
   .week-change.week-change-forecast {
     opacity: 0.85;
+    cursor: help;
   }
 
   .week-change-forecast-indicator {

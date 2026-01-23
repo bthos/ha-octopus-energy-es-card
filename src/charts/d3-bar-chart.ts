@@ -160,7 +160,7 @@ export async function renderD3BarChart(
       }
       return config.colors.primary;
     })
-    .style('cursor', 'pointer')
+    .style('cursor', 'help')
     .attr('title', (d) => formatTooltipText(d, config.language))
     .on('mouseenter', function(event, d) {
       context.setHoveredPoint(d);

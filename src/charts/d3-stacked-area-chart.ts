@@ -103,7 +103,7 @@ export async function renderD3StackedAreaChart(
       .attr('fill', layer.color)
       .attr('fill-opacity', layer.opacity || 0.7)
       .attr('stroke', 'none')
-      .style('cursor', 'pointer')
+      .style('cursor', 'help')
       .on('mouseenter', function(event, d) {
         // Find the point being hovered
         const [x] = d3.pointer(event, contentGroup.node());

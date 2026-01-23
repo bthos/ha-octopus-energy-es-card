@@ -165,7 +165,7 @@ export async function renderD3LineChart(
     })
     .attr('stroke', '#fff')
     .attr('stroke-width', 2)
-    .style('cursor', 'pointer')
+    .style('cursor', 'help')
     .attr('title', (d) => formatTooltipText(d, config.language))
     .on('mouseenter', function(event, d) {
       context.setHoveredPoint(d);

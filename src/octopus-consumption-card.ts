@@ -107,30 +107,11 @@ export class OctopusConsumptionCard extends LitElement {
   }
 
   /**
-   * Get locale from Home Assistant (for number formatting)
-   * Falls back to language-based locale if locale is not available
+   * Get locale from Home Assistant
+   * Returns locale from hass.locale or fallback to 'en-US'
    */
   private _getLocale(): string {
-    if (this.hass?.locale) {
-      return this.hass.locale;
-    }
-    // Fallback: construct locale from language code
-    const language = this.hass?.language || 'en';
-    if (language === 'es') return 'es-ES';
-    if (language === 'be') return 'be-BY';
-    return 'en-US';
-  }
-
-  /**
-   * Get language code from Home Assistant (for text localization)
-   * Extracts language from locale if available, otherwise uses language property
-   */
-  private _getLanguage(): string {
-    if (this.hass?.locale) {
-      // Extract language code from locale (e.g., 'es-ES' -> 'es')
-      return this.hass.locale.split('-')[0];
-    }
-    return this.hass?.language || 'en';
+    return this.hass?.locale || 'en-US';
   }
 
   /**
@@ -1707,7 +1688,7 @@ export class OctopusConsumptionCard extends LitElement {
    * Render heat calendar (heatmap) visualization
    */
   private _renderHeatCalendar(): TemplateResult {
-    const language = this._getLanguage();
+    const locale = this._getLocale();
     const calendarData = this._getHeatCalendarData();
     const period = this.config.heat_calendar_period || "month";
     const isYearView = period === "year";
@@ -1715,9 +1696,9 @@ export class OctopusConsumptionCard extends LitElement {
     if (calendarData.length === 0) {
       return html`
         <div class="error-message">
-          <div class="error-title">${localize("card.heat_calendar.unavailable", language)}</div>
+          <div class="error-title">${localize("card.heat_calendar.unavailable", locale)}</div>
           <div class="error-details">
-            ${localize("card.heat_calendar.unavailable_details", language)}
+            ${localize("card.heat_calendar.unavailable_details", locale)}
           </div>
         </div>
       `;
@@ -1727,27 +1708,27 @@ export class OctopusConsumptionCard extends LitElement {
     const calendarMap = new Map<number, Map<number, HeatCalendarDay>>();
     // Week starts with Monday (0 = Monday, 6 = Sunday)
     const dayNames = [
-      localize("card.day.mon", language),
-      localize("card.day.tue", language),
-      localize("card.day.wed", language),
-      localize("card.day.thu", language),
-      localize("card.day.fri", language),
-      localize("card.day.sat", language),
-      localize("card.day.sun", language)
+      localize("card.day.mon", locale),
+      localize("card.day.tue", locale),
+      localize("card.day.wed", locale),
+      localize("card.day.thu", locale),
+      localize("card.day.fri", locale),
+      localize("card.day.sat", locale),
+      localize("card.day.sun", locale)
     ];
     const monthNames = [
-      localize("card.month.jan", language),
-      localize("card.month.feb", language),
-      localize("card.month.mar", language),
-      localize("card.month.apr", language),
-      localize("card.month.may", language),
-      localize("card.month.jun", language),
-      localize("card.month.jul", language),
-      localize("card.month.aug", language),
-      localize("card.month.sep", language),
-      localize("card.month.oct", language),
-      localize("card.month.nov", language),
-      localize("card.month.dec", language)
+      localize("card.month.jan", locale),
+      localize("card.month.feb", locale),
+      localize("card.month.mar", locale),
+      localize("card.month.apr", locale),
+      localize("card.month.may", locale),
+      localize("card.month.jun", locale),
+      localize("card.month.jul", locale),
+      localize("card.month.aug", locale),
+      localize("card.month.sep", locale),
+      localize("card.month.oct", locale),
+      localize("card.month.nov", locale),
+      localize("card.month.dec", locale)
     ];
     
     // Track month changes for year view
@@ -1873,17 +1854,17 @@ export class OctopusConsumptionCard extends LitElement {
         </div>
         <div class="heat-calendar-legend">
           <div class="heat-calendar-legend-label">
-            ${localize("card.heat_calendar.intensity_label", language)}:
+            ${localize("card.heat_calendar.intensity_label", locale)}:
           </div>
-          <div class="heat-calendar-legend-item" title="${localize("card.heat_calendar.intensity_low_tooltip", language)}">
+          <div class="heat-calendar-legend-item" title="${localize("card.heat_calendar.intensity_low_tooltip", locale)}">
             <div class="heat-calendar-legend-color intensity-low"></div>
             <span>Low</span>
           </div>
-          <div class="heat-calendar-legend-item" title="${localize("card.heat_calendar.intensity_medium_tooltip", language)}">
+          <div class="heat-calendar-legend-item" title="${localize("card.heat_calendar.intensity_medium_tooltip", locale)}">
             <div class="heat-calendar-legend-color intensity-medium"></div>
             <span>Medium</span>
           </div>
-          <div class="heat-calendar-legend-item" title="${localize("card.heat_calendar.intensity_high_tooltip", language)}">
+          <div class="heat-calendar-legend-item" title="${localize("card.heat_calendar.intensity_high_tooltip", locale)}">
             <div class="heat-calendar-legend-color intensity-high"></div>
             <span>High</span>
           </div>
@@ -1896,9 +1877,9 @@ export class OctopusConsumptionCard extends LitElement {
    * Render week-over-week comparison
    */
   private _renderWeekComparison(): TemplateResult {
-    const language = this._getLanguage();
+    const locale = this._getLocale();
     if (!this._weekComparisonData || this._weekComparisonData.weeks.length === 0) {
-      return html`<div class="loading">${localize("card.week_comparison.no_data", language)}</div>`;
+      return html`<div class="loading">${localize("card.week_comparison.no_data", locale)}</div>`;
     }
 
     const { weeks, comparisons } = this._weekComparisonData;
@@ -1930,7 +1911,7 @@ export class OctopusConsumptionCard extends LitElement {
                   </div>
                   ${comparison ? html`
                     <span class="week-change ${comparison.consumptionChangePercent >= 0 ? 'positive' : 'negative'} ${comparison.isForecastComparison ? 'week-change-forecast' : ''}" 
-                          title="${comparison.isForecastComparison ? localize("card.week_comparison.forecast_comparison_tooltip", language) : ''}">
+                          title="${comparison.isForecastComparison ? localize("card.week_comparison.forecast_comparison_tooltip", locale) : ''}">
                       ${comparison.consumptionChangePercent >= 0 ? '↑' : '↓'} ${Math.abs(comparison.consumptionChangePercent).toFixed(1)}%
                       ${comparison.isForecastComparison ? html`<span class="week-change-forecast-indicator">*</span>` : ''}
                     </span>
@@ -1939,28 +1920,28 @@ export class OctopusConsumptionCard extends LitElement {
                 <div class="week-card-metrics">
                   ${isIncomplete ? html`
                     <div class="week-metric week-metric-days">
-                      <span class="week-metric-label">${localize("card.week_comparison.days_available", language)}:</span>
+                      <span class="week-metric-label">${localize("card.week_comparison.days_available", locale)}:</span>
                       <div class="week-metric-value-container">
-                        <span class="week-metric-value">${week.daysCount}/7 ${localize("card.week_comparison.days", language)}</span>
-                        <span class="week-incomplete-badge">${localize("card.week_comparison.incomplete", language)}</span>
+                        <span class="week-metric-value">${week.daysCount}/7 ${localize("card.week_comparison.days", locale)}</span>
+                        <span class="week-incomplete-badge">${localize("card.week_comparison.incomplete", locale)}</span>
                       </div>
                     </div>
                   ` : ''}
                   <div class="week-metric">
-                    <span class="week-metric-label">${localize("card.week_comparison.consumption", language)}:</span>
+                    <span class="week-metric-label">${localize("card.week_comparison.consumption", locale)}:</span>
                     <div class="week-metric-value-container">
                       <span class="week-metric-value">${week.consumption.toFixed(3)} kWh</span>
                       ${isIncomplete && forecastConsumption > 0 ? html`
-                        <div class="week-forecast">${localize("card.week_comparison.forecast", language)}: ${forecastConsumption.toFixed(3)} kWh</div>
+                        <div class="week-forecast">${localize("card.week_comparison.forecast", locale)}: ${forecastConsumption.toFixed(3)} kWh</div>
                       ` : ''}
                     </div>
                   </div>
                   <div class="week-metric">
-                    <span class="week-metric-label">${localize("card.week_comparison.cost", language)}:</span>
+                    <span class="week-metric-label">${localize("card.week_comparison.cost", locale)}:</span>
                     <div class="week-metric-value-container">
                       <span class="week-metric-value">€${week.cost.toFixed(2)}</span>
                       ${isIncomplete && forecastCost > 0 ? html`
-                        <div class="week-forecast">${localize("card.week_comparison.forecast", language)}: €${forecastCost.toFixed(2)}</div>
+                        <div class="week-forecast">${localize("card.week_comparison.forecast", locale)}: €${forecastCost.toFixed(2)}</div>
                       ` : ''}
                     </div>
                   </div>
@@ -2461,14 +2442,14 @@ export class OctopusConsumptionCard extends LitElement {
   }
 
   protected render(): TemplateResult {
-    const language = this._getLanguage();
+    const locale = this._getLocale();
     
     // Show full loading screen only on initial load (when we don't have data yet)
     if (this._loading && !this._hasInitialData) {
       return html`
         <div class="loading">
           <ha-circular-progress indeterminate></ha-circular-progress>
-          <p>${localize("card.loading", language)}</p>
+          <p>${localize("card.loading", locale)}</p>
         </div>
       `;
     }
@@ -2480,7 +2461,7 @@ export class OctopusConsumptionCard extends LitElement {
       return html`
         <div class="error-message">
           <ha-icon icon="${isConfigError ? "mdi:cog-outline" : "mdi:alert-circle"}" class="error-icon"></ha-icon>
-          <div class="error-title">${isConfigError ? localize("card.error.configuration_required", language) : localize("card.error.unable_to_load", language)}</div>
+          <div class="error-title">${isConfigError ? localize("card.error.configuration_required", locale) : localize("card.error.unable_to_load", locale)}</div>
           <div class="error-details">${this._error}</div>
           ${isIntegrationError ? html`
             <div class="integration-badges">
@@ -2505,11 +2486,11 @@ export class OctopusConsumptionCard extends LitElement {
             </div>
           ` : isConfigError ? html`
             <div class="error-details" style="margin-top: 12px; font-size: 13px;">
-              ${localize("card.error.config_help", language)}
+              ${localize("card.error.config_help", locale)}
             </div>
           ` : html`
             <button class="retry-button" @click=${this._loadData}>
-              ${localize("card.button.retry", language)}
+              ${localize("card.button.retry", locale)}
             </button>
           `}
         </div>
@@ -2537,7 +2518,7 @@ export class OctopusConsumptionCard extends LitElement {
    * Render consumption view (time-series charts)
    */
   private _renderConsumptionView(): TemplateResult {
-    const language = this._getLanguage();
+    const locale = this._getLocale();
     
     // Calculate total consumption for summary
     const totalConsumption = this._consumptionData.reduce((sum, d) => 
@@ -2556,7 +2537,7 @@ export class OctopusConsumptionCard extends LitElement {
               this._navigatePeriod("prev");
             }}
           >
-            ${localize("card.button.previous", language)}
+            ${localize("card.button.previous", locale)}
           </button>
           <button 
             type="button"
@@ -2569,7 +2550,7 @@ export class OctopusConsumptionCard extends LitElement {
             ?disabled=${this._wouldNavigateToFuture()}
             style=${this._wouldNavigateToFuture() ? "opacity: 0.5; cursor: not-allowed;" : ""}
           >
-            ${localize("card.button.next", language)}
+            ${localize("card.button.next", locale)}
           </button>
         </div>
       ` : nothing}
@@ -2579,7 +2560,7 @@ export class OctopusConsumptionCard extends LitElement {
           <div class="summary-header-top">
             <div class="summary-title-section">
               <ha-icon icon="mdi:lightning-bolt" class="summary-icon"></ha-icon>
-              <h3 class="summary-title">${localize("card.title.electricity", language)}</h3>
+              <h3 class="summary-title">${localize("card.title.electricity", locale)}</h3>
             </div>
             <div class="summary-view-toggle">
               <ha-icon 
@@ -2626,17 +2607,17 @@ export class OctopusConsumptionCard extends LitElement {
    * Render consumption list view (table format)
    */
   private _renderConsumptionList(): TemplateResult {
-    const language = this._getLanguage();
+    const locale = this._getLocale();
     
     if (this._loading) {
-      return html`<div class="loading">${localize("card.loading", language)}</div>`;
+      return html`<div class="loading">${localize("card.loading", locale)}</div>`;
     }
 
     if (!this._loading && !this._error && this._consumptionData.length === 0) {
       const dateRange = this._formatDateRange();
       return html`
         <div class="loading">
-          <div>${localize("card.no_data", language)}</div>
+          <div>${localize("card.no_data", locale)}</div>
           <div style="margin-top: 8px; font-size: 12px; color: var(--secondary-text-color);">
             Period: ${dateRange}
           </div>
@@ -2649,7 +2630,7 @@ export class OctopusConsumptionCard extends LitElement {
       return html`
         <div class="error-message">
           <ha-icon icon="mdi:alert-circle" class="error-icon"></ha-icon>
-          <div class="error-title">${localize("card.error.unable_to_load", language)}</div>
+          <div class="error-title">${localize("card.error.unable_to_load", locale)}</div>
           <div class="error-details">${this._error}</div>
           ${isIntegrationError ? html`
             <div class="integration-badges">
@@ -2674,7 +2655,7 @@ export class OctopusConsumptionCard extends LitElement {
             </div>
           ` : html`
             <button class="retry-button" @click=${this._loadData}>
-              ${localize("card.button.retry", language)}
+              ${localize("card.button.retry", locale)}
             </button>
           `}
         </div>
@@ -2763,7 +2744,7 @@ export class OctopusConsumptionCard extends LitElement {
    * Render heat calendar view
    */
   private _renderHeatCalendarView(): TemplateResult {
-    const language = this._getLanguage();
+    const locale = this._getLocale();
     return html`
       ${this.config.show_navigation !== false ? html`
         <div class="navigation-controls">
@@ -2777,8 +2758,8 @@ export class OctopusConsumptionCard extends LitElement {
             }}
           >
             ${this.config.heat_calendar_period === "year" 
-              ? `${localize("card.button.previous", language)} ${localize("editor.heat_calendar_period_year", language)}`
-              : `${localize("card.button.previous", language)} ${localize("editor.heat_calendar_period_month", language)}`}
+              ? `${localize("card.button.previous", locale)} ${localize("editor.heat_calendar_period_year", locale)}`
+              : `${localize("card.button.previous", locale)} ${localize("editor.heat_calendar_period_month", locale)}`}
           </button>
           <button 
             type="button"
@@ -2792,8 +2773,8 @@ export class OctopusConsumptionCard extends LitElement {
             style=${this._wouldNavigateToFuture() ? "opacity: 0.5; cursor: not-allowed;" : ""}
           >
             ${this.config.heat_calendar_period === "year"
-              ? `${localize("editor.heat_calendar_period_year", language)} ${localize("card.button.next", language)}`
-              : `${localize("editor.heat_calendar_period_month", language)} ${localize("card.button.next", language)}`}
+              ? `${localize("editor.heat_calendar_period_year", locale)} ${localize("card.button.next", locale)}`
+              : `${localize("editor.heat_calendar_period_month", locale)} ${localize("card.button.next", locale)}`}
           </button>
         </div>
       ` : nothing}
@@ -2808,7 +2789,7 @@ export class OctopusConsumptionCard extends LitElement {
    * Render week analysis view
    */
   private _renderWeekAnalysisView(): TemplateResult {
-    const language = this._getLanguage();
+    const locale = this._getLocale();
     return html`
       ${this.config.show_navigation !== false ? html`
         <div class="navigation-controls">
@@ -2847,13 +2828,13 @@ export class OctopusConsumptionCard extends LitElement {
    * Render tariff comparison view
    */
   private _renderTariffComparisonView(): TemplateResult {
-    const language = this._getLanguage();
+    const locale = this._getLocale();
     
     // Show loading state
     if (this._loading) {
       return html`
         <div class="comparison-section">
-          <div class="loading">${localize("card.tariff_comparison.loading", language)}</div>
+          <div class="loading">${localize("card.tariff_comparison.loading", locale)}</div>
         </div>
       `;
     }
@@ -2868,7 +2849,7 @@ export class OctopusConsumptionCard extends LitElement {
         ` : this._comparisonResult && this._comparisonResult.tariffs && this._comparisonResult.tariffs.length > 0 ? html`
           <div class="tariff-comparison-info">
             <ha-icon icon="mdi:information-outline"></ha-icon>
-            <span>${localize("card.tariff_comparison.info", language)}</span>
+            <span>${localize("card.tariff_comparison.info", locale)}</span>
           </div>
           ${this._renderComparison()}
           ${this.config.show_tariff_chart !== false ? this._renderTariffComparisonChart() : nothing}
@@ -2894,52 +2875,53 @@ export class OctopusConsumptionCard extends LitElement {
    * Format date for display (Spanish locale)
    */
   private _formatDate(date: Date, period?: 'day' | 'week' | 'month' | 'year'): string {
-    const language = this._getLanguage();
+    const locale = this._getLocale();
     if (period === 'year') {
       // For year view, show month abbreviation using localized names
       const monthNames = [
-        localize("card.month.jan", language),
-        localize("card.month.feb", language),
-        localize("card.month.mar", language),
-        localize("card.month.apr", language),
-        localize("card.month.may", language),
-        localize("card.month.jun", language),
-        localize("card.month.jul", language),
-        localize("card.month.aug", language),
-        localize("card.month.sep", language),
-        localize("card.month.oct", language),
-        localize("card.month.nov", language),
-        localize("card.month.dec", language)
+        localize("card.month.jan", locale),
+        localize("card.month.feb", locale),
+        localize("card.month.mar", locale),
+        localize("card.month.apr", locale),
+        localize("card.month.may", locale),
+        localize("card.month.jun", locale),
+        localize("card.month.jul", locale),
+        localize("card.month.aug", locale),
+        localize("card.month.sep", locale),
+        localize("card.month.oct", locale),
+        localize("card.month.nov", locale),
+        localize("card.month.dec", locale)
       ];
       return monthNames[date.getMonth()];
     }
     
     // Format date using localized month names
     const monthNames = [
-      localize("card.month.long.jan", language),
-      localize("card.month.long.feb", language),
-      localize("card.month.long.mar", language),
-      localize("card.month.long.apr", language),
-      localize("card.month.long.may", language),
-      localize("card.month.long.jun", language),
-      localize("card.month.long.jul", language),
-      localize("card.month.long.aug", language),
-      localize("card.month.long.sep", language),
-      localize("card.month.long.oct", language),
-      localize("card.month.long.nov", language),
-      localize("card.month.long.dec", language)
+        localize("card.month.long.jan", locale),
+        localize("card.month.long.feb", locale),
+        localize("card.month.long.mar", locale),
+        localize("card.month.long.apr", locale),
+        localize("card.month.long.may", locale),
+        localize("card.month.long.jun", locale),
+        localize("card.month.long.jul", locale),
+        localize("card.month.long.aug", locale),
+        localize("card.month.long.sep", locale),
+        localize("card.month.long.oct", locale),
+        localize("card.month.long.nov", locale),
+        localize("card.month.long.dec", locale)
     ];
     
     const day = date.getDate();
     const month = monthNames[date.getMonth()];
     const year = date.getFullYear();
-    const of = localize("card.date.of", language);
+    const of = localize("card.date.of", locale);
     
-    // Format based on language
-    if (language === 'en') {
+    // Format based on locale (extract language code from locale)
+    const langCode = locale.split('-')[0];
+    if (langCode === 'en') {
       // English: "December 22, 2025"
       return `${month} ${day}, ${year}`;
-    } else if (language === 'es') {
+    } else if (langCode === 'es') {
       // Spanish: "22 de diciembre de 2025"
       return `${day} ${of} ${month} ${of} ${year}`;
     } else {
@@ -2964,7 +2946,7 @@ export class OctopusConsumptionCard extends LitElement {
   }
 
   private _renderChart(): TemplateResult {
-    const language = this._getLanguage();
+    const locale = this._getLocale();
     
     // Always return the chart container to ensure it exists in DOM
     // This prevents the chart from disappearing when loading state changes
@@ -2974,12 +2956,12 @@ export class OctopusConsumptionCard extends LitElement {
         class="chart-svg-container">
         ${this._loading ? html`
           <div class="loading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%; text-align: center;">
-            ${localize("card.loading", language)}
+            ${localize("card.loading", locale)}
           </div>
         ` : nothing}
         ${!this._loading && !this._error && this._consumptionData.length === 0 ? html`
           <div class="loading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%; text-align: center;">
-            <div>${localize("card.no_data", language)}</div>
+            <div>${localize("card.no_data", locale)}</div>
             <div style="margin-top: 8px; font-size: 12px; color: var(--secondary-text-color);">
               Period: ${this._formatDateRange()}
             </div>
@@ -3357,13 +3339,13 @@ export class OctopusConsumptionCard extends LitElement {
             });
           } else {
             // Show error message in container
-            const language = this._getLanguage();
+            const locale = this._getLocale();
             const errorDiv = document.createElement('div');
             errorDiv.className = 'error-message';
             errorDiv.innerHTML = `
-              <div class="error-title">${localize("card.stacked_area.unavailable", language)}</div>
+              <div class="error-title">${localize("card.stacked_area.unavailable", locale)}</div>
               <div class="error-details">
-                ${localize("card.stacked_area.unavailable_details", language)}
+                ${localize("card.stacked_area.unavailable_details", locale)}
               </div>
             `;
             if (container.firstChild) {
@@ -3425,7 +3407,7 @@ export class OctopusConsumptionCard extends LitElement {
 
   private _renderComparison(): TemplateResult {
     if (!this._comparisonResult || !this._comparisonResult.tariffs || this._comparisonResult.tariffs.length === 0) {
-      const language = this._getLanguage();
+      const locale = this._getLocale();
       // Show more informative message if we have error info
       if (this._comparisonError) {
         return html`

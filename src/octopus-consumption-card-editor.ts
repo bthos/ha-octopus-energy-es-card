@@ -50,7 +50,7 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
     moving_average_days: 7,
   };
 
-  private _language: string = "en";
+  private _locale: string = "en-US";
 
   static styles = editorStyles;
 
@@ -109,11 +109,11 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
         this._config = configWithDefaults;
       }
     }
-    // Update language if hass changed
+    // Update locale if hass changed
     if (changedProperties.has("hass") && this.hass) {
-      const newLanguage = this.hass.language || "en";
-      if (this._language !== newLanguage) {
-        this._language = newLanguage;
+      const newLocale = this.hass.locale || 'en-US';
+      if (this._locale !== newLocale) {
+        this._locale = newLocale;
       }
     }
   }
@@ -130,7 +130,7 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
       }
     }
     if (this.hass) {
-      this._language = this.hass.language || "en";
+      this._locale = this.hass.locale || 'en-US';
     }
   }
 
@@ -196,10 +196,10 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
           select: {
             mode: "dropdown",
             options: [
-              { value: "consumption", label: localize("editor.view_consumption", this._language) },
-              { value: "heat-calendar", label: localize("editor.view_heat_calendar", this._language) },
-              { value: "week-analysis", label: localize("editor.view_week_analysis", this._language) },
-              { value: "tariff-comparison", label: localize("editor.view_tariff_comparison", this._language) },
+              { value: "consumption", label: localize("editor.view_consumption", this._locale) },
+              { value: "heat-calendar", label: localize("editor.view_heat_calendar", this._locale) },
+              { value: "week-analysis", label: localize("editor.view_week_analysis", this._locale) },
+              { value: "tariff-comparison", label: localize("editor.view_tariff_comparison", this._locale) },
             ],
           },
         },
@@ -224,9 +224,9 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
             select: {
               mode: "dropdown",
               options: [
-                { value: "day", label: localize("editor.period_day", this._language) },
-                { value: "week", label: localize("editor.period_week", this._language) },
-                { value: "month", label: localize("editor.period_month", this._language) },
+                { value: "day", label: localize("editor.period_day", this._locale) },
+                { value: "week", label: localize("editor.period_week", this._locale) },
+                { value: "month", label: localize("editor.period_month", this._locale) },
               ],
             },
           },
@@ -237,9 +237,9 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
             select: {
               mode: "dropdown",
               options: [
-                { value: "line", label: localize("editor.chart_type_line", this._language) },
-                { value: "bar", label: localize("editor.chart_type_bar", this._language) },
-                { value: "stacked-area", label: localize("editor.chart_type_stacked_area", this._language) },
+                { value: "line", label: localize("editor.chart_type_line", this._locale) },
+                { value: "bar", label: localize("editor.chart_type_bar", this._locale) },
+                { value: "stacked-area", label: localize("editor.chart_type_stacked_area", this._locale) },
               ],
             },
           },
@@ -327,8 +327,8 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
             select: {
               mode: "dropdown",
               options: [
-                { value: "month", label: localize("editor.heat_calendar_period_month", this._language) },
-                { value: "year", label: localize("editor.heat_calendar_period_year", this._language) },
+                { value: "month", label: localize("editor.heat_calendar_period_month", this._locale) },
+                { value: "year", label: localize("editor.heat_calendar_period_year", this._locale) },
               ],
             },
           },
@@ -383,11 +383,11 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
   }
 
   private _computeLabel = (schema: any): string => {
-    return computeLabel(schema, this._language);
+    return computeLabel(schema, this._locale);
   };
 
   private _computeHelper = (schema: any): string => {
-    return computeHelper(schema, this._language);
+    return computeHelper(schema, this._locale);
   };
 
   private _handleTariffSelection(index: number, ev: CustomEvent): void {
@@ -460,7 +460,7 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
 
     return html`
       <div class="form-group">
-        <label>${localize("editor.tariff_entry_ids_label", this._language)}</label>
+        <label>${localize("editor.tariff_entry_ids_label", this._locale)}</label>
         <div class="tariff-dropdown-list">
           ${Array.from({ length: dropdownCount }, (_, index) => {
             const currentValue = tariffIds[index] || "";
@@ -472,7 +472,7 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
                   .selector=${{ config_entry: { integration: "octopus_energy_es" } }}
                   .value=${currentValue}
                   .label=${index === 0 
-                    ? localize("editor.tariff_entry_ids_helper", this._language)
+                    ? localize("editor.tariff_entry_ids_helper", this._locale)
                     : nothing}
                   @value-changed=${(ev: CustomEvent) => this._handleTariffSelection(index, ev)}
                 ></ha-selector>

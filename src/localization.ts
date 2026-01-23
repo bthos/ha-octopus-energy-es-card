@@ -159,13 +159,13 @@ export const translations: Record<string, Translations> = {
     "card.date.of": "of",
     
     // Day names (short)
-    "card.day.sun": "Sun",
     "card.day.mon": "Mon",
     "card.day.tue": "Tue",
     "card.day.wed": "Wed",
     "card.day.thu": "Thu",
     "card.day.fri": "Fri",
     "card.day.sat": "Sat",
+    "card.day.sun": "Sun",
     
   },
   es: {
@@ -319,13 +319,13 @@ export const translations: Record<string, Translations> = {
     "card.date.of": "de",
     
     // Day names (short)
-    "card.day.sun": "Dom",
     "card.day.mon": "Lun",
     "card.day.tue": "Mar",
     "card.day.wed": "Mié",
     "card.day.thu": "Jue",
     "card.day.fri": "Vie",
     "card.day.sat": "Sáb",
+    "card.day.sun": "Dom",
     
   },
   be: {
@@ -479,25 +479,35 @@ export const translations: Record<string, Translations> = {
     "card.date.of": "",
     
     // Day names (short)
-    "card.day.sun": "Нд",
     "card.day.mon": "Пн",
     "card.day.tue": "Аўт",
     "card.day.wed": "Ср",
     "card.day.thu": "Чцв",
     "card.day.fri": "Пт",
     "card.day.sat": "Сб",
+    "card.day.sun": "Нд",
   }
 };
 
 /**
  * Get localized string
+ * Accepts locale (e.g., 'en-US', 'es-ES', 'be-BY')
+ * Extracts language code from locale to find translation
  */
-export function localize(key: string, language: string = "en"): string {
-  const lang = language.toLowerCase();
-  const translation = translations[lang]?.[key] || translations["en"]?.[key];
+export function localize(key: string, locale: string = "en-US"): string {
+  // Extract language code from locale (e.g., 'es-ES' -> 'es', 'en-US' -> 'en')
+  const langCode = locale.toLowerCase().split('-')[0];
   
+  // Find translation by language code
+  let translation = translations[langCode]?.[key];
+  
+  // Fallback to English
   if (!translation) {
-    // Fallback: return the key without prefix
+    translation = translations["en"]?.[key];
+  }
+  
+  // Final fallback: return the key without prefix
+  if (!translation) {
     return key.replace("editor.", "").replace("chart.", "").replace(/_/g, " ");
   }
   
@@ -510,9 +520,9 @@ export function localize(key: string, language: string = "en"): string {
 export function localizeWithVars(
   key: string, 
   vars: Record<string, string>, 
-  language: string = "en"
+  locale: string = "en-US"
 ): string {
-  let translation = localize(key, language);
+  let translation = localize(key, locale);
   
   // Replace variables in format {varName}
   Object.entries(vars).forEach(([varName, value]) => {
@@ -524,14 +534,16 @@ export function localizeWithVars(
 
 /**
  * Compute label for ha-form schema
+ * Accepts locale (e.g., 'en-US', 'es-ES', 'be-BY')
  */
-export function computeLabel(schema: any, language: string = "en"): string {
-  return localize(`editor.${schema.name}_label`, language);
+export function computeLabel(schema: any, locale: string = "en-US"): string {
+  return localize(`editor.${schema.name}_label`, locale);
 }
 
 /**
  * Compute helper text for ha-form schema
+ * Accepts locale (e.g., 'en-US', 'es-ES', 'be-BY')
  */
-export function computeHelper(schema: any, language: string = "en"): string {
-  return localize(`editor.${schema.name}_helper`, language);
+export function computeHelper(schema: any, locale: string = "en-US"): string {
+  return localize(`editor.${schema.name}_helper`, locale);
 }

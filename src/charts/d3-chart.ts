@@ -40,8 +40,7 @@ export class D3Chart {
 
     // Create SVG element with accessibility attributes (Victory.js pattern)
     const locale = config.locale || 'en-US';
-    // Extract language code from locale for text localization
-    const language = locale.split('-')[0];
+    // Use locale directly - localize() accepts locale
     this.svg = d3.select(container)
       .append('svg')
       .attr('class', 'chart-svg')
@@ -49,7 +48,7 @@ export class D3Chart {
       .attr('height', config.height)
       .attr('viewBox', `0 0 ${config.width} ${config.height}`)
       .attr('role', 'img') // Identify as image for screen readers
-      .attr('aria-label', localize('chart.accessibility.title', language)) // Use aria-label for accessibility (doesn't interfere with child tooltips)
+      .attr('aria-label', localize('chart.accessibility.title', locale)) // Use aria-label for accessibility (doesn't interfere with child tooltips)
       .attr('aria-live', 'polite') // Announce dynamic updates
       .attr('tabindex', '0') // Make keyboard-focusable
       .style('display', 'block')
@@ -207,14 +206,11 @@ export class D3Chart {
       maximumFractionDigits: 2 
     });
     
-    // Extract language code from locale for text localization
-    const language = locale.split('-')[0];
-    
-    // Update aria-label for accessibility
+    // Use locale directly - localizeWithVars() accepts locale
     this.svg.attr('aria-label', localizeWithVars('chart.accessibility.title_with_data', {
       period,
       total: formattedTotal
-    }, language));
+    }, locale));
   }
 
   /**

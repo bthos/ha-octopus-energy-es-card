@@ -3234,7 +3234,7 @@ export class OctopusConsumptionCard extends LitElement {
     }
 
     const rightPadding = costData ? 60 : 20;
-    const padding = { top: 10, right: rightPadding, bottom: 10, left: 60 };
+    const padding = { top: 10, right: rightPadding, bottom: 10, left: rightPadding };
     
     const chartData: ChartData = prepareChartData(values, timestamps);
     const tempConfig: ChartConfig = {

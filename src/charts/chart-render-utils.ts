@@ -28,6 +28,7 @@ export const CHART_CONSTANTS = {
   Y_AXIS_LABEL_OFFSET_X: -25,
   Y_AXIS_LABEL_OFFSET_Y: 5,
   MAX_X_TICKS_DAY: 12,
+  Y_AXIS_INSET_OFFSET: 15, // Offset for Y-axis labels positioned inside chart area
 } as const;
 
 /**
@@ -35,8 +36,9 @@ export const CHART_CONSTANTS = {
  */
 export function getChartDimensions(config: ChartConfig): { chartWidth: number; chartHeight: number } {
   const { width, height, padding } = config;
+  // Account for Y-axis labels being positioned inside the chart area
   return {
-    chartWidth: width - padding.left - padding.right,
+    chartWidth: width - padding.left - padding.right - CHART_CONSTANTS.Y_AXIS_INSET_OFFSET,
     chartHeight: height - padding.top - padding.bottom
   };
 }
@@ -85,10 +87,13 @@ export function createContentGroup(
   svg: d3.Selection<SVGSVGElement, unknown, null, undefined>,
   padding: { top: number; left: number }
 ): d3.Selection<SVGGElement, unknown, null, undefined> {
+  // Y-axis labels are positioned inside the chart area
+  // Content group starts at the same position as Y-axis for proper alignment
+  const contentXPosition = padding.left + CHART_CONSTANTS.Y_AXIS_INSET_OFFSET;
   return svg
     .append('g')
     .attr('class', 'chart-content')
-    .attr('transform', `translate(${padding.left}, ${padding.top})`);
+    .attr('transform', `translate(${contentXPosition}, ${padding.top})`);
 }
 
 /**
@@ -131,12 +136,13 @@ export function createXAxis(
   
   // Position X-axis labels inside the chart area (near the bottom)
   // Offset by 20px from bottom to place labels on the chart
+  // Also account for Y-axis labels being positioned inside
   const labelYPosition = padding.top + chartHeight - 20;
   
   const xAxisGroup = svg
     .append('g')
     .attr('class', 'axis axis-x')
-    .attr('transform', `translate(${padding.left}, ${labelYPosition})`);
+    .attr('transform', `translate(${padding.left + CHART_CONSTANTS.Y_AXIS_INSET_OFFSET}, ${labelYPosition})`);
 
   if (period === 'month' || period === 'week') {
     const xAxis = d3.axisBottom(xScale as d3.ScaleBand<string>)
@@ -211,10 +217,12 @@ export function createYAxis(
   config: ChartConfig
 ): d3.Selection<SVGGElement, unknown, null, undefined> {
   const { padding } = config;
+  // Position Y-axis labels inside the chart area (similar to X-axis)
+  const labelXPosition = padding.left + CHART_CONSTANTS.Y_AXIS_INSET_OFFSET;
   const yAxisGroup = svg
     .append('g')
     .attr('class', 'axis axis-y')
-    .attr('transform', `translate(${padding.left}, ${padding.top})`);
+    .attr('transform', `translate(${labelXPosition}, ${padding.top})`);
 
   const yAxis = d3.axisLeft(yScale)
     .ticks(CHART_CONSTANTS.Y_AXIS_TICKS)

@@ -40,6 +40,8 @@ export class D3Chart {
 
     // Create SVG element with accessibility attributes (Victory.js pattern)
     const locale = config.locale || 'en-US';
+    // Extract language code from locale for text localization
+    const language = locale.split('-')[0];
     this.svg = d3.select(container)
       .append('svg')
       .attr('class', 'chart-svg')

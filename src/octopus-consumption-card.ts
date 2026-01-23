@@ -1796,7 +1796,7 @@ export class OctopusConsumptionCard extends LitElement {
       <div class="heat-calendar-container ${isYearView ? 'heat-calendar-year-view' : ''}">
         ${isYearView && yearSummary ? html`
           <div class="heat-calendar-summary">
-            <span>Total: ${yearSummary.totalConsumption.toFixed(1)} kWh</span>
+            <span>Total: ${yearSummary.totalConsumption.toFixed(3)} kWh</span>
             <span>Avg/Day: ${yearSummary.avgDailyConsumption.toFixed(2)} kWh</span>
             <span>Cost: €${yearSummary.totalCost.toFixed(2)}</span>
           </div>
@@ -1835,7 +1835,7 @@ export class OctopusConsumptionCard extends LitElement {
                   >
                     ${isYearView ? '' : html`
                       <div style="font-weight: 600; margin-bottom: 2px;">${dayNum}</div>
-                      <div style="font-size: 10px; opacity: 0.9;">${day.consumption.toFixed(1)} kWh</div>
+                      <div style="font-size: 10px; opacity: 0.9;">${day.consumption.toFixed(3)} kWh</div>
                     `}
                   </div>
                 `;
@@ -1921,9 +1921,9 @@ export class OctopusConsumptionCard extends LitElement {
                   <div class="week-metric">
                     <span class="week-metric-label">${localize("card.week_comparison.consumption", language)}:</span>
                     <div class="week-metric-value-container">
-                      <span class="week-metric-value">${week.consumption.toFixed(1)} kWh</span>
+                      <span class="week-metric-value">${week.consumption.toFixed(3)} kWh</span>
                       ${isIncomplete && forecastConsumption > 0 ? html`
-                        <div class="week-forecast">${localize("card.week_comparison.forecast", language)}: ${forecastConsumption.toFixed(1)} kWh</div>
+                        <div class="week-forecast">${localize("card.week_comparison.forecast", language)}: ${forecastConsumption.toFixed(3)} kWh</div>
                       ` : ''}
                     </div>
                   </div>
@@ -2576,8 +2576,8 @@ export class OctopusConsumptionCard extends LitElement {
           </div>
           <div class="summary-date-range">${this._formatDateRange()}</div>
           <div class="summary-total-consumption">${totalConsumption.toLocaleString('es-ES', { 
-            minimumFractionDigits: 0, 
-            maximumFractionDigits: 0 
+            minimumFractionDigits: 3, 
+            maximumFractionDigits: 3 
           })} kWh</div>
         </div>
       ` : nothing}
@@ -3438,7 +3438,7 @@ export class OctopusConsumptionCard extends LitElement {
                 <span class="period-icon">🔴</span>
                 <span class="period-name">Peak (P1)</span>
               </div>
-              <div class="summary-value">${periodBreakdown.p1_consumption.toFixed(1)} kWh</div>
+              <div class="summary-value">${periodBreakdown.p1_consumption.toFixed(3)} kWh</div>
               <div class="summary-percentage">${periodBreakdown.p1_percentage.toFixed(1)}%</div>
             </div>
             <div class="summary-item">
@@ -3446,7 +3446,7 @@ export class OctopusConsumptionCard extends LitElement {
                 <span class="period-icon">🟠</span>
                 <span class="period-name">Flat (P2)</span>
               </div>
-              <div class="summary-value">${periodBreakdown.p2_consumption.toFixed(1)} kWh</div>
+              <div class="summary-value">${periodBreakdown.p2_consumption.toFixed(3)} kWh</div>
               <div class="summary-percentage">${periodBreakdown.p2_percentage.toFixed(1)}%</div>
             </div>
             <div class="summary-item">
@@ -3454,14 +3454,14 @@ export class OctopusConsumptionCard extends LitElement {
                 <span class="period-icon">🟢</span>
                 <span class="period-name">Valley (P3)</span>
               </div>
-              <div class="summary-value">${periodBreakdown.p3_consumption.toFixed(1)} kWh</div>
+              <div class="summary-value">${periodBreakdown.p3_consumption.toFixed(3)} kWh</div>
               <div class="summary-percentage">${periodBreakdown.p3_percentage.toFixed(1)}%</div>
             </div>
             <div class="summary-item summary-total">
               <div class="summary-period">
                 <span class="period-name"><strong>Total</strong></span>
               </div>
-              <div class="summary-value"><strong>${periodBreakdown.total_consumption.toFixed(1)} kWh</strong></div>
+              <div class="summary-value"><strong>${periodBreakdown.total_consumption.toFixed(3)} kWh</strong></div>
             </div>
           </div>
         </div>

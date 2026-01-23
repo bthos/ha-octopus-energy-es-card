@@ -49,7 +49,7 @@ export const cardStyles = css`
 
   .chart-container {
     margin: 0;
-    min-height: 300px;
+    min-height: 200px;
     position: relative;
     width: 100%;
     /* Victory.js-inspired touch optimization */
@@ -61,7 +61,7 @@ export const cardStyles = css`
 
   .chart-svg-container {
     width: 100%;
-    height: 300px;
+    height: 100%;
     position: relative;
     /* Pointer events structure (Victory pattern) */
     pointer-events: none; /* Container non-interactive */

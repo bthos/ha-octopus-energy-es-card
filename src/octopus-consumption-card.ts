@@ -115,7 +115,7 @@ export class OctopusConsumptionCard extends LitElement {
       return this.hass.locale;
     }
     // Fallback: construct locale from language code
-            const language = this._getLanguage();
+    const language = this.hass?.language || 'en';
     if (language === 'es') return 'es-ES';
     if (language === 'be') return 'be-BY';
     return 'en-US';

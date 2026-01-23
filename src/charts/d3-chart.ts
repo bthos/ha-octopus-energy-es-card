@@ -205,6 +205,9 @@ export class D3Chart {
       maximumFractionDigits: 2 
     });
     
+    // Extract language code from locale for text localization
+    const language = locale.split('-')[0];
+    
     // Update aria-label for accessibility
     this.svg.attr('aria-label', localizeWithVars('chart.accessibility.title_with_data', {
       period,

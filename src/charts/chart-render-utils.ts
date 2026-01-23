@@ -239,6 +239,32 @@ export function createYAxis(
     .style('display', function() {
       // Hide label if it's "0"
       return d3.select(this).text() === '0' ? 'none' : null;
+    })
+    .each(function() {
+      const textNode = this as SVGTextElement;
+      
+      // Skip if text is hidden (e.g., "0" label)
+      if (d3.select(textNode).style('display') === 'none') {
+        return;
+      }
+      
+      // Get bounding box
+      const bbox = textNode.getBBox();
+      const paddingX = 4;
+      const paddingY = 2;
+      
+      // Insert background rectangle before text (so text appears on top)
+      // Use insert to place rect before the text element
+      const parent = d3.select(textNode.parentNode as SVGGElement);
+      parent.insert('rect', function() { return textNode; })
+        .attr('x', bbox.x - paddingX)
+        .attr('y', bbox.y - paddingY)
+        .attr('width', bbox.width + paddingX * 2)
+        .attr('height', bbox.height + paddingY * 2)
+        .attr('fill', config.colors.background)
+        .attr('opacity', 0.85)
+        .attr('rx', 2)
+        .attr('ry', 2);
     });
 
   yAxisGroup.selectAll('line, path')

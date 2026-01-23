@@ -2988,6 +2988,34 @@ export class OctopusConsumptionCard extends LitElement {
     let values = sortedConsumptionData.map(d => d.consumption || d.value || 0);
     let timestamps = sortedConsumptionData.map(d => d.start_time || d.date || '');
     
+    // For day view, filter to show only hours of the selected day
+    if (this._currentPeriod === "day") {
+      const { startDate, endDate } = this._getDateRange();
+      const selectedDayStart = new Date(startDate);
+      selectedDayStart.setHours(0, 0, 0, 0);
+      const selectedDayEnd = new Date(startDate);
+      selectedDayEnd.setHours(23, 59, 59, 999);
+      
+      // Filter data to include only hours within the selected day
+      const filteredData: { timestamp: string; value: number }[] = [];
+      for (let i = 0; i < timestamps.length; i++) {
+        const timestamp = timestamps[i];
+        const dataDate = new Date(timestamp);
+        
+        // Check if this timestamp is within the selected day
+        if (dataDate >= selectedDayStart && dataDate <= selectedDayEnd) {
+          filteredData.push({
+            timestamp: timestamp,
+            value: values[i]
+          });
+        }
+      }
+      
+      // Update arrays with filtered data
+      timestamps = filteredData.map(d => d.timestamp);
+      values = filteredData.map(d => d.value);
+    }
+    
     // Note: Week view shows individual days of one week (Monday to Sunday), not aggregated weeks
     // Data is already loaded as daily for week view, so no grouping needed
     
@@ -3055,6 +3083,34 @@ export class OctopusConsumptionCard extends LitElement {
           let costTimestamps = sortedBreakdown.map((item) => 
             ('hour' in item ? item.hour : 'date' in item ? item.date : '') || ''
           );
+          
+          // For day view, filter cost data to show only hours of the selected day
+          if (this._currentPeriod === "day") {
+            const { startDate } = this._getDateRange();
+            const selectedDayStart = new Date(startDate);
+            selectedDayStart.setHours(0, 0, 0, 0);
+            const selectedDayEnd = new Date(startDate);
+            selectedDayEnd.setHours(23, 59, 59, 999);
+            
+            // Filter cost data to include only hours within the selected day
+            const filteredCostData: { timestamp: string; value: number }[] = [];
+            for (let i = 0; i < costTimestamps.length; i++) {
+              const timestamp = costTimestamps[i];
+              const dataDate = new Date(timestamp);
+              
+              // Check if this timestamp is within the selected day
+              if (dataDate >= selectedDayStart && dataDate <= selectedDayEnd) {
+                filteredCostData.push({
+                  timestamp: timestamp,
+                  value: costValues[i]
+                });
+              }
+            }
+            
+            // Update arrays with filtered cost data
+            costTimestamps = filteredCostData.map(d => d.timestamp);
+            costValues = filteredCostData.map(d => d.value);
+          }
           
           // Note: Week view shows individual days, so no grouping needed for cost data
           

@@ -26,7 +26,7 @@ export const CHART_CONSTANTS = {
   BAR_PADDING_MONTH_WEEK: 0.4,
   BAR_PADDING_DAY: 0.1,
   Y_AXIS_LABEL_OFFSET_X: -10,
-  Y_AXIS_LABEL_OFFSET_Y: -10,
+  Y_AXIS_LABEL_OFFSET_Y: 5,
   MAX_X_TICKS_DAY: 12,
 } as const;
 
@@ -218,12 +218,18 @@ export function createYAxis(
     .ticks(CHART_CONSTANTS.Y_AXIS_TICKS)
     .tickFormat(d => String(d));
 
-  yAxisGroup.call(yAxis)
-    .selectAll('text')
+  yAxisGroup.call(yAxis);
+  
+  // Style Y-axis labels and hide "0" label
+  yAxisGroup.selectAll('text')
     .attr('fill', config.colors.text)
     .attr('font-size', CHART_CONSTANTS.FONT_SIZE)
     .attr('font-family', config.fontFamily || CHART_CONSTANTS.FONT_FAMILY)
-    .attr('opacity', CHART_CONSTANTS.TEXT_OPACITY);
+    .attr('opacity', CHART_CONSTANTS.TEXT_OPACITY)
+    .style('display', function() {
+      // Hide label if it's "0"
+      return d3.select(this).text() === '0' ? 'none' : null;
+    });
 
   yAxisGroup.selectAll('line, path')
     .attr('stroke', config.colors.axis)

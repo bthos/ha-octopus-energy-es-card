@@ -41,7 +41,7 @@ export const cardStyles = css`
   .navigation-controls {
     display: flex;
     gap: 8px;
-    margin: 8px;
+    margin: 8px 0;
   }
 
   .nav-button {
@@ -163,6 +163,7 @@ export const cardStyles = css`
 
   .card-content-wrapper {
     position: relative;
+    margin: 8px;
   }
 
   .loading-overlay {
@@ -310,10 +311,6 @@ export const cardStyles = css`
 
   .comparison-error ha-icon {
     flex-shrink: 0;
-  }
-
-  .comparison-section {
-    margin: 8px;
   }
 
   .comparison-title {

@@ -161,7 +161,11 @@ export async function renderD3BarChart(
       return config.colors.primary;
     })
     .style('cursor', 'help')
-    .attr('title', (d) => formatTooltipText(d, config.language))
+    .each(function(d) {
+      // Use title element instead of title attribute for better browser compatibility
+      d3.select(this).select('title').remove(); // Remove old title if exists
+      d3.select(this).append('title').text(formatTooltipText(d, config.language));
+    })
     .on('mouseenter', function(event, d) {
       context.setHoveredPoint(d);
       

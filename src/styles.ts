@@ -104,7 +104,7 @@ export const cardStyles = css`
   .chart-bar {
     fill: #8B5CF6;
     transition: fill 0.2s ease;
-    cursor: pointer;
+    cursor: help;
   }
 
   .chart-bar:hover {

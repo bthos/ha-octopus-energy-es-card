@@ -8,6 +8,13 @@ import { css } from "lit";
 export const cardStyles = css`
   :host {
     display: block;
+    box-shadow: var(--ha-card-box-shadow, none);
+    box-sizing: border-box;
+    border-radius: var(--ha-card-border-radius, var(--ha-border-radius-lg));
+    border-width: var(--ha-card-border-width, 1px);
+    border-style: solid;
+    border-color: var(--ha-card-border-color, var(--divider-color, #e0e0e0));
+    transition: all .3s ease-out;
   }
 
   .period-selector {
@@ -34,8 +41,7 @@ export const cardStyles = css`
   .navigation-controls {
     display: flex;
     gap: 8px;
-    margin-top: 8px;
-    margin-bottom: 8px;
+    margin: 8px;
   }
 
   .nav-button {
@@ -296,7 +302,6 @@ export const cardStyles = css`
     background: var(--warning-color);
     color: var(--text-primary-color);
     border-radius: 4px;
-    margin-top: 16px;
     font-size: 14px;
     display: flex;
     align-items: center;
@@ -308,7 +313,7 @@ export const cardStyles = css`
   }
 
   .comparison-section {
-    margin-top: 24px;
+    margin: 8px;
   }
 
   .comparison-title {
@@ -468,10 +473,9 @@ export const cardStyles = css`
   }
 
   .consumption-summary-header {
-    margin-bottom: 24px;
     padding: 16px;
-    background: var(--card-background-color);
     border-radius: 8px;
+    background: var(--ha-card-background, var(--card-background-color, #fff));
   }
 
   .summary-header-top {
@@ -588,10 +592,6 @@ export const cardStyles = css`
     color: var(--text-primary-color);
   }
 
-  .consumption-list-container {
-    margin-top: 16px;
-  }
-
   .consumption-list {
     width: 100%;
     overflow-x: auto;
@@ -601,11 +601,11 @@ export const cardStyles = css`
     width: 100%;
     border-collapse: collapse;
     font-size: 14px;
+    margin-bottom: 8px;
   }
 
   .consumption-table thead {
     background: var(--secondary-background-color);
-    border-bottom: 2px solid var(--divider-color);
   }
 
   .consumption-table th {
@@ -618,7 +618,7 @@ export const cardStyles = css`
 
   .consumption-table td {
     padding: 10px 8px;
-    border-bottom: 1px solid var(--divider-color);
+    border-top: 1px solid var(--divider-color);
     color: var(--primary-text-color);
   }
 
@@ -631,15 +631,10 @@ export const cardStyles = css`
     color: var(--primary-color);
   }
 
-  .heat-calendar-container {
-    margin-top: 24px;
-  }
-
   .heat-calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 4px;
-    margin-top: 16px;
   }
 
   .heat-calendar-day {
@@ -800,7 +795,6 @@ export const cardStyles = css`
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 8px;
-    margin-top: 16px;
   }
 
   .week-card {

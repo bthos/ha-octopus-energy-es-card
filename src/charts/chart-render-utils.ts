@@ -127,10 +127,16 @@ export function createXAxis(
   config: ChartConfig
 ): d3.Selection<SVGGElement, unknown, null, undefined> {
   const { width, height, padding } = config;
+  const { chartHeight } = getChartDimensions(config);
+  
+  // Position X-axis labels inside the chart area (near the bottom)
+  // Offset by 20px from bottom to place labels on the chart
+  const labelYPosition = padding.top + chartHeight - 20;
+  
   const xAxisGroup = svg
     .append('g')
     .attr('class', 'axis axis-x')
-    .attr('transform', `translate(${padding.left}, ${height - padding.bottom})`);
+    .attr('transform', `translate(${padding.left}, ${labelYPosition})`);
 
   if (period === 'month' || period === 'week') {
     const xAxis = d3.axisBottom(xScale as d3.ScaleBand<string>)
@@ -158,16 +164,38 @@ export function createXAxis(
     xAxisGroup.call(xAxis);
   }
 
-  // Style X-axis
+  // Hide the axis line and ticks (we only want labels)
+  xAxisGroup.selectAll('line, path')
+    .attr('stroke', 'none')
+    .attr('opacity', 0);
+
+  // Style X-axis labels and add background
   xAxisGroup.selectAll('text')
     .attr('fill', config.colors.text)
     .attr('font-size', CHART_CONSTANTS.FONT_SIZE)
     .attr('font-family', config.fontFamily || CHART_CONSTANTS.FONT_FAMILY)
-    .attr('opacity', CHART_CONSTANTS.TEXT_OPACITY);
-
-  xAxisGroup.selectAll('line, path')
-    .attr('stroke', config.colors.axis)
-    .attr('opacity', CHART_CONSTANTS.AXIS_OPACITY);
+    .attr('opacity', CHART_CONSTANTS.TEXT_OPACITY)
+    .each(function() {
+      const textNode = this as SVGTextElement;
+      
+      // Get bounding box
+      const bbox = textNode.getBBox();
+      const paddingX = 4;
+      const paddingY = 2;
+      
+      // Insert background rectangle before text (so text appears on top)
+      // Use insert to place rect before the text element
+      const parent = d3.select(textNode.parentNode as SVGGElement);
+      parent.insert('rect', function() { return textNode; })
+        .attr('x', bbox.x - paddingX)
+        .attr('y', bbox.y - paddingY)
+        .attr('width', bbox.width + paddingX * 2)
+        .attr('height', bbox.height + paddingY * 2)
+        .attr('fill', config.colors.background)
+        .attr('opacity', 0.85)
+        .attr('rx', 2)
+        .attr('ry', 2);
+    });
 
   return xAxisGroup;
 }

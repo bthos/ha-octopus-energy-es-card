@@ -201,8 +201,8 @@ export function createXAxis(
         .attr('height', bbox.height + paddingY * 2)
         .attr('fill', config.colors.background)
         .attr('opacity', 0.85)
-        .attr('rx', 2)
-        .attr('ry', 2);
+        .attr('rx', 4)
+        .attr('ry', 4);
     });
 
   return xAxisGroup;
@@ -263,8 +263,8 @@ export function createYAxis(
         .attr('height', bbox.height + paddingY * 2)
         .attr('fill', config.colors.background)
         .attr('opacity', 0.85)
-        .attr('rx', 2)
-        .attr('ry', 2);
+        .attr('rx', 4)
+        .attr('ry', 4);
     });
 
   yAxisGroup.selectAll('line, path')

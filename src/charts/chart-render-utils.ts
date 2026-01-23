@@ -145,7 +145,9 @@ export function createXAxis(
     if (period === 'month') {
       xAxis.tickValues(timestamps.filter((ts) => {
         const date = new Date(ts);
-        return date.getDate() % 2 === 1; // Odd days only
+        const day = date.getDate();
+        // Show every 3rd day (1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31) to avoid label overlap
+        return (day - 1) % 3 === 0;
       }));
     }
     

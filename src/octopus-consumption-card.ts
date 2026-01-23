@@ -2975,7 +2975,7 @@ export class OctopusConsumptionCard extends LitElement {
 
     const chartType = this.config.chart_type || "line";
     const width = 800;
-    const height = 300;
+    const height = 200;
     
     // Prepare chart data with grouping based on period
     // Sort consumption data by date to ensure correct order (especially for week view: Monday to Sunday)

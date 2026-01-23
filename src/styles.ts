@@ -34,7 +34,8 @@ export const cardStyles = css`
   .navigation-controls {
     display: flex;
     gap: 8px;
-    margin-bottom: 16px;
+    margin-top: 8px;
+    margin-bottom: 8px;
   }
 
   .nav-button {
@@ -491,13 +492,6 @@ export const cardStyles = css`
     font-size: 24px;
   }
 
-  .summary-title {
-    font-size: 20px;
-    font-weight: 600;
-    margin: 0;
-    color: var(--primary-text-color);
-  }
-
   .summary-view-toggle {
     display: flex;
     gap: 8px;
@@ -539,7 +533,7 @@ export const cardStyles = css`
   .summary-title {
     font-size: 18px;
     font-weight: 500;
-    margin-bottom: 16px;
+    margin: 0;
     color: var(--primary-text-color);
   }
 
@@ -802,14 +796,10 @@ export const cardStyles = css`
     flex-shrink: 0;
   }
 
-  .week-comparison-section {
-    margin-top: 24px;
-  }
-
   .week-comparison-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 16px;
+    gap: 8px;
     margin-top: 16px;
   }
 

@@ -941,6 +941,10 @@ export const cardStyles = css`
     margin-bottom: 4px;
   }
 
+  .week-metric-days .week-incomplete-badge {
+    margin-top: 4px;
+  }
+
   .week-forecast {
     font-size: 12px;
     color: var(--secondary-text-color);

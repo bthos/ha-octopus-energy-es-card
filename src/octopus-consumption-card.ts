@@ -1899,9 +1899,6 @@ export class OctopusConsumptionCard extends LitElement {
                 <div class="week-card-header">
                   <div class="week-card-header-title">
                     <span class="week-period-date">${weekLabel}</span>
-                    ${isIncomplete ? html`
-                      <span class="week-incomplete-badge">${localize("card.week_comparison.incomplete", language)}</span>
-                    ` : ''}
                   </div>
                   ${comparison ? html`
                     <span class="week-change ${comparison.consumptionChangePercent >= 0 ? 'positive' : 'negative'} ${comparison.isForecastComparison ? 'week-change-forecast' : ''}" 
@@ -1915,7 +1912,10 @@ export class OctopusConsumptionCard extends LitElement {
                   ${isIncomplete ? html`
                     <div class="week-metric week-metric-days">
                       <span class="week-metric-label">${localize("card.week_comparison.days_available", language)}:</span>
-                      <span class="week-metric-value">${week.daysCount}/7 ${localize("card.week_comparison.days", language)}</span>
+                      <div class="week-metric-value-container">
+                        <span class="week-metric-value">${week.daysCount}/7 ${localize("card.week_comparison.days", language)}</span>
+                        <span class="week-incomplete-badge">${localize("card.week_comparison.incomplete", language)}</span>
+                      </div>
                     </div>
                   ` : ''}
                   <div class="week-metric">

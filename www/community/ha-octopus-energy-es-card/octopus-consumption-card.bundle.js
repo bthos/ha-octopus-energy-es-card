@@ -1222,7 +1222,7 @@ const lt={attribute:!0,type:String,converter:y,reflect:!1,hasChanged:w},dt=(t=lt
       <div class="heat-calendar-container ${r?"heat-calendar-year-view":""}">
         ${r&&d?Y`
           <div class="heat-calendar-summary">
-            <span>Total: ${d.totalConsumption.toFixed(1)} kWh</span>
+            <span>Total: ${d.totalConsumption.toFixed(3)} kWh</span>
             <span>Avg/Day: ${d.avgDailyConsumption.toFixed(2)} kWh</span>
             <span>Cost: €${d.totalCost.toFixed(2)}</span>
           </div>
@@ -1244,7 +1244,7 @@ const lt={attribute:!0,type:String,converter:y,reflect:!1,hasChanged:w},dt=(t=lt
                   >
                     ${r?"":Y`
                       <div style="font-weight: 600; margin-bottom: 2px;">${n}</div>
-                      <div style="font-size: 10px; opacity: 0.9;">${t.consumption.toFixed(1)} kWh</div>
+                      <div style="font-size: 10px; opacity: 0.9;">${t.consumption.toFixed(3)} kWh</div>
                     `}
                   </div>
                 `})}
@@ -1298,9 +1298,9 @@ const lt={attribute:!0,type:String,converter:y,reflect:!1,hasChanged:w},dt=(t=lt
                   <div class="week-metric">
                     <span class="week-metric-label">${ft("card.week_comparison.consumption",t)}:</span>
                     <div class="week-metric-value-container">
-                      <span class="week-metric-value">${e.consumption.toFixed(1)} kWh</span>
+                      <span class="week-metric-value">${e.consumption.toFixed(3)} kWh</span>
                       ${o&&s>0?Y`
-                        <div class="week-forecast">${ft("card.week_comparison.forecast",t)}: ${s.toFixed(1)} kWh</div>
+                        <div class="week-forecast">${ft("card.week_comparison.forecast",t)}: ${s.toFixed(3)} kWh</div>
                       `:""}
                     </div>
                   </div>
@@ -1452,7 +1452,7 @@ const lt={attribute:!0,type:String,converter:y,reflect:!1,hasChanged:w},dt=(t=lt
             </div>
           </div>
           <div class="summary-date-range">${this._formatDateRange()}</div>
-          <div class="summary-total-consumption">${e.toLocaleString("es-ES",{minimumFractionDigits:0,maximumFractionDigits:0})} kWh</div>
+          <div class="summary-total-consumption">${e.toLocaleString("es-ES",{minimumFractionDigits:3,maximumFractionDigits:3})} kWh</div>
         </div>
       `:W}
 
@@ -1663,7 +1663,7 @@ const lt={attribute:!0,type:String,converter:y,reflect:!1,hasChanged:w},dt=(t=lt
                 <span class="period-icon">🔴</span>
                 <span class="period-name">Peak (P1)</span>
               </div>
-              <div class="summary-value">${n.p1_consumption.toFixed(1)} kWh</div>
+              <div class="summary-value">${n.p1_consumption.toFixed(3)} kWh</div>
               <div class="summary-percentage">${n.p1_percentage.toFixed(1)}%</div>
             </div>
             <div class="summary-item">
@@ -1671,7 +1671,7 @@ const lt={attribute:!0,type:String,converter:y,reflect:!1,hasChanged:w},dt=(t=lt
                 <span class="period-icon">🟠</span>
                 <span class="period-name">Flat (P2)</span>
               </div>
-              <div class="summary-value">${n.p2_consumption.toFixed(1)} kWh</div>
+              <div class="summary-value">${n.p2_consumption.toFixed(3)} kWh</div>
               <div class="summary-percentage">${n.p2_percentage.toFixed(1)}%</div>
             </div>
             <div class="summary-item">
@@ -1679,14 +1679,14 @@ const lt={attribute:!0,type:String,converter:y,reflect:!1,hasChanged:w},dt=(t=lt
                 <span class="period-icon">🟢</span>
                 <span class="period-name">Valley (P3)</span>
               </div>
-              <div class="summary-value">${n.p3_consumption.toFixed(1)} kWh</div>
+              <div class="summary-value">${n.p3_consumption.toFixed(3)} kWh</div>
               <div class="summary-percentage">${n.p3_percentage.toFixed(1)}%</div>
             </div>
             <div class="summary-item summary-total">
               <div class="summary-period">
                 <span class="period-name"><strong>Total</strong></span>
               </div>
-              <div class="summary-value"><strong>${n.total_consumption.toFixed(1)} kWh</strong></div>
+              <div class="summary-value"><strong>${n.total_consumption.toFixed(3)} kWh</strong></div>
             </div>
           </div>
         </div>
@@ -1775,4 +1775,4 @@ const lt={attribute:!0,type:String,converter:y,reflect:!1,hasChanged:w},dt=(t=lt
           </div>
         </div>
       </div>
-    `}static getStubConfig(){return{type:"custom:octopus-consumption-card",source_entry_id:"",view:"consumption",default_period:"week",chart_type:"line",tariff_entry_ids:[],show_cost_on_chart:!1,show_navigation:!0,show_period_distribution:!1,show_moving_average:!1,moving_average_days:7,heat_calendar_period:"month",week_comparison_count:2,show_cost_trend:!1,cost_moving_average_days:30,show_tariff_chart:!0}}static getConfigElement(){return document.createElement("octopus-consumption-card-editor")}}function Oi(){return Ri}function zi(){return vt}function Fi(){return Ri.getStubConfig()}if(Ri.enabledWarnings=[],Ri.SERVICE_TIMEOUT=1e4,Ri.SERVICE_DOMAIN="octopus_energy_es",Ri.SERVICE_FETCH_CONSUMPTION="fetch_consumption",Ri.SERVICE_COMPARE_TARIFFS="compare_tariffs",Ri.SERVICE_GET_LAST_DATA_DATE="get_last_data_date",Ri.styles=_t,Hi([ht({attribute:!1})],Ri.prototype,"hass",void 0),Hi([ht({attribute:!1})],Ri.prototype,"config",void 0),Hi([ut()],Ri.prototype,"_consumptionData",void 0),Hi([ut()],Ri.prototype,"_comparisonResult",void 0),Hi([ut()],Ri.prototype,"_tariffCosts",void 0),Hi([ut()],Ri.prototype,"_loading",void 0),Hi([ut()],Ri.prototype,"_error",void 0),Hi([ut()],Ri.prototype,"_comparisonError",void 0),Hi([ut()],Ri.prototype,"_currentPeriod",void 0),Hi([ut()],Ri.prototype,"_currentDate",void 0),Hi([ut()],Ri.prototype,"_weekComparisonData",void 0),Hi([ut()],Ri.prototype,"_showChartView",void 0),Hi([ut()],Ri.prototype,"_lastDataDate",void 0),"undefined"!=typeof window&&(window.getCardElement=Oi,window.getCardConfigElement=zi,window.getStubConfig=Fi),"undefined"!=typeof window&&"undefined"!=typeof customElements){try{customElements.get("octopus-consumption-card")||customElements.define("octopus-consumption-card",Ri)}catch(t){yt.error("Failed to register octopus-consumption-card: ",t instanceof Error?t.message:String(t))}if(void 0===window.customCards&&(window.customCards=[]),Array.isArray(window.customCards)){window.customCards.some(t=>"custom:octopus-consumption-card"===t.type)||window.customCards.push({type:"custom:octopus-consumption-card",name:"Octopus Energy España Consumption",preview:!1,description:"Display consumption data and tariff comparisons for Octopus Energy España"})}window.customCards["octopus-consumption-card"]=Ri,window.OctopusConsumptionCard=Ri;const t="0.6.30",e=!!customElements.get("octopus-consumption-card");console.groupCollapsed("%c⚡ Octopus Energy España","background: linear-gradient(90deg, #e10090 0%, #c000a0 100%);color: #fff;padding: 4px 8px;border-radius: 4px;font-weight: bold;"),yt.info("Consumption Card",`v${t}`),yt.info(e?"✓ Custom element: ":"✗ Custom element: ","octopus-consumption-card"),yt.success("✓ Added to card picker"),yt.success("✓ Visual editor enabled"),yt.info("ℹ Supported languages: ","en, es, be"),e||yt.error("✗ Registration failed! Element not found in customElements registry"),console.groupEnd()}return t.OctopusConsumptionCard=Ri,t.getCardConfigElement=zi,t.getCardElement=Oi,t.getStubConfig=Fi,t}({});
+    `}static getStubConfig(){return{type:"custom:octopus-consumption-card",source_entry_id:"",view:"consumption",default_period:"week",chart_type:"line",tariff_entry_ids:[],show_cost_on_chart:!1,show_navigation:!0,show_period_distribution:!1,show_moving_average:!1,moving_average_days:7,heat_calendar_period:"month",week_comparison_count:2,show_cost_trend:!1,cost_moving_average_days:30,show_tariff_chart:!0}}static getConfigElement(){return document.createElement("octopus-consumption-card-editor")}}function Oi(){return Ri}function zi(){return vt}function Fi(){return Ri.getStubConfig()}if(Ri.enabledWarnings=[],Ri.SERVICE_TIMEOUT=1e4,Ri.SERVICE_DOMAIN="octopus_energy_es",Ri.SERVICE_FETCH_CONSUMPTION="fetch_consumption",Ri.SERVICE_COMPARE_TARIFFS="compare_tariffs",Ri.SERVICE_GET_LAST_DATA_DATE="get_last_data_date",Ri.styles=_t,Hi([ht({attribute:!1})],Ri.prototype,"hass",void 0),Hi([ht({attribute:!1})],Ri.prototype,"config",void 0),Hi([ut()],Ri.prototype,"_consumptionData",void 0),Hi([ut()],Ri.prototype,"_comparisonResult",void 0),Hi([ut()],Ri.prototype,"_tariffCosts",void 0),Hi([ut()],Ri.prototype,"_loading",void 0),Hi([ut()],Ri.prototype,"_error",void 0),Hi([ut()],Ri.prototype,"_comparisonError",void 0),Hi([ut()],Ri.prototype,"_currentPeriod",void 0),Hi([ut()],Ri.prototype,"_currentDate",void 0),Hi([ut()],Ri.prototype,"_weekComparisonData",void 0),Hi([ut()],Ri.prototype,"_showChartView",void 0),Hi([ut()],Ri.prototype,"_lastDataDate",void 0),"undefined"!=typeof window&&(window.getCardElement=Oi,window.getCardConfigElement=zi,window.getStubConfig=Fi),"undefined"!=typeof window&&"undefined"!=typeof customElements){try{customElements.get("octopus-consumption-card")||customElements.define("octopus-consumption-card",Ri)}catch(t){yt.error("Failed to register octopus-consumption-card: ",t instanceof Error?t.message:String(t))}if(void 0===window.customCards&&(window.customCards=[]),Array.isArray(window.customCards)){window.customCards.some(t=>"custom:octopus-consumption-card"===t.type)||window.customCards.push({type:"custom:octopus-consumption-card",name:"Octopus Energy España Consumption",preview:!1,description:"Display consumption data and tariff comparisons for Octopus Energy España"})}window.customCards["octopus-consumption-card"]=Ri,window.OctopusConsumptionCard=Ri;const t="0.6.31",e=!!customElements.get("octopus-consumption-card");console.groupCollapsed("%c⚡ Octopus Energy España","background: linear-gradient(90deg, #e10090 0%, #c000a0 100%);color: #fff;padding: 4px 8px;border-radius: 4px;font-weight: bold;"),yt.info("Consumption Card",`v${t}`),yt.info(e?"✓ Custom element: ":"✗ Custom element: ","octopus-consumption-card"),yt.success("✓ Added to card picker"),yt.success("✓ Visual editor enabled"),yt.info("ℹ Supported languages: ","en, es, be"),e||yt.error("✗ Registration failed! Element not found in customElements registry"),console.groupEnd()}return t.OctopusConsumptionCard=Ri,t.getCardConfigElement=zi,t.getCardElement=Oi,t.getStubConfig=Fi,t}({});

@@ -3016,6 +3016,37 @@ export class OctopusConsumptionCard extends LitElement {
       values = filteredData.map(d => d.value);
     }
     
+    // For month view, filter to show only days of the selected month
+    if (this._currentPeriod === "month") {
+      const { startDate, endDate } = this._getDateRange();
+      const selectedMonthStart = new Date(startDate);
+      selectedMonthStart.setHours(0, 0, 0, 0);
+      const selectedMonthEnd = new Date(endDate);
+      selectedMonthEnd.setHours(23, 59, 59, 999);
+      
+      // Filter data to include only days within the selected month
+      const filteredData: { timestamp: string; value: number }[] = [];
+      for (let i = 0; i < timestamps.length; i++) {
+        const timestamp = timestamps[i];
+        const dataDate = new Date(timestamp);
+        // Normalize to start of day for comparison
+        const dataDateStart = new Date(dataDate);
+        dataDateStart.setHours(0, 0, 0, 0);
+        
+        // Check if this timestamp is within the selected month
+        if (dataDateStart >= selectedMonthStart && dataDateStart <= selectedMonthEnd) {
+          filteredData.push({
+            timestamp: timestamp,
+            value: values[i]
+          });
+        }
+      }
+      
+      // Update arrays with filtered data
+      timestamps = filteredData.map(d => d.timestamp);
+      values = filteredData.map(d => d.value);
+    }
+    
     // Note: Week view shows individual days of one week (Monday to Sunday), not aggregated weeks
     // Data is already loaded as daily for week view, so no grouping needed
     
@@ -3100,6 +3131,37 @@ export class OctopusConsumptionCard extends LitElement {
               
               // Check if this timestamp is within the selected day
               if (dataDate >= selectedDayStart && dataDate <= selectedDayEnd) {
+                filteredCostData.push({
+                  timestamp: timestamp,
+                  value: costValues[i]
+                });
+              }
+            }
+            
+            // Update arrays with filtered cost data
+            costTimestamps = filteredCostData.map(d => d.timestamp);
+            costValues = filteredCostData.map(d => d.value);
+          }
+          
+          // For month view, filter cost data to show only days of the selected month
+          if (this._currentPeriod === "month") {
+            const { startDate, endDate } = this._getDateRange();
+            const selectedMonthStart = new Date(startDate);
+            selectedMonthStart.setHours(0, 0, 0, 0);
+            const selectedMonthEnd = new Date(endDate);
+            selectedMonthEnd.setHours(23, 59, 59, 999);
+            
+            // Filter cost data to include only days within the selected month
+            const filteredCostData: { timestamp: string; value: number }[] = [];
+            for (let i = 0; i < costTimestamps.length; i++) {
+              const timestamp = costTimestamps[i];
+              const dataDate = new Date(timestamp);
+              // Normalize to start of day for comparison
+              const dataDateStart = new Date(dataDate);
+              dataDateStart.setHours(0, 0, 0, 0);
+              
+              // Check if this timestamp is within the selected month
+              if (dataDateStart >= selectedMonthStart && dataDateStart <= selectedMonthEnd) {
                 filteredCostData.push({
                   timestamp: timestamp,
                   value: costValues[i]

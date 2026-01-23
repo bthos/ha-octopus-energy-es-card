@@ -127,7 +127,7 @@ export async function renderD3StackedAreaChart(
           context.setHoveredPoint(point);
           // Update title dynamically - use title element for better browser compatibility
           d3.select(this).select('title').remove(); // Remove old title if exists
-          d3.select(this).append('title').text(formatTooltipText(point, config.language));
+          d3.select(this).append('title').text(formatTooltipText(point, config.locale || 'en-US'));
         }
       })
       .on('mouseleave', function() {
@@ -159,7 +159,7 @@ export async function renderD3StackedAreaChart(
           };
           // Update title dynamically - use title element for better browser compatibility
           d3.select(this).select('title').remove(); // Remove old title if exists
-          d3.select(this).append('title').text(formatTooltipText(point, config.language));
+          d3.select(this).append('title').text(formatTooltipText(point, config.locale || 'en-US'));
         }
       });
   });

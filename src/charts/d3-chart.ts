@@ -39,7 +39,7 @@ export class D3Chart {
     this.chartId = `chart-${Math.random().toString(36).substring(2, 9)}`;
 
     // Create SVG element with accessibility attributes (Victory.js pattern)
-    const language = config.language || 'en';
+    const locale = config.locale || 'en-US';
     this.svg = d3.select(container)
       .append('svg')
       .attr('class', 'chart-svg')
@@ -199,9 +199,7 @@ export class D3Chart {
    * Update chart title dynamically when data changes
    */
   updateTitle(period: string, total: number): void {
-    const language = this.config.language || 'en';
-    // Format total based on language locale
-    const locale = language === 'es' ? 'es-ES' : language === 'be' ? 'be-BY' : 'en-US';
+    const locale = this.config.locale || 'en-US';
     const formattedTotal = total.toLocaleString(locale, { 
       minimumFractionDigits: 2, 
       maximumFractionDigits: 2 

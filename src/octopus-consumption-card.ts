@@ -35,7 +35,8 @@ interface HomeAssistant {
     return_response?: boolean;
     [key: string]: any;
   }) => Promise<T>;
-  language?: string;
+  language?: string; // Two-letter language code (e.g., 'es', 'en')
+  locale?: string; // Full locale code (e.g., 'es-ES', 'en-US')
   [key: string]: any;
 }
 
@@ -103,6 +104,33 @@ export class OctopusConsumptionCard extends LitElement {
       }
     }
     return fallback;
+  }
+
+  /**
+   * Get locale from Home Assistant (for number formatting)
+   * Falls back to language-based locale if locale is not available
+   */
+  private _getLocale(): string {
+    if (this.hass?.locale) {
+      return this.hass.locale;
+    }
+    // Fallback: construct locale from language code
+            const language = this._getLanguage();
+    if (language === 'es') return 'es-ES';
+    if (language === 'be') return 'be-BY';
+    return 'en-US';
+  }
+
+  /**
+   * Get language code from Home Assistant (for text localization)
+   * Extracts language from locale if available, otherwise uses language property
+   */
+  private _getLanguage(): string {
+    if (this.hass?.locale) {
+      // Extract language code from locale (e.g., 'es-ES' -> 'es')
+      return this.hass.locale.split('-')[0];
+    }
+    return this.hass?.language || 'en';
   }
 
   /**
@@ -1679,7 +1707,7 @@ export class OctopusConsumptionCard extends LitElement {
    * Render heat calendar (heatmap) visualization
    */
   private _renderHeatCalendar(): TemplateResult {
-    const language = this.hass?.language || 'en';
+    const language = this._getLanguage();
     const calendarData = this._getHeatCalendarData();
     const period = this.config.heat_calendar_period || "month";
     const isYearView = period === "year";
@@ -1868,7 +1896,7 @@ export class OctopusConsumptionCard extends LitElement {
    * Render week-over-week comparison
    */
   private _renderWeekComparison(): TemplateResult {
-    const language = this.hass?.language || 'en';
+    const language = this._getLanguage();
     if (!this._weekComparisonData || this._weekComparisonData.weeks.length === 0) {
       return html`<div class="loading">${localize("card.week_comparison.no_data", language)}</div>`;
     }
@@ -2433,7 +2461,7 @@ export class OctopusConsumptionCard extends LitElement {
   }
 
   protected render(): TemplateResult {
-    const language = this.hass?.language || 'en';
+    const language = this._getLanguage();
     
     // Show full loading screen only on initial load (when we don't have data yet)
     if (this._loading && !this._hasInitialData) {
@@ -2509,7 +2537,7 @@ export class OctopusConsumptionCard extends LitElement {
    * Render consumption view (time-series charts)
    */
   private _renderConsumptionView(): TemplateResult {
-    const language = this.hass?.language || 'en';
+    const language = this._getLanguage();
     
     // Calculate total consumption for summary
     const totalConsumption = this._consumptionData.reduce((sum, d) => 
@@ -2575,7 +2603,7 @@ export class OctopusConsumptionCard extends LitElement {
             </div>
           </div>
           <div class="summary-date-range">${this._formatDateRange()}</div>
-          <div class="summary-total-consumption">${totalConsumption.toLocaleString('es-ES', { 
+          <div class="summary-total-consumption">${totalConsumption.toLocaleString(this._getLocale(), { 
             minimumFractionDigits: 3, 
             maximumFractionDigits: 3 
           })} kWh</div>
@@ -2598,7 +2626,7 @@ export class OctopusConsumptionCard extends LitElement {
    * Render consumption list view (table format)
    */
   private _renderConsumptionList(): TemplateResult {
-    const language = this.hass?.language || 'en';
+    const language = this._getLanguage();
     
     if (this._loading) {
       return html`<div class="loading">${localize("card.loading", language)}</div>`;
@@ -2662,18 +2690,18 @@ export class OctopusConsumptionCard extends LitElement {
       // Format date based on current period
       let dateStr = '';
       if (this._currentPeriod === 'day') {
-        dateStr = date.toLocaleTimeString('es-ES', { 
+        dateStr = date.toLocaleTimeString(this._getLocale(), { 
           hour: '2-digit', 
           minute: '2-digit' 
         });
       } else if (this._currentPeriod === 'week') {
-        dateStr = date.toLocaleDateString('es-ES', { 
+        dateStr = date.toLocaleDateString(this._getLocale(), { 
           weekday: 'short',
           day: 'numeric',
           month: 'short'
         });
       } else {
-        dateStr = date.toLocaleDateString('es-ES', { 
+        dateStr = date.toLocaleDateString(this._getLocale(), { 
           day: 'numeric',
           month: 'short'
         });
@@ -2735,7 +2763,7 @@ export class OctopusConsumptionCard extends LitElement {
    * Render heat calendar view
    */
   private _renderHeatCalendarView(): TemplateResult {
-    const language = this.hass?.language || 'en';
+    const language = this._getLanguage();
     return html`
       ${this.config.show_navigation !== false ? html`
         <div class="navigation-controls">
@@ -2780,7 +2808,7 @@ export class OctopusConsumptionCard extends LitElement {
    * Render week analysis view
    */
   private _renderWeekAnalysisView(): TemplateResult {
-    const language = this.hass?.language || 'en';
+    const language = this._getLanguage();
     return html`
       ${this.config.show_navigation !== false ? html`
         <div class="navigation-controls">
@@ -2819,7 +2847,7 @@ export class OctopusConsumptionCard extends LitElement {
    * Render tariff comparison view
    */
   private _renderTariffComparisonView(): TemplateResult {
-    const language = this.hass?.language || 'en';
+    const language = this._getLanguage();
     
     // Show loading state
     if (this._loading) {
@@ -2866,7 +2894,7 @@ export class OctopusConsumptionCard extends LitElement {
    * Format date for display (Spanish locale)
    */
   private _formatDate(date: Date, period?: 'day' | 'week' | 'month' | 'year'): string {
-    const language = this.hass?.language || 'en';
+    const language = this._getLanguage();
     if (period === 'year') {
       // For year view, show month abbreviation using localized names
       const monthNames = [
@@ -2936,7 +2964,7 @@ export class OctopusConsumptionCard extends LitElement {
   }
 
   private _renderChart(): TemplateResult {
-    const language = this.hass?.language || 'en';
+    const language = this._getLanguage();
     
     // Always return the chart container to ensure it exists in DOM
     // This prevents the chart from disappearing when loading state changes
@@ -3280,7 +3308,7 @@ export class OctopusConsumptionCard extends LitElement {
         height,
         padding,
         colors,
-        language: this.hass?.language || 'en'
+        locale: this._getLocale()
       });
     } else {
       // Clear previous chart content and resize
@@ -3329,7 +3357,7 @@ export class OctopusConsumptionCard extends LitElement {
             });
           } else {
             // Show error message in container
-            const language = this.hass?.language || 'en';
+            const language = this._getLanguage();
             const errorDiv = document.createElement('div');
             errorDiv.className = 'error-message';
             errorDiv.innerHTML = `
@@ -3397,7 +3425,7 @@ export class OctopusConsumptionCard extends LitElement {
 
   private _renderComparison(): TemplateResult {
     if (!this._comparisonResult || !this._comparisonResult.tariffs || this._comparisonResult.tariffs.length === 0) {
-      const language = this.hass?.language || 'en';
+      const language = this._getLanguage();
       // Show more informative message if we have error info
       if (this._comparisonError) {
         return html`

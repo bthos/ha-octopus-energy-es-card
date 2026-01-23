@@ -373,8 +373,7 @@ function getISOWeekNumber(date: Date): number {
  * Format tooltip text for browser tooltip
  * Used across all chart types (bar, line, stacked area)
  */
-export function formatTooltipText(point: DataPoint, language: string = 'en'): string {
-  const locale = language === 'es' ? 'es-ES' : language === 'be' ? 'be-BY' : 'en-US';
+export function formatTooltipText(point: DataPoint, locale: string = 'en-US'): string {
   const valueStr = point.value.toLocaleString(locale, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2

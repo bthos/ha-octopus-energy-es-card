@@ -11,7 +11,7 @@ export interface ChartConfig {
   padding: { top: number; right: number; bottom: number; left: number };
   colors: ChartColors;
   fontFamily?: string;
-  language?: string; // Language code for localization (e.g., 'en', 'es', 'be')
+  locale?: string; // Locale code for number formatting (e.g., 'en-US', 'es-ES', 'be-BY')
 }
 
 export interface ChartGradient {

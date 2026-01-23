@@ -155,11 +155,11 @@ jobs:
           CURRENT_SHA="${{ github.event.workflow_run.head_sha }}"
           
           if [ -z "$PREVIOUS_TAG" ] || [ "$PREVIOUS_TAG" = "" ]; then
-            # First release - get all commits
-            git log --pretty=format:"- %s (%h)" --reverse > changelog.txt
+            # First release - get all commits, excluding "Build bundle" commits
+            git log --pretty=format:"- %s (%h)" --reverse | grep -v "Build bundle" > changelog.txt
           else
-            # Get commits since last tag
-            git log ${PREVIOUS_TAG}..${CURRENT_SHA} --pretty=format:"- %s (%h)" --reverse > changelog.txt
+            # Get commits since last tag, excluding "Build bundle" commits
+            git log ${PREVIOUS_TAG}..${CURRENT_SHA} --pretty=format:"- %s (%h)" --reverse | grep -v "Build bundle" > changelog.txt
           fi
           
           if [ ! -s changelog.txt ]; then

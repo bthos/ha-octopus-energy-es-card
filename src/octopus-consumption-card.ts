@@ -549,6 +549,24 @@ export class OctopusConsumptionCard extends LitElement {
     return String(error);
   }
 
+  /**
+   * Checks if the error indicates that the integration is not available
+   */
+  private _isIntegrationNotAvailableError(error: string | null): boolean {
+    if (!error) return false;
+    const errorLower = error.toLowerCase();
+    // Check for integration-related errors
+    return (
+      (errorLower.includes('octopus_energy_es') || errorLower.includes('octopus energy españa')) &&
+      (errorLower.includes('not available') ||
+       errorLower.includes('not found') ||
+       errorLower.includes('not installed') ||
+       errorLower.includes('not configured') ||
+       errorLower.includes('ensure the') ||
+       errorLower.includes('integration is installed'))
+    );
+  }
+
 
   /**
    * Extracts response data from WebSocket result
@@ -2429,13 +2447,35 @@ export class OctopusConsumptionCard extends LitElement {
 
     if (this._error) {
       const isConfigError = this._error.includes("Configuration incomplete") || this._error.includes("configuration is required");
+      const isIntegrationError = this._isIntegrationNotAvailableError(this._error);
       
       return html`
         <div class="error-message">
           <ha-icon icon="${isConfigError ? "mdi:cog-outline" : "mdi:alert-circle"}" class="error-icon"></ha-icon>
           <div class="error-title">${isConfigError ? localize("card.error.configuration_required", language) : localize("card.error.unable_to_load", language)}</div>
           <div class="error-details">${this._error}</div>
-          ${isConfigError ? html`
+          ${isIntegrationError ? html`
+            <div class="integration-badges">
+              <a 
+                href="https://my.home-assistant.io/redirect/hacs_repository/?owner=bthos&repository=ha-octopus-energy-es&category=integration" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                class="integration-badge hacs-badge"
+              >
+                <ha-icon icon="mdi:package-variant"></ha-icon>
+                <span>HACS</span>
+              </a>
+              <a 
+                href="https://github.com/bthos/ha-octopus-energy-es" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                class="integration-badge github-badge"
+              >
+                <ha-icon icon="mdi:github"></ha-icon>
+                <span>GitHub</span>
+              </a>
+            </div>
+          ` : isConfigError ? html`
             <div class="error-details" style="margin-top: 12px; font-size: 13px;">
               ${localize("card.error.config_help", language)}
             </div>
@@ -2577,10 +2617,38 @@ export class OctopusConsumptionCard extends LitElement {
     }
 
     if (this._error) {
+      const isIntegrationError = this._isIntegrationNotAvailableError(this._error);
       return html`
         <div class="error-message">
+          <ha-icon icon="mdi:alert-circle" class="error-icon"></ha-icon>
           <div class="error-title">${localize("card.error.unable_to_load", language)}</div>
           <div class="error-details">${this._error}</div>
+          ${isIntegrationError ? html`
+            <div class="integration-badges">
+              <a 
+                href="https://my.home-assistant.io/redirect/hacs_repository/?owner=bthos&repository=ha-octopus-energy-es&category=integration" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                class="integration-badge hacs-badge"
+              >
+                <ha-icon icon="mdi:package-variant"></ha-icon>
+                <span>HACS</span>
+              </a>
+              <a 
+                href="https://github.com/bthos/ha-octopus-energy-es" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                class="integration-badge github-badge"
+              >
+                <ha-icon icon="mdi:github"></ha-icon>
+                <span>GitHub</span>
+              </a>
+            </div>
+          ` : html`
+            <button class="retry-button" @click=${this._loadData}>
+              ${localize("card.button.retry", language)}
+            </button>
+          `}
         </div>
       `;
     }

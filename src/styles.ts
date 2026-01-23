@@ -224,6 +224,72 @@ export const cardStyles = css`
     opacity: 0.9;
   }
 
+  .integration-badges {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+
+  .integration-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+  }
+
+  .integration-badge ha-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  .integration-badge.hacs-badge {
+    background: var(--hacs-badge-background, rgba(41, 128, 185, 0.1));
+    color: var(--hacs-badge-color, #2980b9);
+    border-color: var(--hacs-badge-border, rgba(41, 128, 185, 0.3));
+  }
+
+  .integration-badge.hacs-badge:hover {
+    background: var(--hacs-badge-background-hover, rgba(41, 128, 185, 0.2));
+    border-color: var(--hacs-badge-border-hover, #2980b9);
+    transform: translateY(-1px);
+  }
+
+  .integration-badge.github-badge {
+    background: var(--github-badge-background, rgba(33, 33, 33, 0.1));
+    color: var(--github-badge-color, #212121);
+    border-color: var(--github-badge-border, rgba(33, 33, 33, 0.3));
+  }
+
+  .integration-badge.github-badge:hover {
+    background: var(--github-badge-background-hover, rgba(33, 33, 33, 0.2));
+    border-color: var(--github-badge-border-hover, #212121);
+    transform: translateY(-1px);
+  }
+
+  /* Dark mode support */
+  @media (prefers-color-scheme: dark) {
+    .integration-badge.hacs-badge {
+      background: var(--hacs-badge-background, rgba(41, 128, 185, 0.2));
+      color: var(--hacs-badge-color, #5dade2);
+      border-color: var(--hacs-badge-border, rgba(41, 128, 185, 0.4));
+    }
+
+    .integration-badge.github-badge {
+      background: var(--github-badge-background, rgba(255, 255, 255, 0.1));
+      color: var(--github-badge-color, #ffffff);
+      border-color: var(--github-badge-border, rgba(255, 255, 255, 0.3));
+    }
+  }
+
   .comparison-error {
     padding: 12px;
     background: var(--warning-color);

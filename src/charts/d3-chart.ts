@@ -47,11 +47,20 @@ export class D3Chart {
       .attr('height', config.height)
       .attr('viewBox', `0 0 ${config.width} ${config.height}`)
       .attr('role', 'img') // Identify as image for screen readers
-      .attr('aria-label', localize('chart.accessibility.title', language)) // Use aria-label for accessibility
+      // Don't use aria-label on SVG to avoid interfering with child element tooltips
+      // Use aria-labelledby with a hidden title element instead
       .attr('aria-live', 'polite') // Announce dynamic updates
       .attr('tabindex', '0') // Make keyboard-focusable
       .style('display', 'block')
       .style('pointer-events', 'all'); // SVG interactive (Victory pattern)
+    
+    // Add hidden title element for screen readers (doesn't interfere with tooltips)
+    this.svg.append('title')
+      .attr('id', `${this.chartId}-title`)
+      .attr('style', 'display: none')
+      .text(localize('chart.accessibility.title', language));
+    
+    this.svg.attr('aria-labelledby', `${this.chartId}-title`);
 
 
     // Add keyboard and touch support
@@ -208,12 +217,12 @@ export class D3Chart {
       maximumFractionDigits: 2 
     });
     
-    // Update aria-label for accessibility
+    // Update title element for accessibility
     const titleText = localizeWithVars('chart.accessibility.title_with_data', {
       period,
       total: formattedTotal
     }, language);
-    this.svg.attr('aria-label', titleText);
+    this.svg.select(`#${this.chartId}-title`).text(titleText);
   }
 
   /**

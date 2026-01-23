@@ -129,14 +129,13 @@ export async function renderD3StackedAreaChart(
             timestamp: timestamps[closestIndex]
           };
           context.setHoveredPoint(point);
-          // Update title dynamically - use title element for better browser compatibility
-          d3.select(this).select('title').remove(); // Remove old title if exists
-          d3.select(this).append('title').text(formatTooltipText(point, config.language));
+          // Update title dynamically
+          d3.select(this).attr('title', formatTooltipText(point, config.language));
         }
       })
       .on('mouseleave', function() {
         context.setHoveredPoint(null);
-        d3.select(this).select('title').remove();
+        d3.select(this).attr('title', '');
       })
       .on('mousemove', function(event, d) {
         const [x] = d3.pointer(event, contentGroup.node());
@@ -161,9 +160,8 @@ export async function renderD3StackedAreaChart(
             value: layer.data[closestIndex],
             timestamp: timestamps[closestIndex]
           };
-          // Update title dynamically - use title element for better browser compatibility
-          d3.select(this).select('title').remove(); // Remove old title if exists
-          d3.select(this).append('title').text(formatTooltipText(point, config.language));
+          // Update title dynamically
+          d3.select(this).attr('title', formatTooltipText(point, config.language));
         }
       });
   });

@@ -19,13 +19,13 @@ export const CHART_CONSTANTS = {
   GRID_OPACITY: 0.2,
   AXIS_OPACITY: 0.2,
   TEXT_OPACITY: 0.9,
-  FONT_SIZE: '13px',
+  FONT_SIZE: '15px',
   FONT_FAMILY: 'Roboto, sans-serif',
   Y_AXIS_TICKS: 5,
   Y_AXIS_PADDING: 1.1, // 10% padding at top
   BAR_PADDING_MONTH_WEEK: 0.4,
   BAR_PADDING_DAY: 0.1,
-  Y_AXIS_LABEL_OFFSET_X: -20,
+  Y_AXIS_LABEL_OFFSET_X: -25,
   Y_AXIS_LABEL_OFFSET_Y: 5,
   MAX_X_TICKS_DAY: 12,
 } as const;

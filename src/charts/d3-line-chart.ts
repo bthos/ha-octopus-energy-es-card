@@ -19,7 +19,6 @@ import {
   createGridLines,
   createXAxis,
   createYAxis,
-  addYAxisLabel,
   getXCoordinate
 } from './chart-render-utils';
 
@@ -57,9 +56,6 @@ export async function renderD3LineChart(
   // Create axes
   createXAxis(svg, xScale, timestamps, period, config);
   createYAxis(svg, yScale, config);
-
-  // Add Y-axis label
-  addYAxisLabel(svg, padding, config);
 
   // Create line generator
   const line = d3.line<DataPoint>()

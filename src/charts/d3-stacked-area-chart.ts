@@ -19,7 +19,6 @@ import {
   createGridLines,
   createXAxis,
   createYAxis,
-  addYAxisLabel,
   getXCoordinate
 } from './chart-render-utils';
 
@@ -60,9 +59,6 @@ export async function renderD3StackedAreaChart(
   // Create axes
   createXAxis(svg, xScale, timestamps, period, config);
   createYAxis(svg, yScale, config);
-
-  // Add Y-axis label
-  addYAxisLabel(svg, padding, config);
 
   // Prepare stacked data using d3.stack
   // Create data array for stacking - each element is an array of values for all layers at that timestamp

@@ -19,7 +19,6 @@ import {
   createGridLines,
   createXAxis,
   createYAxis,
-  addYAxisLabel,
   getXCoordinate,
   CHART_CONSTANTS
 } from './chart-render-utils';
@@ -71,9 +70,6 @@ export async function renderD3BarChart(
   // Create axes
   createXAxis(svg, xScale, timestamps, period, config);
   createYAxis(svg, yScale, config);
-
-  // Add Y-axis label
-  addYAxisLabel(svg, padding, config);
 
   // Create gradient if enabled (Octopus Energy pink gradient pattern)
   const useGradient = config.colors.gradient?.enabled ?? false;

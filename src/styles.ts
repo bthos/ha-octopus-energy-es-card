@@ -80,6 +80,28 @@ export const cardStyles = css`
     pointer-events: all; /* SVG interactive */
   }
 
+  /* Hide axis labels by default, show on hover */
+  .chart-container .axis-x text,
+  .chart-container .axis-y text {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .chart-container:hover .axis-x text,
+  .chart-container:hover .axis-y text {
+    opacity: 0.9;
+  }
+
+  /* Hide background rectangles for X-axis labels by default */
+  .chart-container .axis-x rect {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .chart-container:hover .axis-x rect {
+    opacity: 0.85;
+  }
+
   /* Mobile-specific optimizations */
   @media (hover: none) and (pointer: coarse) {
     .chart-container {
@@ -93,6 +115,13 @@ export const cardStyles = css`
     circle.point {
       min-width: 44px;
       min-height: 44px;
+    }
+
+    /* Show axis labels always on mobile (hover doesn't work) */
+    .chart-container .axis-x text,
+    .chart-container .axis-y text,
+    .chart-container .axis-x rect {
+      opacity: 0.9 !important;
     }
   }
 

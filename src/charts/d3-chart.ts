@@ -47,7 +47,7 @@ export class D3Chart {
       .attr('height', config.height)
       .attr('viewBox', `0 0 ${config.width} ${config.height}`)
       .attr('role', 'img') // Identify as image for screen readers
-      .attr('aria-label', localize('chart.accessibility.title', language)) // Use aria-label instead of title to avoid overriding child tooltips
+      .attr('aria-label', localize('chart.accessibility.title', language)) // Use aria-label for accessibility
       .attr('aria-live', 'polite') // Announce dynamic updates
       .attr('tabindex', '0') // Make keyboard-focusable
       .style('display', 'block')
@@ -208,11 +208,12 @@ export class D3Chart {
       maximumFractionDigits: 2 
     });
     
-    // Update aria-label instead of title element to avoid overriding child tooltips
-    this.svg.attr('aria-label', localizeWithVars('chart.accessibility.title_with_data', {
+    // Update aria-label for accessibility
+    const titleText = localizeWithVars('chart.accessibility.title_with_data', {
       period,
       total: formattedTotal
-    }, language));
+    }, language);
+    this.svg.attr('aria-label', titleText);
   }
 
   /**

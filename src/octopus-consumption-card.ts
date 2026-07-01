@@ -3720,8 +3720,8 @@ if (typeof window !== 'undefined' && typeof window.customElements !== 'undefined
     'font-weight: bold;'
   );
   
-  Logger.info('Consumption Card', `v${VERSION}`);
-  Logger.info(isRegistered ? '✓ Custom element: ' : '✗ Custom element: ', 'octopus-consumption-card');
+  Logger.info('Consumption Card ', `v${VERSION}`);
+  Logger.info('Custom element:', isRegistered ? ' ✓ ' : ' ✗ ', 'octopus-consumption-card');
   Logger.success('✓ Added to card picker');
   Logger.success('✓ Visual editor enabled');
   Logger.info('ℹ Supported languages: ', 'en, es, be');

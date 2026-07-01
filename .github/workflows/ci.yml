@@ -1,0 +1,150 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npm run type-check
+      - run: mkdir -p www/community/ha-octopus-energy-es-card
+      - run: npm run build
+
+      - name: Verify bundle
+        run: |
+          BUNDLE="www/community/ha-octopus-energy-es-card/octopus-consumption-card.bundle.js"
+          [ -f "$BUNDLE" ] || { echo "Bundle not found"; exit 1; }
+          echo "Bundle size: $(wc -c < "$BUNDLE") bytes"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bundle
+          path: www/community/ha-octopus-energy-es-card/octopus-consumption-card.bundle.js
+
+  validate:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hacs/action@main
+        with:
+          category: plugin
+          ignore: brands
+
+  release:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: bundle
+          path: www/community/ha-octopus-energy-es-card
+
+      - name: Determine version
+        id: version
+        run: |
+          CURRENT=$(node -p "require('./package.json').version")
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          LATEST_TAG_VERSION="${LATEST_TAG#v}"
+
+          # If package.json version is already ahead of the latest tag, use it as-is
+          # Otherwise bump the patch
+          if [ "$CURRENT" != "$LATEST_TAG_VERSION" ] && \
+             [ "$(printf '%s\n' "$CURRENT" "$LATEST_TAG_VERSION" | sort -V | tail -1)" = "$CURRENT" ]; then
+            echo "version=$CURRENT" >> $GITHUB_OUTPUT
+            echo "bumped=false" >> $GITHUB_OUTPUT
+            echo "Version $CURRENT already ahead of tag $LATEST_TAG — no bump needed"
+          else
+            IFS='.' read -ra PARTS <<< "$CURRENT"
+            NEW="${PARTS[0]}.${PARTS[1]}.$((PARTS[2] + 1))"
+            echo "version=$NEW" >> $GITHUB_OUTPUT
+            echo "bumped=true" >> $GITHUB_OUTPUT
+            echo "Bumping $CURRENT → $NEW"
+          fi
+
+      - name: Update version files
+        if: steps.version.outputs.bumped == 'true'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            pkg.version = '$VERSION';
+            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+          sed -i "s/const VERSION = ['\"][^'\"]*['\"];/const VERSION = '$VERSION';/" src/octopus-consumption-card.ts
+
+      - name: Commit and tag
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Stage bundle (always) and version files (if bumped)
+          git add -f www/community/ha-octopus-energy-es-card/octopus-consumption-card.bundle.js
+          if [ "${{ steps.version.outputs.bumped }}" = "true" ]; then
+            git add package.json src/octopus-consumption-card.ts
+          fi
+
+          git diff --staged --quiet || git commit -m "Release v${VERSION} [skip ci]"
+          git tag -a "v${VERSION}" -m "Release v${VERSION}"
+          git push --follow-tags
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 "v${VERSION}^" 2>/dev/null || echo "")
+          echo "previous_tag=${PREVIOUS_TAG}" >> $GITHUB_OUTPUT
+
+          if [ -z "$PREVIOUS_TAG" ]; then
+            COMMITS=$(git log --pretty=format:"- %s (%h)" --reverse | grep -vE "(Release v|Build bundle|Merge branch)")
+          else
+            COMMITS=$(git log "${PREVIOUS_TAG}..v${VERSION}" --pretty=format:"- %s (%h)" --reverse | grep -vE "(Release v|Build bundle|Merge branch)")
+          fi
+
+          [ -z "$COMMITS" ] && COMMITS="- Maintenance release"
+
+          DELIMITER="EOF_$(date +%s)"
+          {
+            printf "changelog<<%s\n" "$DELIMITER"
+            printf "%s\n" "$COMMITS"
+            printf "%s\n" "$DELIMITER"
+          } >> $GITHUB_OUTPUT
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
+          body: |
+            ## Changes
+
+            ${{ steps.changelog.outputs.changelog }}
+
+            ---
+            [Full changelog](https://github.com/${{ github.repository }}/compare/${{ steps.changelog.outputs.previous_tag }}...v${{ steps.version.outputs.version }})
+          files: www/community/ha-octopus-energy-es-card/octopus-consumption-card.bundle.js

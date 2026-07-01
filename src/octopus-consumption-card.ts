@@ -3707,7 +3707,7 @@ if (typeof window !== 'undefined' && typeof window.customElements !== 'undefined
   (window as any).OctopusConsumptionCard = OctopusConsumptionCard;
 
   // Styled console logs for DevTools (after registration)
-  const VERSION = '0.7.2';
+  const VERSION = '0.7.3';
   const isRegistered = !!window.customElements.get('octopus-consumption-card');
   
   // Branding header (keep styled for visual impact)

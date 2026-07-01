@@ -111,7 +111,7 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
     }
     // Update locale if hass changed
     if (changedProperties.has("hass") && this.hass) {
-      const newLocale = this.hass.locale || 'en-US';
+      const newLocale = this._extractLocale();
       if (this._locale !== newLocale) {
         this._locale = newLocale;
       }
@@ -130,8 +130,21 @@ export class OctopusConsumptionCardEditor extends LitElement implements Lovelace
       }
     }
     if (this.hass) {
-      this._locale = this.hass.locale || 'en-US';
+      this._locale = this._extractLocale();
     }
+  }
+
+  /**
+   * Extract a locale string for localize().
+   * HA provides hass.locale as a FrontendLocaleData object ({ language, ... }),
+   * NOT a string. Passing the object to localize() throws
+   * "e.toLowerCase is not a function", so extract the language string here.
+   */
+  private _extractLocale(): string {
+    const locale = this.hass?.locale as any;
+    if (typeof locale === "string" && locale) return locale;
+    if (locale && typeof locale === "object" && locale.language) return locale.language;
+    return (this.hass?.language as string) || "en-US";
   }
 
   private _valueChanged(ev: CustomEvent): void {

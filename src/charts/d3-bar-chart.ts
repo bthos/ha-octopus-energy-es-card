@@ -11,6 +11,7 @@ import type {
   D3ChartContext
 } from './chart-types';
 import { formatTooltipText, calculateMovingAverage } from './chart-utils';
+import { OCTOPUS_BRAND } from '../brand';
 import {
   getChartDimensions,
   createXScale,
@@ -85,8 +86,8 @@ export async function renderD3BarChart(
     const gradientConfig = config.colors.gradient;
     const gradientId = gradientConfig.id || 'octopus-pink-gradient';
     const stops = gradientConfig.stops || [
-      { offset: '0%', color: '#F050F8' }, // Bright pink (top)
-      { offset: '100%', color: '#FA98FF' } // Light pink (bottom)
+      { offset: '0%', color: OCTOPUS_BRAND.gradientTop }, // Bright pink (top)
+      { offset: '100%', color: OCTOPUS_BRAND.gradientBottom } // Light pink (bottom)
     ];
 
     // Create linear gradient (top to bottom by default)
@@ -147,7 +148,7 @@ export async function renderD3BarChart(
       if (context.hoveredPoint && 
           context.hoveredPoint.timestamp === d.timestamp &&
           context.hoveredPoint.value === d.value) {
-        return config.colors.hover || '#ff69b4';
+        return config.colors.hover || OCTOPUS_BRAND.pink;
       }
       // Use gradient if enabled, otherwise use theme color
       if (useGradient) {
@@ -169,7 +170,7 @@ export async function renderD3BarChart(
       d3.select(this)
         .transition()
         .duration(200)
-        .attr('fill', config.colors.hover || '#ff69b4');
+        .attr('fill', config.colors.hover || OCTOPUS_BRAND.pink);
     })
     .on('mouseleave', function() {
       context.setHoveredPoint(null);

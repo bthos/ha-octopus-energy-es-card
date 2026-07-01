@@ -3,10 +3,17 @@
  * Extracted from the main component for better organization
  */
 
-import { css } from "lit";
+import { css, unsafeCSS } from "lit";
+import { OCTOPUS_BRAND } from "./brand";
 
 export const cardStyles = css`
   :host {
+    /* Octopus Energy España brand tokens — single source of truth in src/brand.ts.
+       Override any of these from a Home Assistant theme to re-skin the card. */
+    --oe-purple: ${unsafeCSS(OCTOPUS_BRAND.purple)};
+    --oe-pink: ${unsafeCSS(OCTOPUS_BRAND.pink)};
+    --oe-tooltip-bg: ${unsafeCSS(OCTOPUS_BRAND.tooltipBg)};
+    --oe-font-family: ${unsafeCSS(OCTOPUS_BRAND.fontFamily)};
     display: block;
     box-shadow: var(--ha-card-box-shadow, none);
     box-sizing: border-box;
@@ -131,24 +138,24 @@ export const cardStyles = css`
   }
 
   .chart-bar {
-    fill: #8B5CF6;
+    fill: var(--oe-purple);
     transition: fill 0.2s ease;
     cursor: help;
   }
 
   .chart-bar:hover {
-    fill: #ff69b4;
+    fill: var(--oe-pink);
   }
 
   /* Path-based bars (for rounded top corners) */
   path.bar {
-    fill: #8B5CF6;
+    fill: var(--oe-purple);
     transition: fill 0.2s ease;
     cursor: help;
   }
 
   path.bar:hover {
-    fill: #ff69b4;
+    fill: var(--oe-pink);
   }
 
   .chart-grid-line {
@@ -165,22 +172,22 @@ export const cardStyles = css`
   }
 
   .tooltip-bg {
-    fill: rgba(40, 26, 61, 0.95);
+    fill: var(--oe-tooltip-bg);
     stroke: none;
   }
 
   .tooltip-value {
-    fill: #ff69b4;
+    fill: var(--oe-pink);
     font-size: 16px;
     font-weight: 600;
-    font-family: Roboto, sans-serif;
+    font-family: var(--oe-font-family);
   }
 
   .tooltip-date {
     fill: #fff;
     font-size: 13px;
     font-weight: 500;
-    font-family: Roboto, sans-serif;
+    font-family: var(--oe-font-family);
   }
 
 

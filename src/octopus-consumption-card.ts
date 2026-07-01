@@ -18,6 +18,7 @@ import "./octopus-consumption-card-editor";
 import { OctopusConsumptionCardEditor } from "./octopus-consumption-card-editor";
 import { Logger } from "./logger";
 import { cardStyles } from "./styles";
+import { OCTOPUS_BRAND } from "./brand";
 import { D3Chart } from "./charts";
 import type { ChartData, StackedData, AnimationConfig, ChartConfig } from "./charts";
 import { prepareChartData, calculatePoints, groupByWeeks, groupByMonths } from "./charts/chart-utils";
@@ -36,7 +37,9 @@ interface HomeAssistant {
     [key: string]: any;
   }) => Promise<T>;
   language?: string; // Two-letter language code (e.g., 'es', 'en')
-  locale?: string; // Full locale code (e.g., 'es-ES', 'en-US')
+  // HA passes locale as a FrontendLocaleData object ({ language, number_format, … }),
+  // NOT a string. Tolerate a bare string too for safety/back-compat.
+  locale?: { language?: string; [key: string]: any } | string;
   [key: string]: any;
 }
 
@@ -111,7 +114,14 @@ export class OctopusConsumptionCard extends LitElement {
    * Returns locale from hass.locale or fallback to 'en-US'
    */
   private _getLocale(): string {
-    return this.hass?.locale || 'en-US';
+    const locale = this.hass?.locale;
+    // HA provides hass.locale as a FrontendLocaleData object ({ language, ... }).
+    // Passing that object to localize()/toLocaleString() throws
+    // "e.toLowerCase is not a function", so extract the language string here.
+    // Older callers may still pass a bare locale string — support both.
+    if (typeof locale === 'string' && locale) return locale;
+    if (locale && typeof locale === 'object' && locale.language) return locale.language;
+    return this.hass?.language || 'en-US';
   }
 
   /**
@@ -123,17 +133,13 @@ export class OctopusConsumptionCard extends LitElement {
       throw new Error("Invalid configuration");
     }
 
-    // Validate required fields (Home Assistant best practice: validate early)
-    if (!config.source_entry_id) {
-      throw new Error("Configuration incomplete. Please select your Octopus Energy tariff in the card editor.");
-    }
+    // NOTE: We deliberately do NOT throw for a missing source_entry_id/view here.
+    // Throwing in setConfig makes the card-picker preview (preview: true) and the
+    // "Add card" flow render a raw Home Assistant error card. Instead we store the
+    // config and let _validateConfig()/render() surface the friendly
+    // "select your tariff" state (card.error.configuration_required).
+    this.config = config.view ? config : { ...config, view: "consumption" };
 
-    if (!config.view) {
-      throw new Error("Configuration incomplete. Please select a view in the card editor.");
-    }
-
-    this.config = config;
-    
     // Initialize state from config if available
     if (config.default_period) {
       this._currentPeriod = config.default_period;
@@ -3261,11 +3267,10 @@ export class OctopusConsumptionCard extends LitElement {
       timestamps
     );
 
-    // Get colors - matching Octopus Energy España style
-    // Bar default color: purple/violet (#8B5CF6)
-    // Bar hover color: bright pink (#ff69b4)
-    const barDefaultColor = '#8B5CF6'; // Purple/violet like Octopus Energy España
-    const barHoverColor = '#ff69b4'; // Bright pink for hover
+    // Get colors - matching Octopus Energy España style.
+    // Brand colors come from the single source of truth in src/brand.ts.
+    const barDefaultColor = OCTOPUS_BRAND.purple; // Purple/violet like Octopus Energy España
+    const barHoverColor = OCTOPUS_BRAND.pink; // Bright pink for hover
     const primaryColor = this._getComputedColor('--primary-color', barDefaultColor);
     const colors = {
       text: this._getComputedColor('--secondary-text-color', '#b0b0b0'),
@@ -3684,7 +3689,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
       (window as any).customCards.push({
         type: 'custom:octopus-consumption-card',
         name: 'Octopus Energy España Consumption',
-        preview: false,
+        preview: true,
         description: 'Display consumption data and tariff comparisons for Octopus Energy España',
       });
     }
@@ -3697,7 +3702,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
   (window as any).OctopusConsumptionCard = OctopusConsumptionCard;
 
   // Styled console logs for DevTools (after registration)
-  const VERSION = '0.6.36';
+  const VERSION = '0.6.37';
   const isRegistered = !!customElements.get('octopus-consumption-card');
   
   // Branding header (keep styled for visual impact)

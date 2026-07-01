@@ -11,6 +11,7 @@ import type {
   D3ChartContext
 } from './chart-types';
 import { formatTooltipText, calculateMovingAverage } from './chart-utils';
+import { OCTOPUS_BRAND } from '../brand';
 import {
   getChartDimensions,
   createXScale,
@@ -155,7 +156,7 @@ export async function renderD3LineChart(
       if (context.hoveredPoint && 
           context.hoveredPoint.timestamp === d.timestamp &&
           context.hoveredPoint.value === d.value) {
-        return config.colors.hover || '#ff69b4';
+        return config.colors.hover || OCTOPUS_BRAND.pink;
       }
       return config.colors.primary;
     })
@@ -173,7 +174,7 @@ export async function renderD3LineChart(
         .transition()
         .duration(150) // Match Victory.js tooltip fade timing
         .attr('r', 6)
-        .attr('fill', config.colors.hover || '#ff69b4');
+        .attr('fill', config.colors.hover || OCTOPUS_BRAND.pink);
     })
     .on('mouseleave', function() {
       context.setHoveredPoint(null);

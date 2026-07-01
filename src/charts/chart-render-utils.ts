@@ -11,6 +11,7 @@ import type {
   DataPoint
 } from './chart-types';
 import { formatDate } from './chart-utils';
+import { OCTOPUS_BRAND } from '../brand';
 
 /**
  * Chart rendering constants
@@ -20,7 +21,7 @@ export const CHART_CONSTANTS = {
   AXIS_OPACITY: 0.2,
   TEXT_OPACITY: 0.9,
   FONT_SIZE: '15px',
-  FONT_FAMILY: 'Roboto, sans-serif',
+  FONT_FAMILY: OCTOPUS_BRAND.fontFamily,
   Y_AXIS_TICKS: 5,
   Y_AXIS_PADDING: 1.1, // 10% padding at top
   BAR_PADDING_MONTH_WEEK: 0.4,

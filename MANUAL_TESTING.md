@@ -11,7 +11,7 @@ This document provides a checklist for manually testing the Octopus Energy Espa�
 - [ ] Bundle file (`octopus-consumption-card.bundle.js`) is generated
 - [ ] Bundle size is reasonable (< 500KB)
 - [ ] Card can be installed via HACS
-- [ ] Card appears in Lovelace card picker
+- [ ] Card appears in Lovelace card picker (after a hard reload — Shift-F5 — to bust the browser cache)
 
 ### ✅ Basic Functionality
 
@@ -136,3 +136,6 @@ This document provides a checklist for manually testing the Octopus Energy Espa�
 - Use actual Octopus Energy España integration for realistic testing
 - Test with different data scenarios (empty, partial, full data)
 - Verify translations work in different languages (en, es, be)
+- After a HACS update, always hard-reload the browser (Shift-F5 / Ctrl-Shift-R) before
+  testing the card picker. A cached bundle will serve the old version and may reproduce
+  the "Custom element not found" symptom even when the correct bundle is deployed.

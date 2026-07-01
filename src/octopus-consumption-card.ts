@@ -3689,7 +3689,15 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
       (window as any).customCards.push({
         type: 'custom:octopus-consumption-card',
         name: 'Octopus Energy España Consumption',
-        preview: true,
+        // preview:false → the picker shows the name + description text instead of
+        // eagerly rendering a live instance. Rendering an instance forces HA's
+        // getLovelaceElementClass() to resolve the class within a 2000ms
+        // whenDefined() window; our large bundle (Lit + full D3 + editor) can miss
+        // that window on the energy dashboard, producing "Custom element not found"
+        // and a downstream null getElementById crash in hui-card-picker. The card
+        // works fine once the user actually adds/edits it, so a text-only preview
+        // is the safe choice here.
+        preview: false,
         description: 'Display consumption data and tariff comparisons for Octopus Energy España',
       });
     }
@@ -3702,7 +3710,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
   (window as any).OctopusConsumptionCard = OctopusConsumptionCard;
 
   // Styled console logs for DevTools (after registration)
-  const VERSION = '0.6.38';
+  const VERSION = '0.6.39';
   const isRegistered = !!customElements.get('octopus-consumption-card');
   
   // Branding header (keep styled for visual impact)

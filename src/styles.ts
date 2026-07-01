@@ -290,9 +290,6 @@ export const cardStyles = css`
   }
 
   .integration-badge ha-icon {
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
   }
 
   .integration-badge.hacs-badge {

@@ -9,6 +9,14 @@ const VERSION = packageJson.version;
 
 export default {
   input: 'dist/octopus-consumption-card.js',
+  context: 'window',
+  onwarn(warning, warn) {
+    // d3-selection has intentional internal cycles; suppress them
+    if (warning.code === 'CIRCULAR_DEPENDENCY' && warning.ids?.some(id => id.includes('node_modules') && id.includes('d3'))) {
+      return;
+    }
+    warn(warning);
+  },
   output: {
     file: 'www/community/ha-octopus-energy-es-card/octopus-consumption-card.bundle.js',
     format: 'iife',

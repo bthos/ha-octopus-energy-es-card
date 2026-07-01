@@ -3663,11 +3663,11 @@ declare global {
 // Explicitly register the custom element for Home Assistant
 // This ensures the element is available even if decorators don't work properly
 // Register immediately when module loads (for IIFE bundles)
-if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
+if (typeof window !== 'undefined' && typeof window.customElements !== 'undefined') {
   // Register the custom element FIRST
   try {
-    if (!customElements.get('octopus-consumption-card')) {
-      customElements.define('octopus-consumption-card', OctopusConsumptionCard);
+    if (!window.customElements.get('octopus-consumption-card')) {
+      window.customElements.define('octopus-consumption-card', OctopusConsumptionCard);
     }
   } catch (error) {
     Logger.error('Failed to register octopus-consumption-card: ', error instanceof Error ? error.message : String(error));
@@ -3703,15 +3703,12 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
     }
   }
   
-  // Also keep object assignment for backward compatibility
-  (window as any).customCards['octopus-consumption-card'] = OctopusConsumptionCard;
-  
   // Also expose directly on window for compatibility
   (window as any).OctopusConsumptionCard = OctopusConsumptionCard;
 
   // Styled console logs for DevTools (after registration)
-  const VERSION = '0.6.39';
-  const isRegistered = !!customElements.get('octopus-consumption-card');
+  const VERSION = '0.7.0';
+  const isRegistered = !!window.customElements.get('octopus-consumption-card');
   
   // Branding header (keep styled for visual impact)
   console.groupCollapsed(

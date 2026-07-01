@@ -15,11 +15,13 @@ export class Logger {
   };
 
   static info(message: string, ...values: string[]): void {
-    const args: any[] = [message, this.STYLES.info];
+    let format = `%c${message}`;
+    const styleArgs: string[] = [this.STYLES.info];
     values.forEach((value, index) => {
-      args.push(value, index % 2 === 0 ? this.STYLES.infoValue : this.STYLES.info);
+      format += `%c${value}`;
+      styleArgs.push(index % 2 === 0 ? this.STYLES.infoValue : this.STYLES.info);
     });
-    console.log(...args);
+    console.log(format, ...styleArgs);
   }
 
   static error(message: string, value?: string): void {
@@ -73,42 +75,22 @@ export class Logger {
     );
   }
 
-  /**
-   * Start a collapsible group for service call logging
-   */
   static groupServiceCall(domain: string, service: string): void {
-    console.groupCollapsed(
-      `%c🔧 Service Call: %c${domain}.${service}`,
-      this.STYLES.info,
-      this.STYLES.infoValue
-    );
+    console.log(`%c🔧 Service Call: %c${domain}.${service}`, this.STYLES.info, this.STYLES.infoValue);
   }
 
-  /**
-   * End a collapsible group
-   */
-  static groupEnd(): void {
-    console.groupEnd();
-  }
+  // No-op: console.groupEnd() without a matching group would close an ancestor group
+  static groupEnd(): void {}
 
-  /**
-   * Start a collapsible group for data loading
-   */
   static groupDataLoad(entryId: string, period: string, dates: string): void {
-    console.groupCollapsed(
+    console.log(
       `%c📊 Loading Data: %cEntry: ${entryId} | Period: ${period} | ${dates}`,
       this.STYLES.info,
       this.STYLES.infoValue
     );
   }
 
-  /**
-   * Start a collapsible group for errors
-   */
   static groupError(title: string): void {
-    console.groupCollapsed(
-      `%c❌ ${title}`,
-      this.STYLES.error
-    );
+    console.log(`%c❌ ${title}`, this.STYLES.error);
   }
 }

@@ -45,11 +45,9 @@ export class Logger {
   }
 
   static data(label: string, data: any): void {
-    console.log(
-      `%c  ${label}: %c${JSON.stringify(data, null, 2)}`,
-      this.STYLES.info,
-      this.STYLES.infoValue
-    );
+    console.groupCollapsed(`%c  ${label}`, this.STYLES.info);
+    console.log(data);
+    console.groupEnd();
   }
 
   static serviceCall(domain: string, service: string, withResponse: boolean = false): void {
@@ -68,11 +66,9 @@ export class Logger {
   }
 
   static serviceError(error: any): void {
-    console.error(
-      '%c  Service Error Details: %c' + JSON.stringify(error, Object.getOwnPropertyNames(error), 2),
-      this.STYLES.info,
-      this.STYLES.errorValue
-    );
+    console.groupCollapsed('%c  Service Error Details', this.STYLES.error);
+    console.error(error);
+    console.groupEnd();
   }
 
   static groupServiceCall(domain: string, service: string): void {

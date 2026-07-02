@@ -1,6 +1,6 @@
 {
   "name": "octopus-energy-es-frontend",
-  "version": "0.7.3",
+  "version": "0.7.4",
   "type": "module",
   "description": "Frontend components for Octopus Energy España Home Assistant integration",
   "main": "octopus-consumption-card.js",
